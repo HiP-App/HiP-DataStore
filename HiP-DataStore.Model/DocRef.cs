@@ -31,5 +31,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
             Collection = collection;
             Database = database;
         }
+
+        public override string ToString() =>
+            $"{Id} (collection: '{Collection ?? "<unspecified>"}', database: '{Database ?? "<unspecified>"}')";
     }
 }
