@@ -1,4 +1,6 @@
-﻿namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
+﻿using MongoDB.Bson;
+
+namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 {
     public class ExhibitCreated : IEvent
     {
@@ -6,6 +8,6 @@
         public string Description { get; set; }
         public float Latitude { get; set; }
         public float Longitude { get; set; }
-        public int ImageId { get; set; }
+        public ObjectId ImageId { get; set; }
     }
 }

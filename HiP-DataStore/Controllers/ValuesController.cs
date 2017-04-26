@@ -23,7 +23,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet]
         public async Task<IEnumerable<string>> Get()
         {
-            var ev = new ExhibitCreated();
+            var ev = new ExhibitCreated
+            {
+                Name = "Uni Paderborn",
+                Latitude = 17,
+                Longitude = 5
+            };
+
             await _eventStore.AppendEventAsync(ev, Guid.NewGuid());
             return new string[0];
         }

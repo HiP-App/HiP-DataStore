@@ -1,12 +1,14 @@
-﻿namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
+﻿using MongoDB.Bson;
+
+namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 {
-    class Exhibit
+    public class Exhibit
     {
-        public int Id { get; set; }
+        public ObjectId Id { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
         public float Latitude { get; set; }
         public float Longitude { get; set; }
-        public MediaElement Image { get; set; }
+        public DocRef<MediaElement> Image { get; set; }
     }
 }

@@ -1,6 +1,6 @@
 ﻿namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 {
-    class MediaElement
+    public class MediaElement
     {
         public int Id { get; set; }
         public string Title { get; set; }
@@ -8,7 +8,7 @@
         public MediaType Type { get; set; }
     }
 
-    enum MediaType
+    public enum MediaType
     {
         Image, Audio
     }
