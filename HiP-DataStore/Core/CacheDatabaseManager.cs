@@ -35,7 +35,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
             switch (ev)
             {
                 case ExhibitCreated e:
-                    // TODO: Apply event to MongoDB cache database
                     var newExhibit = new Exhibit
                     {
                         Id = ObjectId.GenerateNewId(),
@@ -43,10 +42,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
                         Description = e.Description,
                         Latitude = e.Latitude,
                         Longitude = e.Longitude,
-                        Image = new DocRef<MediaElement>(e.ImageId, KnownCollections.MediaElements)
+                        Image = new DocRef<MediaElement>(e.ImageId, MediaElement.CollectionName)
                     };
                     
-                    _db.GetCollection<Exhibit>(KnownCollections.Exhibits).InsertOne(newExhibit);
+                    _db.GetCollection<Exhibit>(Exhibit.CollectionName).InsertOne(newExhibit);
                     break;
 
                 // TODO: Handle further events
