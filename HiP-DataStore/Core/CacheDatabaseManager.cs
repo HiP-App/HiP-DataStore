@@ -26,6 +26,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
                 .Wait();
 
             // Open MongoDB database
+            // TODO: Make the connection string (MongoUrl) configurable
             var mongo = new MongoClient("mongodb://localhost:27017");
             _db = mongo.GetDatabase("main");
         }

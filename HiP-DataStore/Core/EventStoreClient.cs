@@ -15,7 +15,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
     /// </remarks>
     public class EventStoreClient
     {
-        public const string DefaultStreamName = "main-stream";
+        public const string DefaultStreamName = "main-stream"; // TODO: Make configurable
         public static readonly IPEndPoint LocalhostEndpoint = new IPEndPoint(IPAddress.Loopback, 1113);
 
         public IEventStoreConnection Connection { get; }
