@@ -15,6 +15,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
         private readonly EventStoreClient _eventStore;
         private readonly IMongoDatabase _db;
 
+        public IMongoDatabase Database => _db;
+
         public CacheDatabaseManager(EventStoreClient eventStore)
         {
             // Subscribe to EventStore events
