@@ -48,6 +48,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
 
+            // CacheDatabaseManager should start up immediately (not only when injected into a controller or
+            // something), so we manually request an instance here
+            app.ApplicationServices.GetService<CacheDatabaseManager>();
+
             app.UseMvc();
 
             // Swagger / Swashbuckle configuration:

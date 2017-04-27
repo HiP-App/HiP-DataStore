@@ -19,19 +19,27 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
 
         public CacheDatabaseManager(EventStoreClient eventStore)
         {
-            // Subscribe to EventStore events
-            _eventStore = eventStore;
-            _eventStore.Connection
-                .SubscribeToStreamAsync(EventStoreClient.DefaultStreamName, false, OnEventAppeared)
-                .Wait();
+            // For now, the cache database is always created from scratch by replaying all events.
+            // This also implies that, for now, the cache database always contains the entire data (not a subset).
+            // In order to receive all the events, a Catch-Up Subscription is created.
 
-            // Open MongoDB database
-            // TODO: Make the connection string (MongoUrl) configurable
+            // 1) Open MongoDB connection and clear existing database
+            // TODO: Make the connection string (MongoUrl) and database name configurable
             var mongo = new MongoClient("mongodb://localhost:27017");
+            mongo.DropDatabase("main");
             _db = mongo.GetDatabase("main");
+
+            // 2) Subscribe to EventStore to receive all past and future events
+            _eventStore = eventStore;
+
+            _eventStore.Connection.SubscribeToStreamFrom(
+                EventStoreClient.DefaultStreamName,
+                StreamPosition.Start,
+                CatchUpSubscriptionSettings.Default,
+                OnEventAppeared);
         }
 
-        private void OnEventAppeared(EventStoreSubscription subscription, ResolvedEvent resolvedEvent)
+        private void OnEventAppeared(EventStoreCatchUpSubscription subscription, ResolvedEvent resolvedEvent)
         {
             var ev = resolvedEvent.Event.ToIEvent();
 
@@ -47,11 +55,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
                         Longitude = e.Longitude,
                         Image = new DocRef<MediaElement>(e.ImageId, MediaElement.CollectionName)
                     };
-                    
+
                     _db.GetCollection<Exhibit>(Exhibit.CollectionName).InsertOne(newExhibit);
                     break;
 
-                // TODO: Handle further events
+                    // TODO: Handle further events
             }
         }
     }

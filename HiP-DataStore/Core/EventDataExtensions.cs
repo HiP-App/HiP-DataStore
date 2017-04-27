@@ -42,7 +42,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
             var metadata = Encoding.UTF8.GetString(ev.Metadata);
             var headers = JsonConvert.DeserializeObject<IDictionary<string, object>>(metadata);
 
-            if (!headers.TryGetValue(EventClrTypeHeader, out var typeNameEntry))
+            if (headers == null || !headers.TryGetValue(EventClrTypeHeader, out var typeNameEntry))
                 throw new ArgumentException($"Cannot resolve event type: Metadata does not specify the CLR type");
 
             var typeName = typeNameEntry.ToString();
