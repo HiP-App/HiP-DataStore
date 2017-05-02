@@ -43,8 +43,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return BadRequest(ModelState);
 
             // ensure referenced image exists and is published
-            if (_mediaIndex.GetMediaStatus(args.Image) != Model.ContentStatus.Published)
-                return BadRequest(); // TODO: Error details
+            if (!_mediaIndex.IsPublishedImage(args.Image))
+                return StatusCode(422, $"ID '{args.Image}' does not refer to a published image");
 
             var ev = new ExhibitCreated
             {

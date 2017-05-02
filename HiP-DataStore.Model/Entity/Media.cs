@@ -1,9 +1,9 @@
-﻿using MongoDB.Bson.Serialization.Attributes;
-
-namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
+﻿namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 {
     public abstract class MediaElement : ContentBase
     {
+        public const string CollectionName = "media";
+
         public int Id { get; set; }
 
         public string Title { get; set; }
@@ -16,16 +16,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
         /// The path to the actual file.
         /// </summary>
         public string File { get; set; }
+
+        public MediaType Type { get; set; }
     }
 
-    public class Image : MediaElement
+    public enum MediaType
     {
-        public const string CollectionName = "images";
-
-    }
-
-    public class Audio : MediaElement
-    {
-        public const string CollectionName = "audio";
+        Image, Audio
     }
 }

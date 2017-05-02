@@ -10,10 +10,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
         // TODO: What about waypoints?
 
         [BsonElement(nameof(Image))]
-        private DocRef<Image> _image = new DocRef<Image>(Entity.Image.CollectionName);
+        private DocRef<MediaElement> _image = new DocRef<MediaElement>(MediaElement.CollectionName);
 
         [BsonElement(nameof(Audio))]
-        private DocRef<Audio> _audio = new DocRef<Audio>(Entity.Audio.CollectionName);
+        private DocRef<MediaElement> _audio = new DocRef<MediaElement>(MediaElement.CollectionName);
 
         [BsonElement(nameof(Exhibits))]
         private DocRefList<Exhibit> _exhibits = new DocRefList<Exhibit>(Exhibit.CollectionName);
@@ -31,9 +31,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         public double Distance { get; set; }
 
-        public DocRef<Image> Image => _image;
+        public DocRef<MediaElement> Image => _image;
 
-        public DocRef<Audio> Audio => _audio;
+        public DocRef<MediaElement> Audio => _audio;
 
         public DocRefList<Exhibit> Exhibits => _exhibits;
 

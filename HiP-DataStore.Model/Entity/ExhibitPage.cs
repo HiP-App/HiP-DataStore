@@ -12,13 +12,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
         // TODO: What about the page type? (AppetizerPage, ImagePage, SliderPage)
 
         [BsonElement(nameof(Image))]
-        private DocRef<Image> _image = new DocRef<Image>(Entity.Image.CollectionName);
+        private DocRef<MediaElement> _image = new DocRef<MediaElement>(MediaElement.CollectionName);
 
         [BsonElement(nameof(Audio))]
-        private DocRef<Audio> _audio = new DocRef<Audio>(Entity.Audio.CollectionName);
+        private DocRef<MediaElement> _audio = new DocRef<MediaElement>(MediaElement.CollectionName);
 
         [BsonElement(nameof(Images))]
-        private DocRefList<Image> _images = new DocRefList<Image>(Entity.Image.CollectionName);
+        private DocRefList<MediaElement> _images = new DocRefList<MediaElement>(MediaElement.CollectionName);
 
         public int Id { get; set; }
 
@@ -26,10 +26,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         public bool HideYearNumbers { get; set; }
 
-        public DocRef<Audio> Audio => _audio;
+        public DocRef<MediaElement> Audio => _audio;
 
-        public DocRef<Image> Image => _image;
+        public DocRef<MediaElement> Image => _image;
 
-        public DocRefList<Image> Images => _images;
+        public DocRefList<MediaElement> Images => _images;
     }
 }

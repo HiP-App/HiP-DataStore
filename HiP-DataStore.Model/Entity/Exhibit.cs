@@ -9,7 +9,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
         public const string CollectionName = "exhibits";
 
         [BsonElement(nameof(Image))]
-        private DocRef<Image> _image = new DocRef<Image>(Entity.Image.CollectionName);
+        private DocRef<MediaElement> _image = new DocRef<MediaElement>(MediaElement.CollectionName);
 
         [BsonElement(nameof(Pages))]
         private List<ExhibitPage> _pages = new List<ExhibitPage>();
@@ -27,7 +27,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         public float Longitude { get; set; }
 
-        public DocRef<Image> Image => _image;
+        public DocRef<MediaElement> Image => _image;
 
         public IList<ExhibitPage> Pages => _pages;
 
