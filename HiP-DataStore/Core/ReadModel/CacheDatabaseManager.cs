@@ -5,7 +5,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 
-namespace PaderbornUniversity.SILab.Hip.DataStore.Core
+namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 {
     /// <summary>
     /// Subscribes to EventStore events to keep the cache database up to date.
