@@ -1,14 +1,15 @@
-﻿using System.Collections.Generic;
-using Microsoft.AspNetCore.Mvc;
-using PaderbornUniversity.SILab.Hip.DataStore.Core;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
-using System.Threading.Tasks;
-using System;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+﻿using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using MongoDB.Driver;
+using PaderbornUniversity.SILab.Hip.DataStore.Core;
+using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
@@ -20,11 +21,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
     {
         private readonly EventStoreClient _eventStore;
         private readonly CacheDatabaseManager _db;
+        private readonly MediaIndex _mediaIndex;
 
-        public ExhibitsController(EventStoreClient eventStore, CacheDatabaseManager db)
+        public ExhibitsController(EventStoreClient eventStore, CacheDatabaseManager db, MediaIndex mediaIndex)
         {
             _eventStore = eventStore;
             _db = db;
+            _mediaIndex = mediaIndex;
         }
 
         /// <summary>
@@ -37,6 +40,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
+            // ensure referenced image exists and is published
+            if (_mediaIndex.GetMediaStatus(args.Image) != Model.ContentStatus.Published)
+                return BadRequest(); // TODO: Error details
 
             var ev = new ExhibitCreated
             {

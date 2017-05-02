@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using PaderbornUniversity.SILab.Hip.DataStore.Core;
+using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.Webservice;
 using Swashbuckle.AspNetCore.Swagger;
 
@@ -40,6 +41,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             services.AddMvc();
             services.AddSingleton<EventStoreClient>();
             services.AddSingleton<CacheDatabaseManager>();
+            services.AddSingleton<IDomainIndex, MediaIndex>();
+            services.AddSingleton<IDomainIndex, AnotherIndex>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
