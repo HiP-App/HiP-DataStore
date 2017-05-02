@@ -53,7 +53,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
                         Description = e.Description,
                         Latitude = e.Latitude,
                         Longitude = e.Longitude,
-                        Image = new DocRef<MediaElement>(e.ImageId, MediaElement.CollectionName)
+                        Image = { Id = e.ImageId }
                     };
 
                     _db.GetCollection<Exhibit>(Exhibit.CollectionName).InsertOne(newExhibit);
