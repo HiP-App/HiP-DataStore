@@ -4,6 +4,7 @@ using MongoDB.Driver;
 using PaderbornUniversity.SILab.Hip.DataStore.Core;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
+using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
@@ -31,6 +32,70 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             _mediaIndex = mediaIndex;
         }
 
+        [HttpGet]
+        public IActionResult Get([FromBody]ExhibitQueryArgs args)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            IQueryable<Exhibit> query = _db.Database.GetCollection<Exhibit>(Exhibit.CollectionName).AsQueryable();
+
+            // filter by IDs
+            query = query.Where(x => args.IncludesId(x.Id.ToString()));
+
+            // filter by status
+            if (args.Status != ContentStatus.All)
+                query = query.Where(x => x.Status == args.Status);
+
+            // filter by query string
+            if (!string.IsNullOrEmpty(args.Query))
+                query = query.Where(x => x.Name.Contains(args.Query) || x.Description.Contains(args.Query));
+
+            // filter by route (TODO)
+            if (args.RouteIds != null)
+            {
+
+            }
+            
+            // order results
+            switch (args.OrderBy)
+            {
+                case "id": query = query.OrderBy(x => x.Id); break;
+                case "name": query = query.OrderBy(x => x.Name); break;
+                case "timestamp": query = query.OrderBy(x => x.Timestamp); break;
+            }
+
+            // paging
+            query = query.Skip(args.Page * args.PageSize).Take(args.PageSize);
+
+            // TODO: What to do with timestamp?
+
+            var results = query.Select(x => new ExhibitResult
+            {
+                Id = x.Id.ToString(),
+                Name = x.Name,
+                Description = x.Description,
+                Image = x.Image.Id.ToString(),
+                Latitude = x.Latitude,
+                Longitude = x.Longitude
+            }).ToList();
+
+            return Ok(results);
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         /// <summary>
         /// An example of a "command" that issues a "create new exhibit"-event to the EventStore.
         /// </summary>
@@ -57,29 +122,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             await _eventStore.AppendEventAsync(ev, Guid.NewGuid());
             return Ok();
-        }
-
-        /// <summary>
-        /// An example of a "query" that gets all exhibits from the MongoDB cache database.
-        /// </summary>
-        /// <returns></returns>
-        [HttpGet]
-        public async Task<IEnumerable<ExhibitResult>> Get()
-        {
-            var exhibits = await _db.Database
-                .GetCollection<Exhibit>(Exhibit.CollectionName)
-                .Find(Builders<Exhibit>.Filter.Empty)
-                .ToListAsync();
-
-            return exhibits.Select(o => new ExhibitResult
-            {
-                Id = o.Id.ToString(),
-                Name = o.Name,
-                Description = o.Description,
-                Image = o.Image.Id.ToString(),
-                Latitude = o.Latitude,
-                Longitude = o.Longitude
-            });
         }
     }
 }

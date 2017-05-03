@@ -11,7 +11,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
     /// </summary>
     public class DocRefList<T> : DocRefBase, ICollection<BsonValue>
     {
-        private readonly HashSet<BsonValue> _ids;
+        [BsonElement("ids")]
+        private HashSet<BsonValue> _ids = new HashSet<BsonValue>();
 
         public int Count => _ids.Count;
 
