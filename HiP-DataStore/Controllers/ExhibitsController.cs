@@ -25,11 +25,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly CacheDatabaseManager _db;
         private readonly MediaIndex _mediaIndex;
 
-        public ExhibitsController(EventStoreClient eventStore, CacheDatabaseManager db, MediaIndex mediaIndex)
+        public ExhibitsController(EventStoreClient eventStore, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices)
         {
             _eventStore = eventStore;
             _db = db;
-            _mediaIndex = mediaIndex;
+            _mediaIndex = indices.OfType<MediaIndex>().FirstOrDefault();
         }
 
         [HttpGet]
@@ -38,10 +38,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            args = args ?? new ExhibitQueryArgs();
+
             IQueryable<Exhibit> query = _db.Database.GetCollection<Exhibit>(Exhibit.CollectionName).AsQueryable();
 
             // filter by IDs
-            query = query.Where(x => args.IncludesId(x.Id.ToString()));
+            // TODO: ToString() not allowed in query
+            if (args.ExcludedIds != null)
+                query = query.Where(x => !args.ExcludedIds.Contains(x.Id.ToString()));
+
+            if (args.IncludedIds != null)
+                query = query.Where(x => args.IncludedIds.Contains(x.Id.ToString()));
 
             // filter by status
             if (args.Status != ContentStatus.All)
