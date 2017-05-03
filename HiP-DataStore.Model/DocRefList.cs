@@ -16,11 +16,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
 
         public int Count => _ids.Count;
 
+        public DocRefList()
+        {
+        }
+
         public DocRefList(string collection = null, string database = null) : base(collection, database)
         {
         }
 
-        [BsonConstructor]
         public DocRefList(IEnumerable<BsonValue> ids, string collection = null, string database = null) : base(collection, database)
         {
             if (ids == null)

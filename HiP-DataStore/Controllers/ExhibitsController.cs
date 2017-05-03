@@ -33,7 +33,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         }
 
         [HttpGet]
-        public IActionResult Get([FromBody]ExhibitQueryArgs args)
+        public IActionResult Get(ExhibitQueryArgs args)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -43,13 +43,23 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             IQueryable<Exhibit> query = _db.Database.GetCollection<Exhibit>(Exhibit.CollectionName).AsQueryable();
 
             // filter by IDs
-            // TODO: ToString() not allowed in query
-            if (args.ExcludedIds != null)
-                query = query.Where(x => !args.ExcludedIds.Contains(x.Id.ToString()));
+            try
+            {
+                var excludedIds = args.ExcludedIds?.Select(ObjectId.Parse).ToList();
+                var includedIds = args.IncludedIds?.Select(ObjectId.Parse).ToList();
 
-            if (args.IncludedIds != null)
-                query = query.Where(x => args.IncludedIds.Contains(x.Id.ToString()));
 
+                if (excludedIds != null)
+                    query = query.Where(x => !excludedIds.Contains(x.Id));
+
+                if (includedIds != null)
+                    query = query.Where(x => includedIds.Contains(x.Id));
+            }
+            catch (FormatException e)
+            {
+                return StatusCode(422, e.Message);
+            }
+            
             // filter by status
             if (args.Status != ContentStatus.All)
                 query = query.Where(x => x.Status == args.Status);
@@ -58,12 +68,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!string.IsNullOrEmpty(args.Query))
                 query = query.Where(x => x.Name.Contains(args.Query) || x.Description.Contains(args.Query));
 
-            // filter by route (TODO)
+            // filter by route
             if (args.RouteIds != null)
             {
-
+                // TODO
             }
-            
+
             // order results
             switch (args.OrderBy)
             {
@@ -77,7 +87,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             // TODO: What to do with timestamp?
 
-            var results = query.Select(x => new ExhibitResult
+            var results = query.ToList().Select(x => new ExhibitResult
             {
                 Id = x.Id.ToString(),
                 Name = x.Name,
@@ -89,15 +99,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             return Ok(results);
         }
-
-
-
-
-
-
-
-
-
 
 
 

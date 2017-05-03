@@ -12,14 +12,18 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
         /// If not set, the referenced document is assumed to be in the same collection as the referencing document.
         /// </summary>
         [BsonElement]
-        public string Collection { get; }
+        public string Collection { get; private set; }
 
         /// <summary>
         /// The name of the database where the referenced document is. This property is optional:
         /// If not set, the referenced document is assumed to be in the same database as the referencing document.
         /// </summary>
         [BsonElement]
-        public string Database { get; }
+        public string Database { get; private set; }
+
+        protected DocRefBase()
+        {
+        }
 
         protected DocRefBase(string collection, string database)
         {

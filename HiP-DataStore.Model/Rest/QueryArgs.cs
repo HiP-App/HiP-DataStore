@@ -20,15 +20,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 
         [Range(1, int.MaxValue)]
         [DefaultValue(int.MaxValue)]
-        public int PageSize { get; set; }
+        public int PageSize { get; set; } = int.MaxValue;
 
         public virtual string OrderBy { get; set; }
 
         public string Query { get; set; }
 
-        [DefaultValue(ContentStatus.Published)]
         [JsonConverter(typeof(StringEnumConverter))]
-        public ContentStatus Status { get; set; }
+        [DefaultValue(ContentStatus.Published)]
+        public ContentStatus Status { get; set; } = ContentStatus.Published;
 
         public DateTimeOffset? Timestamp { get; set; }
 
