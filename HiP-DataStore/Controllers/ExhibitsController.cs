@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using MongoDB.Bson;
 using MongoDB.Driver;
 using PaderbornUniversity.SILab.Hip.DataStore.Core;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
@@ -51,8 +50,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 var exhibits = query
                     .FilterByIds(args.ExcludedIds, args.IncludedIds)
                     .FilterByStatus(args.Status)
-                    .FilterIf(!string.IsNullOrEmpty(args.Query),
-                        x => x.Name.Contains(args.Query) || x.Description.Contains(args.Query))
+                    .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
+                        x.Name.ToLower().Contains(args.Query.ToLower()) ||
+                        x.Description.ToLower().Contains(args.Query.ToLower()))
                     .FilterIf(args.RouteIds != null,
                         x => true) // TODO: Filter by route
                     .Sort(args.OrderBy,
@@ -100,7 +100,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (args.Image.HasValue && !_mediaIndex.IsPublishedImage(args.Image.Value))
                 return StatusCode(422, $"ID '{args.Image}' does not refer to a published image");
 
-            // TODO: ensure referenced tags exist
+            // TODO: ensure referenced tags exist and are published (+ return tags in ExhibitResult)
 
             var ev = new ExhibitCreated
             {
