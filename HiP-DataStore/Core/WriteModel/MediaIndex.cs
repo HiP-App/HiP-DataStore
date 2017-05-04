@@ -10,16 +10,16 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
     /// </summary>
     public class MediaIndex : IDomainIndex
     {
-        private readonly Dictionary<string, MediaInfo> _media = new Dictionary<string, MediaInfo>();
+        private readonly Dictionary<int, MediaInfo> _media = new Dictionary<int, MediaInfo>();
 
-        public bool IsPublishedImage(string id)
+        public bool IsPublishedImage(int id)
         {
             return _media.TryGetValue(id, out var info) &&
                 info.Status == ContentStatus.Published &&
                 info.Type == MediaType.Image;
         }
 
-        public bool IsPublishedAudio(string id)
+        public bool IsPublishedAudio(int id)
         {
             return _media.TryGetValue(id, out var info) &&
                 info.Status == ContentStatus.Published &&

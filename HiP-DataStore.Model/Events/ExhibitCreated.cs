@@ -1,13 +1,16 @@
-﻿using MongoDB.Bson;
+﻿using System;
+using Newtonsoft.Json;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 {
-    public class ExhibitCreated : IEvent
+    public class ExhibitCreated : ICrudEvent
     {
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public float Latitude { get; set; }
-        public float Longitude { get; set; }
-        public ObjectId ImageId { get; set; }
+        public int Id { get; set; }
+        public ExhibitArgs Properties { get; set; }
+
+        [JsonIgnore]
+        public Type EntityType => typeof(Exhibit);
     }
 }

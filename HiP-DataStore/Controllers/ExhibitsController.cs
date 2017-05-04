@@ -23,12 +23,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly EventStoreClient _eventStore;
         private readonly CacheDatabaseManager _db;
         private readonly MediaIndex _mediaIndex;
+        private readonly IdIndex _idIndex;
 
         public ExhibitsController(EventStoreClient eventStore, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices)
         {
             _eventStore = eventStore;
             _db = db;
-            _mediaIndex = indices.OfType<MediaIndex>().FirstOrDefault();
+            _mediaIndex = indices.OfType<MediaIndex>().First();
+            _idIndex = indices.OfType<IdIndex>().First();
         }
 
         [HttpGet]
@@ -46,11 +48,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             try
             {
-                var excludedIds = args.ExcludedIds?.Select(ObjectId.Parse).ToList();
-                var includedIds = args.IncludedIds?.Select(ObjectId.Parse).ToList();
-
                 var exhibits = query
-                    .FilterByIds(excludedIds, includedIds)
+                    .FilterByIds(args.ExcludedIds, args.IncludedIds)
                     .FilterByStatus(args.Status)
                     .FilterIf(!string.IsNullOrEmpty(args.Query),
                         x => x.Name.Contains(args.Query) || x.Description.Contains(args.Query))
@@ -66,10 +65,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 // TODO: What to do with timestamp?
                 var results = exhibits.Select(x => new ExhibitResult
                 {
-                    Id = x.Id.ToString(),
+                    Id = x.Id,
                     Name = x.Name,
                     Description = x.Description,
-                    Image = x.Image.Id.ToString(),
+                    Image = x.Image.Id.AsNullableInt32,
                     Latitude = x.Latitude,
                     Longitude = x.Longitude
                 }).ToList();
@@ -98,16 +97,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return BadRequest(ModelState);
 
             // ensure referenced image exists and is published
-            if (!_mediaIndex.IsPublishedImage(args.Image))
+            if (args.Image.HasValue && !_mediaIndex.IsPublishedImage(args.Image.Value))
                 return StatusCode(422, $"ID '{args.Image}' does not refer to a published image");
+
+            // TODO: ensure referenced tags exist
 
             var ev = new ExhibitCreated
             {
-                Name = args.Name,
-                Description = args.Description,
-                ImageId = ObjectId.TryParse(args.Image, out var id) ? id : ObjectId.Empty,
-                Latitude = args.Latitude,
-                Longitude = args.Longitude
+                Id = _idIndex.NextId<Exhibit>(),
+                Properties = args
             };
 
             await _eventStore.AppendEventAsync(ev, Guid.NewGuid());

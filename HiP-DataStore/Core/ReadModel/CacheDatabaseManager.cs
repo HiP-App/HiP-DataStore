@@ -1,7 +1,5 @@
 ﻿using EventStore.ClientAPI;
-using MongoDB.Bson;
 using MongoDB.Driver;
-using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 
@@ -48,12 +46,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                 case ExhibitCreated e:
                     var newExhibit = new Exhibit
                     {
-                        Id = ObjectId.GenerateNewId(),
-                        Name = e.Name,
-                        Description = e.Description,
-                        Latitude = e.Latitude,
-                        Longitude = e.Longitude,
-                        Image = { Id = e.ImageId }
+                        Id = e.Id,
+                        Name = e.Properties.Name,
+                        Description = e.Properties.Description,
+                        Latitude = e.Properties.Latitude,
+                        Longitude = e.Properties.Longitude,
+                        Image = { Id = e.Properties.Image }
                     };
 
                     _db.GetCollection<Exhibit>(Exhibit.CollectionName).InsertOne(newExhibit);

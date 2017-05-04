@@ -37,12 +37,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
                 // Define a Swagger document
                 c.SwaggerDoc("v1", new Info { Title = _Name, Version = _Version });
                 c.OperationFilter<SwaggerOperationFilter>();
+                c.DescribeAllEnumsAsStrings();
             });
 
             services.AddMvc();
             services.AddSingleton<EventStoreClient>();
             services.AddSingleton<CacheDatabaseManager>();
             services.AddSingleton<IDomainIndex, MediaIndex>();
+            services.AddSingleton<IDomainIndex, IdIndex>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

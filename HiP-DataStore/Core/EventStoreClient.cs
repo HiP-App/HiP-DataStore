@@ -44,12 +44,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
             if (ev == null)
                 throw new ArgumentNullException(nameof(ev));
 
-            // persist event in Event Store
-            await Connection.AppendToStreamAsync(DefaultStreamName, ExpectedVersion.Any, ev.ToEventData(eventId));
-
             // forward event to indices so they can update their state
             foreach (var index in _indices)
                 index.ApplyEvent(ev);
+
+            // persist event in Event Store
+            await Connection.AppendToStreamAsync(DefaultStreamName, ExpectedVersion.Any, ev.ToEventData(eventId));
         }
 
         private void PopulateIndices()

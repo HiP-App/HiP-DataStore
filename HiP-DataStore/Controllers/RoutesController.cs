@@ -7,7 +7,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
     public class RoutesController : Controller
     {
         [HttpGet]
-        public IActionResult Get(RoutesQueryArgs args)
+        public IActionResult Get(RouteQueryArgs args)
         {
             return Ok();
         }
