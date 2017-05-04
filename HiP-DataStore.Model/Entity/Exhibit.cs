@@ -1,5 +1,4 @@
-﻿using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
+﻿using MongoDB.Bson.Serialization.Attributes;
 using System.Collections.Generic;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
@@ -16,8 +15,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         [BsonElement(nameof(Tags))]
         private DocRefList<Tag> _tags = new DocRefList<Tag>();
-
-        public ObjectId Id { get; set; }
 
         public string Name { get; set; }
 

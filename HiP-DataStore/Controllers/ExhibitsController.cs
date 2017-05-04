@@ -4,7 +4,6 @@ using MongoDB.Driver;
 using PaderbornUniversity.SILab.Hip.DataStore.Core;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
-using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
@@ -33,6 +32,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         }
 
         [HttpGet]
+        [ProducesResponseType(typeof(IEnumerable<ExhibitResult>), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(422)]
         public IActionResult Get(ExhibitQueryArgs args)
         {
             if (!ModelState.IsValid)
@@ -40,69 +42,49 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             args = args ?? new ExhibitQueryArgs();
 
-            IQueryable<Exhibit> query = _db.Database.GetCollection<Exhibit>(Exhibit.CollectionName).AsQueryable();
+            var query = _db.Database.GetCollection<Exhibit>(Exhibit.CollectionName).AsQueryable();
 
-            // filter by IDs
             try
             {
                 var excludedIds = args.ExcludedIds?.Select(ObjectId.Parse).ToList();
                 var includedIds = args.IncludedIds?.Select(ObjectId.Parse).ToList();
 
+                var exhibits = query
+                    .FilterByIds(excludedIds, includedIds)
+                    .FilterByStatus(args.Status)
+                    .FilterIf(!string.IsNullOrEmpty(args.Query),
+                        x => x.Name.Contains(args.Query) || x.Description.Contains(args.Query))
+                    .FilterIf(args.RouteIds != null,
+                        x => true) // TODO: Filter by route
+                    .Sort(args.OrderBy,
+                        ("id", x => x.Id),
+                        ("name", x => x.Name),
+                        ("timestamp", x => x.Timestamp))
+                    .Paginate(args.Page, args.PageSize)
+                    .ToList();
 
-                if (excludedIds != null)
-                    query = query.Where(x => !excludedIds.Contains(x.Id));
+                // TODO: What to do with timestamp?
+                var results = exhibits.Select(x => new ExhibitResult
+                {
+                    Id = x.Id.ToString(),
+                    Name = x.Name,
+                    Description = x.Description,
+                    Image = x.Image.Id.ToString(),
+                    Latitude = x.Latitude,
+                    Longitude = x.Longitude
+                }).ToList();
 
-                if (includedIds != null)
-                    query = query.Where(x => includedIds.Contains(x.Id));
+                return Ok(results);
             }
             catch (FormatException e)
             {
                 return StatusCode(422, e.Message);
             }
-            
-            // filter by status
-            if (args.Status != ContentStatus.All)
-                query = query.Where(x => x.Status == args.Status);
-
-            // filter by query string
-            if (!string.IsNullOrEmpty(args.Query))
-                query = query.Where(x => x.Name.Contains(args.Query) || x.Description.Contains(args.Query));
-
-            // filter by route
-            if (args.RouteIds != null)
+            catch (InvalidSortKeyException e)
             {
-                // TODO
+                return StatusCode(422, e.Message);
             }
-
-            // order results
-            switch (args.OrderBy)
-            {
-                case "id": query = query.OrderBy(x => x.Id); break;
-                case "name": query = query.OrderBy(x => x.Name); break;
-                case "timestamp": query = query.OrderBy(x => x.Timestamp); break;
-            }
-
-            // paging
-            query = query.Skip(args.Page * args.PageSize).Take(args.PageSize);
-
-            // TODO: What to do with timestamp?
-
-            var results = query.ToList().Select(x => new ExhibitResult
-            {
-                Id = x.Id.ToString(),
-                Name = x.Name,
-                Description = x.Description,
-                Image = x.Image.Id.ToString(),
-                Latitude = x.Latitude,
-                Longitude = x.Longitude
-            }).ToList();
-
-            return Ok(results);
         }
-
-
-
-
 
         /// <summary>
         /// An example of a "command" that issues a "create new exhibit"-event to the EventStore.

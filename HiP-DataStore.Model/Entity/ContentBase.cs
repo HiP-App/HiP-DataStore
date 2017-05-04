@@ -1,11 +1,12 @@
 ﻿using System;
+using MongoDB.Bson;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 {
     /// <summary>
     /// Base class for routes, exhibits, pages, tags, media etc.
     /// </summary>
-    public abstract class ContentBase
+    public abstract class ContentBase : IEntity<ObjectId>
     {
         public ContentStatus Status { get; set; }
 
@@ -13,5 +14,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
         /// The date and time of the last modification.
         /// </summary>
         public DateTimeOffset Timestamp { get; set; }
+
+        public ObjectId Id { get; set; }
     }
 }

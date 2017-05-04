@@ -1,5 +1,4 @@
-﻿using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
+﻿using MongoDB.Bson.Serialization.Attributes;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 {
@@ -9,8 +8,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         [BsonElement(nameof(Image))]
         private DocRef<MediaElement> _image = new DocRef<MediaElement>(MediaElement.CollectionName);
-
-        public ObjectId Id { get; set; }
 
         public string Title { get; set; }
 

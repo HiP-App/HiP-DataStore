@@ -20,8 +20,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
         [BsonElement(nameof(Images))]
         private DocRefList<MediaElement> _images = new DocRefList<MediaElement>(MediaElement.CollectionName);
 
-        public int Id { get; set; }
-
         public string Text { get; set; }
 
         public bool HideYearNumbers { get; set; }
