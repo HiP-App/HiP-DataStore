@@ -34,6 +34,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
 
         public bool Add(BsonValue id) => _ids.Add(id);
 
+        public void Add(IEnumerable<BsonValue> ids)
+        {
+            foreach (var id in ids)
+                _ids.Add(id);
+        }
+
         public bool Remove(BsonValue id) => _ids.Remove(id);
 
         public void Clear() => _ids.Clear();

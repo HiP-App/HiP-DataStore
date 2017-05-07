@@ -11,9 +11,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         [Required]
         public string Name { get; set; }
         public string Description { get; set; }
+        public int? Image { get; set; }
         public float Latitude { get; set; }
         public float Longitude { get; set; }
-        public int? Image { get; set; }
+        public bool Used { get; set; }
+        public ContentStatus Status { get; set; }
         public List<int> Tags { get; set; }
     }
 }

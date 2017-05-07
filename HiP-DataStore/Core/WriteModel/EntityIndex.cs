@@ -54,20 +54,20 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                     }
                     break;
 
-                case IUpdateEvent ev2:
+                case IUpdateEvent ev:
                     lock (_lockObject)
                     {
-                        var info2 = GetOrCreateEntityTypeInfo(ev2.EntityType);
-                        if (info2.Entities.TryGetValue(ev2.Id, out var entity))
-                            entity.Status = ev2.Status;
+                        var info2 = GetOrCreateEntityTypeInfo(ev.EntityType);
+                        if (info2.Entities.TryGetValue(ev.Id, out var entity))
+                            entity.Status = ev.Status;
                     }
                     break;
 
-                case IDeleteEvent ev3:
+                case IDeleteEvent ev:
                     lock (_lockObject)
                     {
-                        var info3 = GetOrCreateEntityTypeInfo(ev3.EntityType);
-                        info3.Entities.Remove(ev3.Id);
+                        var info3 = GetOrCreateEntityTypeInfo(ev.EntityType);
+                        info3.Entities.Remove(ev.Id);
                     }
                     break;
             }

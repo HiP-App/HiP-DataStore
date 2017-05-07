@@ -1,7 +1,10 @@
 ﻿using EventStore.ClientAPI;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
+using System;
+using System.Linq;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 {
@@ -49,12 +52,35 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         Id = e.Id,
                         Name = e.Properties.Name,
                         Description = e.Properties.Description,
+                        Image = { Id = e.Properties.Image },
                         Latitude = e.Properties.Latitude,
                         Longitude = e.Properties.Longitude,
-                        Image = { Id = e.Properties.Image }
+                        Used = e.Properties.Used,
+                        Status = e.Properties.Status,
+                        Tags = { e.Properties.Tags.Select(id => (BsonValue)id) },
+                        Timestamp = DateTimeOffset.Now
                     };
 
                     _db.GetCollection<Exhibit>(Exhibit.CollectionName).InsertOne(newExhibit);
+                    break;
+
+                case RouteCreated e:
+                    var newRoute = new Route
+                    {
+                        Id = e.Id,
+                        Title = e.Properties.Title,
+                        Description = e.Properties.Description,
+                        Duration = e.Properties.Duration,
+                        Distance = e.Properties.Distance,
+                        Image = { Id = e.Properties.Image },
+                        Audio = { Id = e.Properties.Audio },
+                        Exhibits = { e.Properties.Exhibits.Select(id => (BsonValue)id) },
+                        Status = e.Properties.Status,
+                        Tags = { e.Properties.Tags.Select(id => (BsonValue)id) },
+                        Timestamp = DateTimeOffset.Now
+                    };
+
+                    _db.GetCollection<Route>(Route.CollectionName).InsertOne(newRoute);
                     break;
 
                     // TODO: Handle further events

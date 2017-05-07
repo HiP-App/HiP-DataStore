@@ -24,6 +24,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         public float Longitude { get; set; }
 
+        public bool Used { get; set; }
+
         public DocRef<MediaElement> Image => _image;
 
         public IList<ExhibitPage> Pages => _pages;
