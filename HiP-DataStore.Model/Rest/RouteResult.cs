@@ -2,17 +2,18 @@
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 {
-    public class ExhibitResult
+    public class RouteResult
     {
         public int Id { get; set; }
-        public string Name { get; set; }
+        public string Title { get; set; }
         public string Description { get; set; }
+        public int Duration { get; set; }
+        public double Distance { get; set; }
         public int? Image { get; set; }
-        public float Latitude { get; set; }
-        public float Longitude { get; set; }
+        public int? Audio { get; set; }
+        public int[] Exhibits { get; set; }
         public ContentStatus Status { get; set; }
         public int[] Tags { get; set; }
         public DateTimeOffset Timestamp { get; set; }
-        public bool Used { get; set; }
     }
 }

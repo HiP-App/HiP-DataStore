@@ -68,16 +68,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                     Id = x.Id,
                     Name = x.Name,
                     Description = x.Description,
-                    Image = x.Image.Id.AsNullableInt32,
+                    Image = (int?)x.Image.Id,
                     Latitude = x.Latitude,
                     Longitude = x.Longitude
                 }).ToList();
 
                 return Ok(results);
-            }
-            catch (FormatException e)
-            {
-                return StatusCode(422, e.Message);
             }
             catch (InvalidSortKeyException e)
             {
