@@ -29,7 +29,18 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 
         public void ApplyEvent(IEvent e)
         {
-            // TODO: Basically handle MediaCreated/-Removed/-Updated events
+            switch (e)
+            {
+                case MediaCreated ev:
+                    _media.Add(ev.Id, new MediaInfo { Status = ev.Status, Type = ev.Properties.Type });
+                    break;
+
+                case MediaDeleted ev:
+                    _media.Remove(ev.Id);
+                    break;
+
+                // TODO: Watch MediaUpdated events (publication status could change there)
+            }
         }
 
         public class MediaInfo
