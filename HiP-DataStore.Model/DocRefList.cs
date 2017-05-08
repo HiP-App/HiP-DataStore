@@ -3,6 +3,7 @@ using MongoDB.Bson.Serialization.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Collections;
+using System.Linq;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model
 {
@@ -36,7 +37,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
 
         public void Add(IEnumerable<BsonValue> ids)
         {
-            foreach (var id in ids)
+            foreach (var id in ids ?? Enumerable.Empty<BsonValue>())
                 _ids.Add(id);
         }
 

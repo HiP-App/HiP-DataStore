@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using System;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 {
@@ -12,6 +14,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         public int? Image { get; set; }
         public int? Audio { get; set; }
         public int[] Exhibits { get; set; }
+        [JsonConverter(typeof(StringEnumConverter))]
         public ContentStatus Status { get; set; }
         public int[] Tags { get; set; }
         public DateTimeOffset Timestamp { get; set; }

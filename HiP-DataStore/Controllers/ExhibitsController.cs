@@ -71,7 +71,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                     Description = x.Description,
                     Image = (int?)x.Image.Id,
                     Latitude = x.Latitude,
-                    Longitude = x.Longitude
+                    Longitude = x.Longitude,
+                    Used = x.Used,
+                    Status = x.Status,
+                    Tags = x.Tags.Select(id => (int)id).ToArray(),
+                    Timestamp = x.Timestamp
                 }).ToList();
 
                 return Ok(results);

@@ -57,7 +57,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         Longitude = e.Properties.Longitude,
                         Used = e.Properties.Used,
                         Status = e.Properties.Status,
-                        Tags = { e.Properties.Tags.Select(id => (BsonValue)id) },
+                        Tags = { e.Properties.Tags?.Select(id => (BsonValue)id) },
                         Timestamp = DateTimeOffset.Now
                     };
 
@@ -74,9 +74,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         Distance = e.Properties.Distance,
                         Image = { Id = e.Properties.Image },
                         Audio = { Id = e.Properties.Audio },
-                        Exhibits = { e.Properties.Exhibits.Select(id => (BsonValue)id) },
+                        Exhibits = { e.Properties.Exhibits?.Select(id => (BsonValue)id) },
                         Status = e.Properties.Status,
-                        Tags = { e.Properties.Tags.Select(id => (BsonValue)id) },
+                        Tags = { e.Properties.Tags?.Select(id => (BsonValue)id) },
                         Timestamp = DateTimeOffset.Now
                     };
 
