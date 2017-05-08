@@ -4,11 +4,11 @@ using System;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 {
-    public class MediaDeleted : IDeleteEvent
+    public class RouteDeleted : IDeleteEvent
     {
         public int Id { get; set; }
-        
+
         [JsonIgnore]
-        public Type EntityType => typeof(MediaElement);
+        public Type EntityType => typeof(Route);
     }
 }
