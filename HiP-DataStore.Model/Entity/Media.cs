@@ -1,6 +1,6 @@
 ﻿namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 {
-    public abstract class MediaElement : ContentBase
+    public class MediaElement : ContentBase
     {
         public const string CollectionName = "media";
 
