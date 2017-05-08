@@ -4,6 +4,9 @@
     <TargetFramework>netcoreapp1.1</TargetFramework>
     <RootNamespace>PaderbornUniversity.SILab.Hip.DataStore</RootNamespace>
   </PropertyGroup>
+  <PropertyGroup>
+    <RestoreConfigFile>Nuget.Config</RestoreConfigFile>
+  </PropertyGroup>
 
   <ItemGroup>
     <Folder Include="wwwroot\" />
