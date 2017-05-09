@@ -3,19 +3,27 @@ using System.ComponentModel.DataAnnotations;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 {
-    /// <summary>
-    /// Model for creating new exhibits.
-    /// </summary>
-    public class ExhibitArgs
+    public class RouteArgs
     {
         [Required]
-        public string Name { get; set; }
+        public string Title { get; set; }
+
         public string Description { get; set; }
+
+        [Range(0, int.MaxValue)]
+        public int Duration { get; set; }
+
+        [Range(0, double.PositiveInfinity)]
+        public double Distance { get; set; }
+
         public int? Image { get; set; }
-        public float Latitude { get; set; }
-        public float Longitude { get; set; }
-        public bool Used { get; set; }
+
+        public int? Audio { get; set; }
+
+        public List<int> Exhibits { get; set; }
+
         public ContentStatus Status { get; set; }
+
         public List<int> Tags { get; set; }
     }
 }

@@ -14,18 +14,15 @@ using System.Threading.Tasks;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
-    /// <summary>
-    /// Controller for testing purposes.
-    /// </summary>
     [Route("api/[controller]")]
-    public class ExhibitsController : Controller
+    public class RoutesController : Controller
     {
         private readonly EventStoreClient _eventStore;
         private readonly CacheDatabaseManager _db;
         private readonly MediaIndex _mediaIndex;
         private readonly EntityIndex _entityIndex;
 
-        public ExhibitsController(EventStoreClient eventStore, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices)
+        public RoutesController(EventStoreClient eventStore, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices)
         {
             _eventStore = eventStore;
             _db = db;
@@ -34,45 +31,44 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         }
 
         [HttpGet]
-        [ProducesResponseType(typeof(IEnumerable<ExhibitResult>), 200)]
+        [ProducesResponseType(typeof(IEnumerable<RouteResult>), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(422)]
-        public IActionResult Get(ExhibitQueryArgs args)
+        public IActionResult Get(RouteQueryArgs args)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            args = args ?? new ExhibitQueryArgs();
+            args = args ?? new RouteQueryArgs();
 
-            var query = _db.Database.GetCollection<Exhibit>(Exhibit.CollectionName).AsQueryable();
+            var query = _db.Database.GetCollection<Route>(Route.CollectionName).AsQueryable();
 
             try
             {
-                var exhibits = query
+                var routes = query
                     .FilterByIds(args.ExcludedIds, args.IncludedIds)
                     .FilterByStatus(args.Status)
                     .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
-                        x.Name.ToLower().Contains(args.Query.ToLower()) ||
+                        x.Title.ToLower().Contains(args.Query.ToLower()) ||
                         x.Description.ToLower().Contains(args.Query.ToLower()))
-                    .FilterIf(args.RouteIds != null,
-                        x => true) // TODO: Filter by route
                     .Sort(args.OrderBy,
                         ("id", x => x.Id),
-                        ("name", x => x.Name),
+                        ("title", x => x.Title),
                         ("timestamp", x => x.Timestamp))
                     .Paginate(args.Page, args.PageSize)
                     .ToList();
 
                 // TODO: What to do with timestamp?
-                var results = exhibits.Select(x => new ExhibitResult
+                var results = routes.Select(x => new RouteResult
                 {
                     Id = x.Id,
-                    Name = x.Name,
+                    Title = x.Title,
                     Description = x.Description,
+                    Duration = x.Duration,
+                    Distance = x.Distance,
                     Image = (int?)x.Image.Id,
-                    Latitude = x.Latitude,
-                    Longitude = x.Longitude,
-                    Used = x.Used,
+                    Audio = (int?)x.Audio.Id,
+                    Exhibits = x.Exhibits.Select(id => (int)id).ToArray(),
                     Status = x.Status,
                     Tags = x.Tags.Select(id => (int)id).ToArray(),
                     Timestamp = x.Timestamp
@@ -90,7 +86,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(422)]
-        public async Task<IActionResult> PostAsync([FromBody]ExhibitArgs args)
+        public async Task<IActionResult> PostAsync([FromBody]RouteArgs args)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -98,6 +94,21 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             // ensure referenced image exists and is published
             if (args.Image.HasValue && !_mediaIndex.IsPublishedImage(args.Image.Value))
                 return StatusCode(422, ErrorMessages.ImageNotFoundOrNotPublished(args.Image.Value));
+
+            // ensure referenced audio exists and is published
+            if (args.Audio.HasValue && !_mediaIndex.IsPublishedAudio(args.Audio.Value))
+                return StatusCode(422, ErrorMessages.AudioNotFoundOrNotPublished(args.Audio.Value));
+
+            // ensure referenced exhibits exist and are published
+            if (args.Exhibits != null)
+            {
+                var invalidIds = args.Exhibits
+                    .Where(id => _entityIndex.Status<Exhibit>(id) != ContentStatus.Published)
+                    .ToList();
+
+                if (invalidIds.Count > 0)
+                    return StatusCode(422, ErrorMessages.ExhibitNotFoundOrNotPublished(invalidIds[0]));
+            }
 
             // ensure referenced tags exist and are published
             if (args.Tags != null)
@@ -110,9 +121,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                     return StatusCode(422, ErrorMessages.TagNotFoundOrNotPublished(invalidIds[0]));
             }
 
-            var ev = new ExhibitCreated
+            var ev = new RouteCreated
             {
-                Id = _entityIndex.NextId<Exhibit>(),
+                Id = _entityIndex.NextId<Route>(),
                 Properties = args
             };
 
