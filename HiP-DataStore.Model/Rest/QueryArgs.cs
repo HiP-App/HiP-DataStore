@@ -19,8 +19,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         public int Page { get; set; }
 
         [Range(1, int.MaxValue)]
-        [DefaultValue(int.MaxValue)]
-        public int PageSize { get; set; } = int.MaxValue;
+        [DefaultValue(10)]
+        public int PageSize { get; set; } = 10;
 
         public virtual string OrderBy { get; set; }
 
