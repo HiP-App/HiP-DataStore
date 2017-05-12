@@ -62,10 +62,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         public static IQueryable<T> Sort<T>(this IQueryable<T> query, string sortKey,
             params (string Key, Expression<Func<T, object>> Expression)[] sortRules)
         {
+            if (sortKey == null)
+                return query;
+
             var expression = sortRules.FirstOrDefault(c => c.Key == sortKey).Expression;
 
             return (expression == null)
-                ? query
+                ? throw new InvalidSortKeyException(sortKey)
                 : query.OrderBy(expression);
         }
     }
