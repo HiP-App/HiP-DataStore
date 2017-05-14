@@ -2,6 +2,7 @@
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
+using System;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 {
@@ -10,7 +11,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
     /// </summary>
     public class MediaIndex : IDomainIndex
     {
+        int MaxMediaId = -1;
         private readonly Dictionary<int, MediaInfo> _media = new Dictionary<int, MediaInfo>();
+
+        public int NextId()
+        {
+            return ++MaxMediaId;
+        }
 
         public bool IsPublishedImage(int id)
         {
@@ -33,13 +40,18 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
             {
                 case MediaCreated ev:
                     _media.Add(ev.Id, new MediaInfo { Status = ev.Status, Type = ev.Properties.Type });
+                    MaxMediaId = Math.Max(ev.Id, MaxMediaId);
                     break;
 
                 case MediaDeleted ev:
                     _media.Remove(ev.Id);
                     break;
 
-                // TODO: Watch MediaUpdated events (publication status could change there)
+                case MediaUpdate ev:
+                    _media[ev.Id].Status= ev.Status;
+                    break;
+
+                    // TODO: Watch MediaUpdated events (publication status could change there)
             }
         }
 

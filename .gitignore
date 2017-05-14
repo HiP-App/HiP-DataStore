@@ -260,3 +260,5 @@ paket-files/
 __pycache__/
 *.pyc
 HiP-DataStore/Webservice/
+HiP-DataStore/Media/Audio/
+HiP-DataStore/Media/Image/
