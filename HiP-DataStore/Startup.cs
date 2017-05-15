@@ -42,6 +42,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
                 c.DescribeAllEnumsAsStrings();
             });
 
+            services.Configure<EndpointConfig>(Configuration.GetSection("Endpoints"));
+            services.Configure<UploadFilesConfig>(Configuration.GetSection("UploadingFiles"));
+
             services.AddMvc();
             services.AddSingleton<EventStoreClient>();
             services.AddSingleton<CacheDatabaseManager>();

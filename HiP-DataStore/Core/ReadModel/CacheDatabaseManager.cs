@@ -1,9 +1,11 @@
 ﻿using EventStore.ClientAPI;
+using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
+using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using System;
 using System.Linq;
 
@@ -19,17 +21,16 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 
         public IMongoDatabase Database => _db;
 
-        public CacheDatabaseManager(EventStoreClient eventStore)
+        public CacheDatabaseManager(EventStoreClient eventStore, IOptions<EndpointConfig> config)
         {
             // For now, the cache database is always created from scratch by replaying all events.
             // This also implies that, for now, the cache database always contains the entire data (not a subset).
             // In order to receive all the events, a Catch-Up Subscription is created.
 
             // 1) Open MongoDB connection and clear existing database
-            // TODO: Make the connection string (MongoUrl) and database name configurable
-            var mongo = new MongoClient("mongodb://localhost:27017");
-            mongo.DropDatabase("main");
-            _db = mongo.GetDatabase("main");
+            var mongo = new MongoClient(config.Value.MongoDbHost);
+            mongo.DropDatabase(config.Value.MongoDbName);
+            _db = mongo.GetDatabase(config.Value.MongoDbName);
 
             // 2) Subscribe to EventStore to receive all past and future events
             _eventStore = eventStore;

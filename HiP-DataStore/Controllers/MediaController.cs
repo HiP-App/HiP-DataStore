@@ -233,12 +233,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return NotFound();
 
             var extension = file.FileName.Split('.').Last();
-            string fileType = Enum.GetName(typeof(MediaType), media.Type);
+            var fileType = Enum.GetName(typeof(MediaType), media.Type);
 
             /* Checking supported extensions
              * Configuration catalogue has to have same key name as on of MediaType constant names */
-            if (_uploadConfig.SupportedFormats[fileType].FirstOrDefault(y => y == extension) == null)
-                return BadRequest(new { Message = $"Extension: {extension} is not supported for type : {fileType}" });
+            if (!_uploadConfig.SupportedFormats[fileType].Contains(extension))
+                return BadRequest(new { Message = $"Extension '{extension}' is not supported for type '{fileType}'" });
 
 
             // Remove old file
