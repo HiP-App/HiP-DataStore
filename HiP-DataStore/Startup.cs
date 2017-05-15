@@ -4,6 +4,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using PaderbornUniversity.SILab.Hip.DataStore.Core;
+using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
+using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
+using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.Webservice;
 using Swashbuckle.AspNetCore.Swagger;
 
@@ -35,11 +38,19 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
                 // Define a Swagger document
                 c.SwaggerDoc("v1", new Info { Title = _Name, Version = _Version });
                 c.OperationFilter<SwaggerOperationFilter>();
+                c.OperationFilter<SwaggerFileUploadOperationFilter>();
+                c.DescribeAllEnumsAsStrings();
+                
             });
+
+            services.Configure<EndpointConfig>(Configuration.GetSection("Endpoints"));
+            services.Configure<UploadFilesConfig>(Configuration.GetSection("UploadingFiles"));
 
             services.AddMvc();
             services.AddSingleton<EventStoreClient>();
             services.AddSingleton<CacheDatabaseManager>();
+            services.AddSingleton<IDomainIndex, MediaIndex>();
+            services.AddSingleton<IDomainIndex, EntityIndex>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
