@@ -7,7 +7,6 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -21,6 +20,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly CacheDatabaseManager _db;
         private readonly MediaIndex _mediaIndex;
         private readonly EntityIndex _entityIndex;
+        private readonly ReferencesIndex _referencesIndex;
 
         public RoutesController(EventStoreClient eventStore, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices)
         {
@@ -28,6 +28,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             _db = db;
             _mediaIndex = indices.OfType<MediaIndex>().First();
             _entityIndex = indices.OfType<EntityIndex>().First();
+            _referencesIndex = indices.OfType<ReferencesIndex>().First();
         }
 
         [HttpGet]
@@ -171,7 +172,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists<Route>(id))
                 return NotFound();
 
-            if (_entityIndex.IsUsed<Route>(id))
+            if (_referencesIndex.IsUsed(ResourceType.Route, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
 
             var ev = new RouteDeleted { Id = id };

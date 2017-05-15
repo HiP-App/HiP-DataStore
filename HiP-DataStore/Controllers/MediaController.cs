@@ -10,25 +10,23 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using MongoDB.Driver;
-using System.Net;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using System.IO;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.StaticFiles;
+using PaderbornUniversity.SILab.Hip.DataStore.Model;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
     [Route("api/[controller]")]
     public class MediaController : Controller
     {
-    
         private readonly EventStoreClient _eventStore;
         private readonly CacheDatabaseManager _db;
+        private readonly UploadFilesConfig _uploadConfig;
         private readonly MediaIndex _mediaIndex;
         private readonly EntityIndex _entityIndex;
-        private readonly UploadFilesConfig _uploadConfig;
+        private readonly ReferencesIndex _referencesIndex;
 
         public MediaController(EventStoreClient eventStore, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices, UploadFilesConfig uploadConfig)
         {
@@ -36,28 +34,28 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             _db = db;
             _mediaIndex = indices.OfType<MediaIndex>().First();
             _entityIndex = indices.OfType<EntityIndex>().First();
+            _referencesIndex = indices.OfType<ReferencesIndex>().First();
             _uploadConfig = uploadConfig;
-         
+
         }
 
         [HttpPost]
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
-        public async Task<IActionResult> PostAsync([FromBody] MediaArgs args)
+        public async Task<IActionResult> PostAsync([FromBody]MediaArgs args)
         {
-
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
             var ev = new MediaCreated
             {
-                Id = _entityIndex.NextId<MediaElement>(),
+                Id = _entityIndex.NextId(ResourceType.Media),
                 Properties = args
             };
-            await _eventStore.AppendEventAsync(ev, Guid.NewGuid());
+
+            await _eventStore.AppendEventAsync(ev);
             return Ok();
         }
-
 
         [HttpGet]
         [ProducesResponseType(typeof(AllItemsResult<MediaResult>), 200)]
@@ -69,14 +67,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var query = _db.Database.GetCollection<MediaElement>(MediaElement.CollectionName).AsQueryable();
+            var query = _db.Database.GetCollection<MediaElement>(ResourceType.Media.Name).AsQueryable();
 
             try
             {
                 var medias = query
                     .FilterByIds(args.ExcludedIds, args.IncludedIds)
                     .FilterByStatus(args.Status)
-                    .FilterIf(args.Used != null, x => x.IsUsed == args.Used)
+                    .FilterIf(args.Used != null, x => _referencesIndex.IsUsed(ResourceType.Media, x.Id) == args.Used)
                     .FilterIf(args.Type != null, x => x.Type == args.Type)
                     .FilterIf(args.Timestamp != null, x => DateTimeOffset.Compare(x.Timestamp, args.Timestamp.GetValueOrDefault()) == 1)
                     .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
@@ -92,7 +90,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                         Id = x.Id,
                         Title = x.Title,
                         Description = x.Description,
-                        Used = x.IsUsed,
+                        Used = _referencesIndex.IsUsed(ResourceType.Media, x.Id),
                         Type = x.Type,
                         Status = x.Status,
                         Timestamp = x.Timestamp
@@ -121,7 +119,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var query = _db.Database.GetCollection<MediaElement>(MediaElement.CollectionName).AsQueryable();
+            var query = _db.Database.GetCollection<MediaElement>(ResourceType.Media.Name).AsQueryable();
 
 
             var media = query.Where(x => x.Id == id)
@@ -141,7 +139,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 Id = media.Id,
                 Title = media.Title,
                 Description = media.Description,
-                Used = media.IsUsed,
+                Used = _referencesIndex.IsUsed(ResourceType.Media, media.Id),
                 Type = media.Type,
                 Timestamp = media.Timestamp,
                 Status = media.Status
@@ -158,12 +156,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var query = _db.Database.GetCollection<MediaElement>(MediaElement.CollectionName).AsQueryable();
-
-            var media = query.Where(x => x.Id == id)
-                             .FirstOrDefault();
-
-            if (media == null || media.IsUsed == true)
+            if (_referencesIndex.IsUsed(ResourceType.Media, id))
                 return BadRequest();
 
             var ev = new MediaDeleted
@@ -171,12 +164,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 Id = id
             };
 
-            await _eventStore.AppendEventAsync(ev, Guid.NewGuid());
+            await _eventStore.AppendEventAsync(ev);
 
             return StatusCode(204);
 
         }
-
 
         [HttpPut("{id:int}")]
         [ProducesResponseType(204)]
@@ -186,44 +178,38 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var elementWithId = _db.Database.GetCollection<MediaElement>(MediaElement.CollectionName).Find(x => x.Id == id).FirstOrDefault();
-
-            if (elementWithId == null)
+            if (!_entityIndex.Exists(ResourceType.Media, id))
                 BadRequest();
-
 
             var ev = new MediaUpdate
             {
                 Id = id,
                 Properties = args,
                 Timestamp = DateTimeOffset.Now,
-                Status = args.Status ?? elementWithId.Status
+                Status = args.Status ?? _entityIndex.Status(ResourceType.Media, id).Value
             };
-            await _eventStore.AppendEventAsync(ev, Guid.NewGuid());
 
+            await _eventStore.AppendEventAsync(ev);
             return StatusCode(204);
         }
 
-
-
-    
         [HttpGet("{id:int}/File")]
         [ProducesResponseType(200)]
         [ProducesResponseType(404)]
         public IActionResult GetFileById(int id)
         {
-            var query = _db.Database.GetCollection<MediaElement>(MediaElement.CollectionName).AsQueryable();
+            var query = _db.Database.GetCollection<MediaElement>(ResourceType.Media.Name).AsQueryable();
             var media = query.Where(x => x.Id == id)
                              .FirstOrDefault();
 
-            if (media == null|| media.File == null || !System.IO.File.Exists(media.File))
+            if (media == null || media.File == null || !System.IO.File.Exists(media.File))
                 return NotFound();
 
-            new FileExtensionContentTypeProvider().TryGetContentType(media.File, out string mimeType );
+            new FileExtensionContentTypeProvider().TryGetContentType(media.File, out string mimeType);
             mimeType = mimeType ?? "application/octet-stream";
 
 
-            return File(new FileStream(media.File,FileMode.Open), mimeType,Path.GetFileName(media.File));
+            return File(new FileStream(media.File, FileMode.Open), mimeType, Path.GetFileName(media.File));
 
 
         }
@@ -237,8 +223,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            // TODO: This method requires rework - we should not query the read model here
 
-            var query = _db.Database.GetCollection<MediaElement>(MediaElement.CollectionName).AsQueryable();
+            var query = _db.Database.GetCollection<MediaElement>(ResourceType.Media.Name).AsQueryable();
             var media = query.Where(x => x.Id == id)
                              .FirstOrDefault();
             if (media == null)
@@ -277,13 +264,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 File = filePath,
                 Timestamp = DateTimeOffset.Now
             };
-            await _eventStore.AppendEventAsync(ev, Guid.NewGuid());
+            await _eventStore.AppendEventAsync(ev);
 
 
             return StatusCode(204);
         }
-
-   
-
     }
 }

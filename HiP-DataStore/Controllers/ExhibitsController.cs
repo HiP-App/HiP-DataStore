@@ -24,6 +24,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly CacheDatabaseManager _db;
         private readonly MediaIndex _mediaIndex;
         private readonly EntityIndex _entityIndex;
+        private readonly ReferencesIndex _referencesIndex;
 
         public ExhibitsController(EventStoreClient eventStore, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices)
         {
@@ -31,6 +32,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             _db = db;
             _mediaIndex = indices.OfType<MediaIndex>().First();
             _entityIndex = indices.OfType<EntityIndex>().First();
+            _referencesIndex = indices.OfType<ReferencesIndex>().First();
         }
 
         [HttpGet]
@@ -144,7 +146,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists<Exhibit>(id))
                 return NotFound();
 
-            if (_entityIndex.IsUsed<Exhibit>(id))
+            if (_referencesIndex.IsUsed(ResourceType.Exhibit, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
 
             var ev = new ExhibitDeleted { Id = id };

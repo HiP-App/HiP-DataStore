@@ -24,7 +24,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
             return _media.TryGetValue(id, out var info) &&
                 info.Status == ContentStatus.Published &&
                 info.Type == MediaType.Audio;
-
         }
 
         public void ApplyEvent(IEvent e)
