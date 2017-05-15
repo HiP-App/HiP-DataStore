@@ -15,6 +15,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using System.IO;
 using Microsoft.AspNetCore.StaticFiles;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
+using Microsoft.Extensions.Options;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
@@ -28,14 +29,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly EntityIndex _entityIndex;
         private readonly ReferencesIndex _referencesIndex;
 
-        public MediaController(EventStoreClient eventStore, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices, UploadFilesConfig uploadConfig)
+        public MediaController(EventStoreClient eventStore, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices, IOptions<UploadFilesConfig> uploadConfig)
         {
             _eventStore = eventStore;
             _db = db;
             _mediaIndex = indices.OfType<MediaIndex>().First();
             _entityIndex = indices.OfType<EntityIndex>().First();
             _referencesIndex = indices.OfType<ReferencesIndex>().First();
-            _uploadConfig = uploadConfig;
+            _uploadConfig = uploadConfig.Value;
 
         }
 
@@ -236,7 +237,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             /* Checking supported extensions
              * Configuration catalogue has to have same key name as on of MediaType constant names */
-            if (_uploadConfig.Formats[fileType].FirstOrDefault(y => y == extension) == null)
+            if (_uploadConfig.SupportedFormats[fileType].FirstOrDefault(y => y == extension) == null)
                 return BadRequest(new { Message = $"Extension: {extension} is not supported for type : {fileType}" });
 
 
