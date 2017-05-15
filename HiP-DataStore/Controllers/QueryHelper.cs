@@ -29,6 +29,16 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return query.FilterIf(status != ContentStatus.All, x => x.Status == status);
         }
 
+        public static IQueryable<T> FilterByUsage<T>(this IQueryable<T> query, bool? used) where T : ContentBase
+        {
+            switch (used)
+            {
+                case true: return query.Where(x => x.Referencees.Count > 0);
+                case false: return query.Where(x => x.Referencees.Count == 0);
+                default: return query;
+            }
+        }
+
         public static IQueryable<T> Paginate<T>(this IQueryable<T> query, int page, int pageSize)
         {
             return (page < 0 || pageSize <= 0)

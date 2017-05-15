@@ -92,12 +92,29 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     _db.GetCollection<Route>(ResourceType.Route.Name).DeleteOne(r => r.Id == e.Id);
                     break;
 
+                case MediaCreated e:
+                    var newMedia = new MediaElement
+                    {
+                        Id = e.Id,
+                        Title = e.Properties.Title,
+                        Description = e.Properties.Description,
+                        Type = e.Properties.Type,
+                        Status = e.Properties.Status,
+                        Timestamp = DateTimeOffset.Now
+                    };
+
+                    _db.GetCollection<MediaElement>(ResourceType.Media.Name).InsertOne(newMedia);
+                    break;
+
+                case MediaDeleted e:
+                    _db.GetCollection<MediaElement>(ResourceType.Media.Name).DeleteOne(m => m.Id == e.Id);
+                    break;
 
                 case ReferenceAdded e:
                     var referencedEntity = _db.GetCollection<ContentBase>(e.SourceType.Name).AsQueryable()
                         .FirstOrDefault(o => o.Id == e.TargetId);
 
-                    referencedEntity.Referencees.Add(new Model.DocRef<ContentBase>(e.SourceId, e.SourceType.Name));
+                    referencedEntity.Referencees.Add(new DocRef<ContentBase>(e.SourceId, e.SourceType.Name));
                     break;
 
                 case ReferenceRemoved e:

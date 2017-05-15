@@ -75,7 +75,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 var medias = query
                     .FilterByIds(args.ExcludedIds, args.IncludedIds)
                     .FilterByStatus(args.Status)
-                    .FilterIf(args.Used != null, x => _referencesIndex.IsUsed(ResourceType.Media, x.Id) == args.Used)
+                    .FilterByUsage(args.Used)
                     .FilterIf(args.Type != null, x => x.Type == args.Type)
                     .FilterIf(args.Timestamp != null, x => DateTimeOffset.Compare(x.Timestamp, args.Timestamp.GetValueOrDefault()) == 1)
                     .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
@@ -91,17 +91,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                         Id = x.Id,
                         Title = x.Title,
                         Description = x.Description,
-                        Used = _referencesIndex.IsUsed(ResourceType.Media, x.Id),
+                        Used = x.Referencees.Count > 0,
                         Type = x.Type,
                         Status = x.Status,
                         Timestamp = x.Timestamp
                     })
                     .ToList();
 
-
-
                 var output = new AllItemsResult<MediaResult> { Total = medias.Count, Items = medias };
-
                 return Ok(output);
             }
             catch (InvalidSortKeyException e)
@@ -120,27 +117,23 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var query = _db.Database.GetCollection<MediaElement>(ResourceType.Media.Name).AsQueryable();
-
-
-            var media = query.Where(x => x.Id == id)
-                             .FirstOrDefault();
+            var media = _db.Database.GetCollection<MediaElement>(ResourceType.Media.Name).AsQueryable()
+                .Where(x => x.Id == id)
+                .FirstOrDefault();
 
             if (media == null)
                 return NotFound();
 
-            //Media instance wasn`t modified after timestamp
+            // Media instance wasn`t modified after timestamp
             if (DateTimeOffset.Compare(media.Timestamp, timestamp.GetValueOrDefault()) != 1)
                 return StatusCode(304);
-
-
 
             var result = new MediaResult
             {
                 Id = media.Id,
                 Title = media.Title,
                 Description = media.Description,
-                Used = _referencesIndex.IsUsed(ResourceType.Media, media.Id),
+                Used = media.Referencees.Count > 0,
                 Type = media.Type,
                 Timestamp = media.Timestamp,
                 Status = media.Status
