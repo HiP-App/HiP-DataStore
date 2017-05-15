@@ -83,6 +83,40 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     _db.GetCollection<Route>(Route.CollectionName).InsertOne(newRoute);
                     break;
 
+                case MediaCreated e:
+                    var newMedia = new MediaElement
+                    {
+                        Id = e.Id,
+                        Title = e.Properties.Title,
+                        Description = e.Properties.Description,
+                        Type = e.Properties.Type,
+                        Status = e.Properties.Status,
+                        IsUsed = false,
+                        File = "",
+                        Timestamp = DateTimeOffset.Now,
+
+                    };
+                    _db.GetCollection<MediaElement>(MediaElement.CollectionName).InsertOne(newMedia);
+                    break;
+
+                case MediaDeleted e:
+                    _db.GetCollection<MediaElement>(MediaElement.CollectionName).DeleteOne(x => x.Id == e.Id);
+                    break;
+                case MediaUpdate e:
+               
+                      var filter = Builders<MediaElement>.Filter.Eq(x => x.Id,e.Id);
+                      var timestamp = new { Timestamp= e.Timestamp }.ToBsonDocument();
+                      var bsonDoc = new BsonDocument("$set", e.Properties.ToBsonDocument().AddRange(timestamp));
+ 
+                      _db.GetCollection<MediaElement>(MediaElement.CollectionName).UpdateOne(filter,bsonDoc);
+                    break;
+                case MediaFileUpdated e:
+                       var fileDocBson = e.ToBsonDocument();
+
+                      bsonDoc = new BsonDocument("$set",fileDocBson);
+                      _db.GetCollection<MediaElement>(MediaElement.CollectionName).UpdateOne(x => x.Id == e.Id, bsonDoc);
+                        break;
+
                     // TODO: Handle further events
             }
         }
