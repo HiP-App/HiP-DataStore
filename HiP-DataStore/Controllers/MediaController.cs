@@ -21,7 +21,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
     [Route("api/[controller]")]
     public class MediaController : Controller
     {
-    
+
         private readonly EventStoreClient _eventStore;
         private readonly CacheDatabaseManager _db;
         private readonly MediaIndex _mediaIndex;
@@ -35,7 +35,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             _mediaIndex = indices.OfType<MediaIndex>().First();
             _entityIndex = indices.OfType<EntityIndex>().First();
             _uploadConfig = uploadConfig.Value;
-         
+
         }
 
         [HttpPost]
@@ -204,7 +204,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
 
 
-    
+
         [HttpGet("{id:int}/File")]
         [ProducesResponseType(200)]
         [ProducesResponseType(404)]
@@ -214,14 +214,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             var media = query.Where(x => x.Id == id)
                              .FirstOrDefault();
 
-            if (media == null|| media.File == null || !System.IO.File.Exists(media.File))
+            if (media == null || media.File == null || !System.IO.File.Exists(media.File))
                 return NotFound();
 
-            new FileExtensionContentTypeProvider().TryGetContentType(media.File, out string mimeType );
+            new FileExtensionContentTypeProvider().TryGetContentType(media.File, out string mimeType);
             mimeType = mimeType ?? "application/octet-stream";
 
 
-            return File(new FileStream(media.File,FileMode.Open), mimeType,Path.GetFileName(media.File));
+            return File(new FileStream(media.File, FileMode.Open), mimeType, Path.GetFileName(media.File));
 
 
         }
@@ -243,12 +243,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return NotFound();
 
             var extension = file.FileName.Split('.').Last();
-            string fileType = Enum.GetName(typeof(MediaType), media.Type);
+            var fileType = Enum.GetName(typeof(MediaType), media.Type);
 
             /* Checking supported extensions
              * Configuration catalogue has to have same key name as on of MediaType constant names */
-            if (_uploadConfig.SupportedFormats[fileType].FirstOrDefault(y => y == extension) == null)
-                return BadRequest(new { Message = $"Extension: {extension} is not supported for type : {fileType}" });
+            if (!_uploadConfig.SupportedFormats[fileType].Contains(extension))
+                return BadRequest(new { Message = $"Extension '{extension}' is not supported for type '{fileType}'" });
 
 
             // Remove old file
@@ -280,8 +280,5 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             return StatusCode(204);
         }
-
-   
-
     }
 }
