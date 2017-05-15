@@ -16,7 +16,13 @@
 
         /// <summary>
         /// Endpoint of the Event Store.
-        /// Example: "http://localhost:1113"
+        /// 
+        /// Examples:
+        /// "tcp://localhost:1113",
+        /// "tcp://user:password@myserver:11234",
+        /// "discover://user:password@myserver:1234"
+        /// 
+        /// See also: http://docs.geteventstore.com/dotnet-api/4.0.0/connecting-to-a-server/
         /// </summary>
         public string EventStoreHost { get; set; }
     }
