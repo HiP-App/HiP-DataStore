@@ -55,13 +55,16 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         Image = { Id = e.Properties.Image },
                         Latitude = e.Properties.Latitude,
                         Longitude = e.Properties.Longitude,
-                        Used = e.Properties.Used,
                         Status = e.Properties.Status,
                         Tags = { e.Properties.Tags?.Select(id => (BsonValue)id) },
                         Timestamp = DateTimeOffset.Now
                     };
 
                     _db.GetCollection<Exhibit>(Exhibit.CollectionName).InsertOne(newExhibit);
+                    break;
+
+                case ExhibitDeleted e:
+                    _db.GetCollection<Exhibit>(Exhibit.CollectionName).DeleteOne(x => x.Id == e.Id);
                     break;
 
                 case RouteCreated e:
@@ -81,6 +84,28 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     };
 
                     _db.GetCollection<Route>(Route.CollectionName).InsertOne(newRoute);
+                    break;
+
+                case RouteDeleted e:
+                    _db.GetCollection<Route>(Route.CollectionName).DeleteOne(r => r.Id == e.Id);
+                    break;
+
+
+                case ReferenceAdded e:
+                    var referencedEntity = _db.GetCollection<ContentBase>(e.TargetCollectionName).AsQueryable()
+                        .FirstOrDefault(o => o.Id == e.TargetId);
+
+                    referencedEntity.Referencees.Add(new Model.DocRef<ContentBase>(e.SourceId, e.SourceCollectionName));
+                    break;
+
+                case ReferenceRemoved e:
+                    var referencedEntity2 = _db.GetCollection<ContentBase>(e.TargetCollectionName).AsQueryable()
+                        .FirstOrDefault(o => o.Id == e.TargetId);
+
+                    var referenceToRemove = referencedEntity2.Referencees
+                        .FirstOrDefault(r => r.Collection == e.SourceCollectionName && r.Id == e.SourceId);
+
+                    referencedEntity2.Referencees.Remove(referenceToRemove);
                     break;
 
                     // TODO: Handle further events

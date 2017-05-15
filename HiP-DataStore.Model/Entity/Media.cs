@@ -8,8 +8,6 @@
 
         public string Description { get; set; }
 
-        public bool IsUsed { get; set; }
-
         /// <summary>
         /// The path to the actual file.
         /// </summary>

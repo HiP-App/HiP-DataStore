@@ -83,7 +83,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         }
 
         [HttpPost]
-        [ProducesResponseType(200)]
+        [ProducesResponseType(typeof(int), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(422)]
         public async Task<IActionResult> PostAsync([FromBody]RouteArgs args)
@@ -92,11 +92,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return BadRequest(ModelState);
 
             // ensure referenced image exists and is published
-            if (args.Image.HasValue && !_mediaIndex.IsPublishedImage(args.Image.Value))
+            if (args.Image != null && !_mediaIndex.IsPublishedImage(args.Image.Value))
                 return StatusCode(422, ErrorMessages.ImageNotFoundOrNotPublished(args.Image.Value));
 
             // ensure referenced audio exists and is published
-            if (args.Audio.HasValue && !_mediaIndex.IsPublishedAudio(args.Audio.Value))
+            if (args.Audio != null && !_mediaIndex.IsPublishedAudio(args.Audio.Value))
                 return StatusCode(422, ErrorMessages.AudioNotFoundOrNotPublished(args.Audio.Value));
 
             // ensure referenced exhibits exist and are published
@@ -121,14 +121,66 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                     return StatusCode(422, ErrorMessages.TagNotFoundOrNotPublished(invalidIds[0]));
             }
 
+            // validation passed, emit events (create route, add references to image, audio, exhibits and tags)
             var ev = new RouteCreated
             {
                 Id = _entityIndex.NextId<Route>(),
                 Properties = args
             };
 
-            await _eventStore.AppendEventAsync(ev, Guid.NewGuid());
-            return Ok();
+            if (args.Image != null)
+            {
+                var imageRef = new ReferenceAdded(Route.CollectionName, ev.Id, MediaElement.CollectionName, args.Image.Value);
+                await _eventStore.AppendEventAsync(imageRef);
+            }
+
+            if (args.Audio != null)
+            {
+                var audioRef = new ReferenceAdded(Route.CollectionName, ev.Id, MediaElement.CollectionName, args.Audio.Value);
+                await _eventStore.AppendEventAsync(audioRef);
+            }
+
+            if (args.Exhibits != null)
+            {
+                foreach (var exhibitId in args.Exhibits)
+                {
+                    var exhibitRef = new ReferenceAdded(Route.CollectionName, ev.Id, Exhibit.CollectionName, exhibitId);
+                    await _eventStore.AppendEventAsync(exhibitRef);
+                }
+            }
+
+            if (args.Tags != null)
+            {
+                foreach (var tagId in args.Tags)
+                {
+                    var tagRef = new ReferenceAdded(Route.CollectionName, ev.Id, Model.Entity.Tag.CollectionName, tagId);
+                    await _eventStore.AppendEventAsync(tagRef);
+                }
+            }
+
+            await _eventStore.AppendEventAsync(ev);
+            return Ok(ev.Id);
+        }
+
+        [HttpDelete]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> DeleteAsync(int id)
+        {
+            if (!_entityIndex.Exists<Route>(id))
+                return NotFound();
+
+            if (_entityIndex.IsUsed<Route>(id))
+                return BadRequest(ErrorMessages.ResourceInUse);
+
+            var ev = new RouteDeleted { Id = id };
+            await _eventStore.AppendEventAsync(ev);
+
+            // remove references to image, audio, exhibits and tags
+            // TODO: For this we need the full Route entity!!
+
+            return NoContent();
         }
     }
 }

@@ -72,7 +72,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                     Image = (int?)x.Image.Id,
                     Latitude = x.Latitude,
                     Longitude = x.Longitude,
-                    Used = x.Used,
+                    Used = x.Referencees.Count > 0,
                     Status = x.Status,
                     Tags = x.Tags.Select(id => (int)id).ToArray(),
                     Timestamp = x.Timestamp
@@ -87,7 +87,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         }
 
         [HttpPost]
-        [ProducesResponseType(200)]
+        [ProducesResponseType(typeof(int), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(422)]
         public async Task<IActionResult> PostAsync([FromBody]ExhibitArgs args)
@@ -96,7 +96,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return BadRequest(ModelState);
 
             // ensure referenced image exists and is published
-            if (args.Image.HasValue && !_mediaIndex.IsPublishedImage(args.Image.Value))
+            if (args.Image != null && !_mediaIndex.IsPublishedImage(args.Image.Value))
                 return StatusCode(422, ErrorMessages.ImageNotFoundOrNotPublished(args.Image.Value));
 
             // ensure referenced tags exist and are published
@@ -110,14 +110,46 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                     return StatusCode(422, ErrorMessages.TagNotFoundOrNotPublished(invalidIds[0]));
             }
 
+            // validation passed, emit events (create exhibit, add references to image and tags)
             var ev = new ExhibitCreated
             {
                 Id = _entityIndex.NextId<Exhibit>(),
                 Properties = args
             };
+            await _eventStore.AppendEventAsync(ev);
 
-            await _eventStore.AppendEventAsync(ev, Guid.NewGuid());
-            return Ok();
+            if (args.Image != null)
+            {
+                var imageRef = new ReferenceAdded(Exhibit.CollectionName, ev.Id, MediaElement.CollectionName, args.Image.Value);
+                await _eventStore.AppendEventAsync(imageRef);
+            }
+
+            if (args.Tags != null)
+            {
+                foreach (var tagId in args.Tags)
+                {
+                    var tagRef = new ReferenceAdded(Exhibit.CollectionName, ev.Id, Model.Entity.Tag.CollectionName, tagId);
+                    await _eventStore.AppendEventAsync(tagRef);
+                }
+            }
+
+            return Ok(ev.Id);
+        }
+
+        [HttpDelete]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> DeleteAsync(int id)
+        {
+            if (!_entityIndex.Exists<Exhibit>(id))
+                return NotFound();
+
+            if (_entityIndex.IsUsed<Exhibit>(id))
+                return BadRequest(ErrorMessages.ResourceInUse);
+
+            var ev = new ExhibitDeleted { Id = id };
+            await _eventStore.AppendEventAsync(ev);
+            return NoContent();
         }
     }
 }

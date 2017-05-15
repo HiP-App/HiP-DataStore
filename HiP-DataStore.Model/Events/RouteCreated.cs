@@ -12,7 +12,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
         public RouteArgs Properties { get; set; }
 
         [JsonIgnore]
-        public Type EntityType => typeof(Exhibit);
+        public Type EntityType => typeof(Route);
 
         [JsonIgnore]
         public ContentStatus Status => Properties.Status;

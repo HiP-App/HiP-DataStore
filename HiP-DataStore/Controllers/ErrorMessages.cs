@@ -13,5 +13,8 @@
 
         public static string TagNotFoundOrNotPublished(int id) =>
             $"ID '{id}' does not refer to a published tag";
+
+        public static string ResourceInUse =>
+            $"The resource cannot be deleted because it is referenced by other resources";
     }
 }
