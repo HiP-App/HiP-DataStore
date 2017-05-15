@@ -105,7 +105,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (args.Tags != null)
             {
                 var invalidIds = args.Tags
-                    .Where(id => _entityIndex.Status<Model.Entity.Tag>(id) != ContentStatus.Published)
+                    .Where(id => _entityIndex.Status(ResourceType.Tag, id) != ContentStatus.Published)
                     .ToList();
 
                 if (invalidIds.Count > 0)
@@ -115,7 +115,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             // validation passed, emit events (create exhibit, add references to image and tags)
             var ev = new ExhibitCreated
             {
-                Id = _entityIndex.NextId<Exhibit>(),
+                Id = _entityIndex.NextId(ResourceType.Exhibit),
                 Properties = args
             };
             await _eventStore.AppendEventAsync(ev);
@@ -143,7 +143,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(404)]
         public async Task<IActionResult> DeleteAsync(int id)
         {
-            if (!_entityIndex.Exists<Exhibit>(id))
+            if (!_entityIndex.Exists(ResourceType.Exhibit, id))
                 return NotFound();
 
             if (_referencesIndex.IsUsed(ResourceType.Exhibit, id))

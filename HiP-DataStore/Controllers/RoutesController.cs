@@ -104,7 +104,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (args.Exhibits != null)
             {
                 var invalidIds = args.Exhibits
-                    .Where(id => _entityIndex.Status<Exhibit>(id) != ContentStatus.Published)
+                    .Where(id => _entityIndex.Status(ResourceType.Exhibit, id) != ContentStatus.Published)
                     .ToList();
 
                 if (invalidIds.Count > 0)
@@ -115,7 +115,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (args.Tags != null)
             {
                 var invalidIds = args.Tags
-                    .Where(id => _entityIndex.Status<Model.Entity.Tag>(id) != ContentStatus.Published)
+                    .Where(id => _entityIndex.Status(ResourceType.Tag, id) != ContentStatus.Published)
                     .ToList();
 
                 if (invalidIds.Count > 0)
@@ -125,7 +125,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             // validation passed, emit events (create route, add references to image, audio, exhibits and tags)
             var ev = new RouteCreated
             {
-                Id = _entityIndex.NextId<Route>(),
+                Id = _entityIndex.NextId(ResourceType.Route),
                 Properties = args
             };
 
@@ -169,7 +169,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(404)]
         public async Task<IActionResult> DeleteAsync(int id)
         {
-            if (!_entityIndex.Exists<Route>(id))
+            if (!_entityIndex.Exists(ResourceType.Route, id))
                 return NotFound();
 
             if (_referencesIndex.IsUsed(ResourceType.Route, id))
