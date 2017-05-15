@@ -1,6 +1,7 @@
 ﻿using EventStore.ClientAPI;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using System;
@@ -60,11 +61,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         Timestamp = DateTimeOffset.Now
                     };
 
-                    _db.GetCollection<Exhibit>(Exhibit.CollectionName).InsertOne(newExhibit);
+                    _db.GetCollection<Exhibit>(ResourceType.Exhibit.Name).InsertOne(newExhibit);
                     break;
 
                 case ExhibitDeleted e:
-                    _db.GetCollection<Exhibit>(Exhibit.CollectionName).DeleteOne(x => x.Id == e.Id);
+                    _db.GetCollection<Exhibit>(ResourceType.Exhibit.Name).DeleteOne(x => x.Id == e.Id);
                     break;
 
                 case RouteCreated e:
@@ -83,27 +84,27 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         Timestamp = DateTimeOffset.Now
                     };
 
-                    _db.GetCollection<Route>(Route.CollectionName).InsertOne(newRoute);
+                    _db.GetCollection<Route>(ResourceType.Route.Name).InsertOne(newRoute);
                     break;
 
                 case RouteDeleted e:
-                    _db.GetCollection<Route>(Route.CollectionName).DeleteOne(r => r.Id == e.Id);
+                    _db.GetCollection<Route>(ResourceType.Route.Name).DeleteOne(r => r.Id == e.Id);
                     break;
 
 
                 case ReferenceAdded e:
-                    var referencedEntity = _db.GetCollection<ContentBase>(e.TargetCollectionName).AsQueryable()
+                    var referencedEntity = _db.GetCollection<ContentBase>(e.SourceType.Name).AsQueryable()
                         .FirstOrDefault(o => o.Id == e.TargetId);
 
-                    referencedEntity.Referencees.Add(new Model.DocRef<ContentBase>(e.SourceId, e.SourceCollectionName));
+                    referencedEntity.Referencees.Add(new Model.DocRef<ContentBase>(e.SourceId, e.SourceType.Name));
                     break;
 
                 case ReferenceRemoved e:
-                    var referencedEntity2 = _db.GetCollection<ContentBase>(e.TargetCollectionName).AsQueryable()
+                    var referencedEntity2 = _db.GetCollection<ContentBase>(e.TargetType.Name).AsQueryable()
                         .FirstOrDefault(o => o.Id == e.TargetId);
 
                     var referenceToRemove = referencedEntity2.Referencees
-                        .FirstOrDefault(r => r.Collection == e.SourceCollectionName && r.Id == e.SourceId);
+                        .FirstOrDefault(r => r.Collection == e.SourceType.Name && r.Id == e.SourceId);
 
                     referencedEntity2.Referencees.Remove(referenceToRemove);
                     break;

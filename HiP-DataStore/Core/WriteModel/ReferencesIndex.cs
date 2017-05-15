@@ -1,46 +1,44 @@
 ﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using System.Collections.Generic;
 using System.Linq;
 using System;
+using PaderbornUniversity.SILab.Hip.DataStore.Model;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 {
     public class ReferencesIndex : IDomainIndex
     {
-        private static readonly Entry[] _noEntries = new Entry[0];
-
         // for each entity X, this stores the references from X to other entities
-        private readonly Dictionary<Entry, HashSet<Entry>> _referencesOf;
+        private readonly Dictionary<Entry, HashSet<Entry>> _referencesOf = new Dictionary<Entry, HashSet<Entry>>();
 
         // for each entity X, this stores the entities referencing X
-        private readonly Dictionary<Entry, HashSet<Entry>> _referencesTo;
+        private readonly Dictionary<Entry, HashSet<Entry>> _referencesTo = new Dictionary<Entry, HashSet<Entry>>();
 
         /// <summary>
         /// Checks whether an entity is referenced by any other entities.
         /// </summary>
         /// <returns>True if there are references to the entity</returns>
-        public bool IsUsed<T>(int id)
+        public bool IsUsed(ResourceType type, int id)
         {
-            var key = new Entry(typeof(T).GetMongoCollectionName(), id);
+            var key = new Entry(type, id);
             return _referencesTo.TryGetValue(key, out var set) && set.Count > 0;
         }
 
         /// <summary>
         /// Returns the IDs of the entities referenced by the entity with the specified type and ID.
         /// </summary>
-        public IReadOnlyCollection<Entry> ReferencesOf<T>(int id)
+        public IReadOnlyCollection<Entry> ReferencesOf(ResourceType type, int id)
         {
-            var key = new Entry(typeof(T).GetMongoCollectionName(), id);
+            var key = new Entry(type, id);
             return _referencesOf.TryGetValue(key, out var set) ? set.ToArray() : Array.Empty<Entry>();
         }
 
         /// <summary>
         /// Returns the IDs of the entities that reference the entity with the specified type and ID.
         /// </summary>
-        public IReadOnlyCollection<Entry> ReferencesTo<T>(int id)
+        public IReadOnlyCollection<Entry> ReferencesTo(ResourceType type, int id)
         {
-            var key = new Entry(typeof(T).GetMongoCollectionName(), id);
+            var key = new Entry(type, id);
             return _referencesOf.TryGetValue(key, out var set) ? set.ToArray() : Array.Empty<Entry>();
         }
 
@@ -48,8 +46,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
         {
             if (ev is ReferenceEventBase e)
             {
-                var source = new Entry(e.SourceCollectionName, e.SourceId);
-                var target = new Entry(e.TargetCollectionName, e.TargetId);
+                var source = new Entry(e.SourceType, e.SourceId);
+                var target = new Entry(e.TargetType, e.TargetId);
 
                 switch (e)
                 {
@@ -83,12 +81,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 
         public struct Entry
         {
-            public string CollectionName { get; }
+            public ResourceType Type { get; }
             public int Id { get; }
 
-            public Entry(string collectionName, int id)
+            public Entry(ResourceType type, int id)
             {
-                CollectionName = collectionName;
+                Type = type;
                 Id = id;
             }
         }

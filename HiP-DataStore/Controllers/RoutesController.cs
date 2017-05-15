@@ -41,7 +41,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             args = args ?? new RouteQueryArgs();
 
-            var query = _db.Database.GetCollection<Route>(Route.CollectionName).AsQueryable();
+            var query = _db.Database.GetCollection<Route>(ResourceType.Route.Name).AsQueryable();
 
             try
             {
@@ -130,13 +130,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (args.Image != null)
             {
-                var imageRef = new ReferenceAdded(Route.CollectionName, ev.Id, MediaElement.CollectionName, args.Image.Value);
+                var imageRef = new ReferenceAdded(ResourceType.Route, ev.Id, ResourceType.Media, args.Image.Value);
                 await _eventStore.AppendEventAsync(imageRef);
             }
 
             if (args.Audio != null)
             {
-                var audioRef = new ReferenceAdded(Route.CollectionName, ev.Id, MediaElement.CollectionName, args.Audio.Value);
+                var audioRef = new ReferenceAdded(ResourceType.Route, ev.Id, ResourceType.Media, args.Audio.Value);
                 await _eventStore.AppendEventAsync(audioRef);
             }
 
@@ -144,7 +144,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             {
                 foreach (var exhibitId in args.Exhibits)
                 {
-                    var exhibitRef = new ReferenceAdded(Route.CollectionName, ev.Id, Exhibit.CollectionName, exhibitId);
+                    var exhibitRef = new ReferenceAdded(ResourceType.Route, ev.Id, ResourceType.Exhibit, exhibitId);
                     await _eventStore.AppendEventAsync(exhibitRef);
                 }
             }
@@ -153,7 +153,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             {
                 foreach (var tagId in args.Tags)
                 {
-                    var tagRef = new ReferenceAdded(Route.CollectionName, ev.Id, Model.Entity.Tag.CollectionName, tagId);
+                    var tagRef = new ReferenceAdded(ResourceType.Route, ev.Id, ResourceType.Tag, tagId);
                     await _eventStore.AppendEventAsync(tagRef);
                 }
             }

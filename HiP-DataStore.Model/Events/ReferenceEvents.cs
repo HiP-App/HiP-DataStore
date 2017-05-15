@@ -1,13 +1,11 @@
-﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
-
-namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
+﻿namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 {
     public abstract class ReferenceEventBase : IEvent
     {
         /// <summary>
         /// Collection where the referencing entity is in.
         /// </summary>
-        public string SourceCollectionName { get; set; }
+        public ResourceType SourceType { get; set; }
 
         /// <summary>
         /// ID of the referencing entity.
@@ -17,7 +15,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
         /// <summary>
         /// Collection where the referenced entity is in.
         /// </summary>
-        public string TargetCollectionName { get; set; }
+        public ResourceType TargetType { get; set; }
 
         /// <summary>
         /// ID of the referenced entity.
@@ -28,11 +26,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
         {
         }
 
-        public ReferenceEventBase(string sourceCollectionName, int sourceId, string targetCollectionName, int targetId)
+        public ReferenceEventBase(ResourceType sourceCollectionName, int sourceId, ResourceType targetCollectionName, int targetId)
         {
-            SourceCollectionName = sourceCollectionName;
+            SourceType = sourceCollectionName;
             SourceId = sourceId;
-            TargetCollectionName = targetCollectionName;
+            TargetType = targetCollectionName;
             TargetId = targetId;
         }
     }
@@ -46,7 +44,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
         {
         }
 
-        public ReferenceAdded(string sourceCollectionName, int sourceId, string targetCollectionName, int targetId)
+        public ReferenceAdded(ResourceType sourceCollectionName, int sourceId, ResourceType targetCollectionName, int targetId)
             : base(sourceCollectionName, sourceId, targetCollectionName, targetId)
         {
         }
@@ -61,7 +59,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
         {
         }
 
-        public ReferenceRemoved(string sourceCollectionName, int sourceId, string targetCollectionName, int targetId)
+        public ReferenceRemoved(ResourceType sourceCollectionName, int sourceId, ResourceType targetCollectionName, int targetId)
             : base(sourceCollectionName, sourceId, targetCollectionName, targetId)
         {
         }

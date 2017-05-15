@@ -2,8 +2,6 @@
 {
     public class MediaElement : ContentBase
     {
-        public const string CollectionName = "media";
-
         public string Title { get; set; }
 
         public string Description { get; set; }

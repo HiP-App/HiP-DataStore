@@ -44,7 +44,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             args = args ?? new ExhibitQueryArgs();
 
-            var query = _db.Database.GetCollection<Exhibit>(Exhibit.CollectionName).AsQueryable();
+            var query = _db.Database.GetCollection<Exhibit>(ResourceType.Exhibit.Name).AsQueryable();
 
             try
             {
@@ -120,7 +120,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (args.Image != null)
             {
-                var imageRef = new ReferenceAdded(Exhibit.CollectionName, ev.Id, MediaElement.CollectionName, args.Image.Value);
+                var imageRef = new ReferenceAdded(ResourceType.Exhibit, ev.Id, ResourceType.Media, args.Image.Value);
                 await _eventStore.AppendEventAsync(imageRef);
             }
 
@@ -128,7 +128,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             {
                 foreach (var tagId in args.Tags)
                 {
-                    var tagRef = new ReferenceAdded(Exhibit.CollectionName, ev.Id, Model.Entity.Tag.CollectionName, tagId);
+                    var tagRef = new ReferenceAdded(ResourceType.Exhibit, ev.Id, ResourceType.Tag, tagId);
                     await _eventStore.AppendEventAsync(tagRef);
                 }
             }

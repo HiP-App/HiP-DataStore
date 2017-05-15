@@ -45,6 +45,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             services.AddSingleton<CacheDatabaseManager>();
             services.AddSingleton<IDomainIndex, MediaIndex>();
             services.AddSingleton<IDomainIndex, EntityIndex>();
+            services.AddSingleton<IDomainIndex, ReferencesIndex>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
