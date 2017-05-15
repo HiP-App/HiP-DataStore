@@ -38,4 +38,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
     public interface IDeleteEvent : ICrudEvent
     {
     }
+    public interface IUpdateFileEvent : ICrudEvent
+    {
+
+    }
 }

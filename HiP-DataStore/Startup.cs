@@ -38,7 +38,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
                 // Define a Swagger document
                 c.SwaggerDoc("v1", new Info { Title = _Name, Version = _Version });
                 c.OperationFilter<SwaggerOperationFilter>();
+                c.OperationFilter<SwaggerFileUploadOperationFilter>();
                 c.DescribeAllEnumsAsStrings();
+                
             });
 
             services.Configure<EndpointConfig>(Configuration.GetSection("Endpoints"));
@@ -48,11 +50,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             services.AddSingleton<CacheDatabaseManager>();
             services.AddSingleton<IDomainIndex, MediaIndex>();
             services.AddSingleton<IDomainIndex, EntityIndex>();
+
+            var uploadConfig = new UploadFilesConfig(Configuration.GetSection("UploadingFiles"));
+            services.AddSingleton(uploadConfig);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
+            
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
 
