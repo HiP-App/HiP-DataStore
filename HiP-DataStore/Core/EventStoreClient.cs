@@ -1,7 +1,8 @@
 ﻿using EventStore.ClientAPI;
+using Microsoft.Extensions.Options;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
+using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using System;
-using System.Net;
 using System.Threading.Tasks;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core
@@ -15,19 +16,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
     /// </remarks>
     public class EventStoreClient
     {
-        public const string DefaultStreamName = "main-stream"; // TODO: Make configurable
-        public static readonly IPEndPoint LocalhostEndpoint = new IPEndPoint(IPAddress.Loopback, 1113);
+        public const string DefaultStreamName = "main-stream";
 
         public IEventStoreConnection Connection { get; }
 
-        public EventStoreClient()
+        public EventStoreClient(IOptions<EndpointConfig> config)
         {
-            // TODO: Inject app settings (so that the endpoint can be configured through appsettings.development.json)
             var settings = ConnectionSettings.Create()
                 .EnableVerboseLogging()
                 .Build();
 
-            Connection = EventStoreConnection.Create(settings, LocalhostEndpoint);
+            Connection = EventStoreConnection.Create(settings, new Uri(config.Value.EventStoreHost));
             Connection.ConnectAsync().Wait();
         }
 
