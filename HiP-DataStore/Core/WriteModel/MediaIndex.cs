@@ -11,14 +11,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
     /// </summary>
     public class MediaIndex : IDomainIndex
     {
-        int MaxMediaId = -1;
+        
         private readonly Dictionary<int, MediaInfo> _media = new Dictionary<int, MediaInfo>();
 
-        public int NextId()
-        {
-            return ++MaxMediaId;
-        }
-
+     
         public bool IsPublishedImage(int id)
         {
             return _media.TryGetValue(id, out var info) &&
@@ -40,7 +36,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
             {
                 case MediaCreated ev:
                     _media.Add(ev.Id, new MediaInfo { Status = ev.Status, Type = ev.Properties.Type });
-                    MaxMediaId = Math.Max(ev.Id, MaxMediaId);
                     break;
 
                 case MediaDeleted ev:

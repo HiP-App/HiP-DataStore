@@ -106,14 +106,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                
                       var filter = Builders<MediaElement>.Filter.Eq(x => x.Id,e.Id);
                       var timestamp = new { Timestamp= e.Timestamp }.ToBsonDocument();
-                      var bsonDoc = new BsonDocument("$set", e.Properties.ToBsonDocument().Add(timestamp));
+                      var bsonDoc = new BsonDocument("$set", e.Properties.ToBsonDocument().AddRange(timestamp));
  
                       _db.GetCollection<MediaElement>(MediaElement.CollectionName).UpdateOne(filter,bsonDoc);
                     break;
                 case MediaFileUpdated e:
                        var fileDocBson = e.ToBsonDocument();
-                           fileDocBson.Remove("Id");
-                           bsonDoc= new BsonDocument("$set",fileDocBson);
+
+                      bsonDoc = new BsonDocument("$set",fileDocBson);
                       _db.GetCollection<MediaElement>(MediaElement.CollectionName).UpdateOne(x => x.Id == e.Id, bsonDoc);
                         break;
 

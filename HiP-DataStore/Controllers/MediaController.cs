@@ -27,6 +27,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly EventStoreClient _eventStore;
         private readonly CacheDatabaseManager _db;
         private readonly MediaIndex _mediaIndex;
+        private readonly EntityIndex _entityIndex;
         private readonly UploadFilesConfig _uploadConfig;
 
         public MediaController(EventStoreClient eventStore, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices, UploadFilesConfig uploadConfig)
@@ -34,6 +35,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             _eventStore = eventStore;
             _db = db;
             _mediaIndex = indices.OfType<MediaIndex>().First();
+            _entityIndex = indices.OfType<EntityIndex>().First();
             _uploadConfig = uploadConfig;
          
         }
@@ -49,7 +51,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             var ev = new MediaCreated
             {
-                Id = _mediaIndex.NextId(),
+                Id = _entityIndex.NextId<MediaElement>(),
                 Properties = args
             };
             await _eventStore.AppendEventAsync(ev, Guid.NewGuid());
