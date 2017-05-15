@@ -43,20 +43,19 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
                 
             });
 
+            services.Configure<EndpointConfig>(Configuration.GetSection("Endpoints"));
+            services.Configure<UploadFilesConfig>(Configuration.GetSection("UploadingFiles"));
+
             services.AddMvc();
             services.AddSingleton<EventStoreClient>();
             services.AddSingleton<CacheDatabaseManager>();
             services.AddSingleton<IDomainIndex, MediaIndex>();
             services.AddSingleton<IDomainIndex, EntityIndex>();
-
-            var uploadConfig = new UploadFilesConfig(Configuration.GetSection("UploadingFiles"));
-            services.AddSingleton(uploadConfig);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
-            
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
 
