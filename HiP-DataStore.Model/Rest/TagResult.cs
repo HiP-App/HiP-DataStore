@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -17,5 +18,20 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 
         [JsonConverter(typeof(StringEnumConverter))]
         public ContentStatus Status { get; set; }
+
+
+        public static TagResult ConvertFrom(Tag tag)
+        {
+           return new TagResult
+            {
+                Id = tag.Id,
+                Title = tag.Title,
+                Description = tag.Description,
+                Used = tag.IsUsed,
+                Image = tag.Image.Id.AsNullableInt32,
+                Status = tag.Status,
+                Timestamp = tag.Timestamp,
+            };
+        }
     }
 }

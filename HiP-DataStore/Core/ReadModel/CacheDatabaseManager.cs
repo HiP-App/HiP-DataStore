@@ -132,6 +132,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     newTag.Image.Id = e.Properties.Image;
                     _db.GetCollection<Tag>(Tag.CollectionName).InsertOne(newTag);
                     break;
+                case TagUpdated e:
+                    bsonDoc = e.ToBsonDocument();
+                    bsonDoc = new BsonDocument("$set", bsonDoc);
+                    _db.GetCollection<Tag>(Tag.CollectionName).UpdateOne(x => x.Id == e.Id, bsonDoc);
+                    break;
 
                     // TODO: Handle further events
             }

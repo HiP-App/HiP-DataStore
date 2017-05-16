@@ -95,16 +95,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                     return StatusCode(304);
 
 
-                var tagsResult = tags.Select(x => new TagResult
-                {
-                    Id = x.Id,
-                    Title = x.Title,
-                    Description = x.Description,
-                    Used = x.IsUsed,
-                    Image = x.Image.Id.AsNullableInt32,
-                    Status = x.Status,
-                    Timestamp = x.Timestamp
-                }).ToList();
+                var tagsResult = tags.Select(x => TagResult.ConvertFrom(x)).ToList();
 
                 var output = new AllItemsResult<TagResult> { Total = tagsResult.Count(), Items = tagsResult };
 
@@ -114,6 +105,78 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             {
                 return StatusCode(422, e.Message);
             }
+        }
+
+        [HttpGet("{id:int}")]
+        [ProducesResponseType(typeof(TagResult),200)]
+        [ProducesResponseType(304)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public IActionResult GetById(int id,DateTimeOffset? timestamp = null)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest();
+
+            var query = _db.Database.GetCollection<Tag>(Tag.CollectionName).AsQueryable();
+
+            var tag = query.Where(x => x.Id == id).FirstOrDefault();
+
+            if (tag == null)
+                return NotFound();
+
+            if (timestamp != null && DateTimeOffset.Compare(tag.Timestamp, timestamp.GetValueOrDefault()) != 1)
+                return StatusCode(304);
+
+            var tagResult = TagResult.ConvertFrom(tag);
+
+            return Ok(tagResult);
+
+        }
+
+        [HttpPut("{id:int}")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> UpdateById(int id,[FromBody]TagUpdateArgs args)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest();
+
+            var tagDb = _db.Database.GetCollection<Tag>(Tag.CollectionName).AsQueryable().Where(x => x.Id == id).FirstOrDefault();
+
+            if (tagDb == null)
+                return StatusCode(404);
+
+            if (args.Image != null)
+            {
+                if (!_mediaIndex.ContainsId(args.Image.GetValueOrDefault()))
+                    return NotFound(new { Message = $"Media with {args.Image} haven`t found" });
+
+                if (!_mediaIndex.IsImage(args.Image.GetValueOrDefault()))
+                    return BadRequest(new { Message = $"Media with id: {args.Image} is not of the Type: Audio" });
+            }
+            var ev = new TagUpdated
+            {
+                Id = id,
+                Properties = args,
+                Timestamp = DateTimeOffset.Now,
+                Status = args.Status ?? tagDb.Status
+            };
+            await _ev.AppendEventAsync(ev, Guid.NewGuid());
+
+            return StatusCode(204);
+        }
+
+        [HttpDelete("id:int")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> DeleteById(int id)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest();
+
+
         }
 
 
