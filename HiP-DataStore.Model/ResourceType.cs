@@ -1,4 +1,6 @@
-﻿namespace PaderbornUniversity.SILab.Hip.DataStore.Model
+﻿using MongoDB.Bson.Serialization.Attributes;
+
+namespace PaderbornUniversity.SILab.Hip.DataStore.Model
 {
     public struct ResourceType
     {
@@ -12,8 +14,10 @@
         /// 1) as a "type"/"kind of resource" identifier in events
         /// 2) as the collection name in the MongoDB cache database
         /// </summary>
+        [BsonElement]
         public string Name { get; }
 
-        private ResourceType(string name) => Name = name;
+        [BsonConstructor]
+        public ResourceType(string name) => Name = name;
     }
 }
