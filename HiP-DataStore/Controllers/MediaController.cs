@@ -98,8 +98,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                     })
                     .ToList();
 
-                var output = new AllItemsResult<MediaResult> { Total = medias.Count, Items = medias };
-                return Ok(output);
+                return Ok(new AllItemsResult<MediaResult>(medias));
             }
             catch (InvalidSortKeyException e)
             {

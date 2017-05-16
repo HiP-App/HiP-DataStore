@@ -32,7 +32,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         }
 
         [HttpGet]
-        [ProducesResponseType(typeof(IEnumerable<RouteResult>), 200)]
+        [ProducesResponseType(typeof(AllItemsResult<RouteResult>), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(422)]
         public IActionResult Get(RouteQueryArgs args)
@@ -75,7 +75,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                     Timestamp = x.Timestamp
                 }).ToList();
 
-                return Ok(results);
+                return Ok(new AllItemsResult<RouteResult>(results));
             }
             catch (InvalidSortKeyException e)
             {

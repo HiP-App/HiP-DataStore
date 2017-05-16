@@ -35,7 +35,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         }
 
         [HttpGet]
-        [ProducesResponseType(typeof(IEnumerable<ExhibitResult>), 200)]
+        [ProducesResponseType(typeof(AllItemsResult<ExhibitResult>), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(422)]
         public IActionResult Get(ExhibitQueryArgs args)
@@ -79,7 +79,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                     Timestamp = x.Timestamp
                 }).ToList();
 
-                return Ok(results);
+                return Ok(new AllItemsResult<ExhibitResult>(results));
             }
             catch (InvalidSortKeyException e)
             {
