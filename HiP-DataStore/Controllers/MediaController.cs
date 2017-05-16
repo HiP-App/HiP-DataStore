@@ -25,7 +25,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly EventStoreClient _eventStore;
         private readonly CacheDatabaseManager _db;
         private readonly UploadFilesConfig _uploadConfig;
-        private readonly MediaIndex _mediaIndex;
         private readonly EntityIndex _entityIndex;
         private readonly ReferencesIndex _referencesIndex;
 
@@ -33,7 +32,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         {
             _eventStore = eventStore;
             _db = db;
-            _mediaIndex = indices.OfType<MediaIndex>().First();
             _entityIndex = indices.OfType<EntityIndex>().First();
             _referencesIndex = indices.OfType<ReferencesIndex>().First();
             _uploadConfig = uploadConfig.Value;
