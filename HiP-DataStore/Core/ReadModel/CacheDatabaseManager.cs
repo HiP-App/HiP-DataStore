@@ -120,20 +120,23 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         break;
 
                     case ReferenceAdded e:
-                        var referencedEntity = _db.GetCollection<ContentBase>(e.SourceType.Name).AsQueryable()
-                            .FirstOrDefault(o => o.Id == e.TargetId);
-
-                        referencedEntity.Referencees.Add(new DocRef<ContentBase>(e.SourceId, e.SourceType.Name));
+                        // a reference (source -> target) was added, so we have to create a new DocRef pointing to the
+                        // source and add it to the target's referencees list
+                        var newReference = new DocRef<ContentBase>(e.SourceId, e.SourceType.Name);
+                        var update = Builders<ContentBase>.Update.Push(nameof(ContentBase.Referencees), newReference);
+                        _db.GetCollection<ContentBase>(e.TargetType.Name).UpdateOne(x => x.Id == e.TargetId, update);
                         break;
 
                     case ReferenceRemoved e:
-                        var referencedEntity2 = _db.GetCollection<ContentBase>(e.TargetType.Name).AsQueryable()
-                            .FirstOrDefault(o => o.Id == e.TargetId);
+                        // a reference (source -> target) was removed, so we have to delete the DocRef pointing to the
+                        // source from the target's referencees list
+                        var update2 = Builders<ContentBase>.Update.PullFilter(
+                            nameof(ContentBase.Referencees),
+                            Builders<ContentBase>.Filter.And(
+                                Builders<ContentBase>.Filter.Eq(nameof(DocRefBase.Collection), e.SourceType.Name),
+                                Builders<ContentBase>.Filter.Eq(nameof(DocRef<int>.Id), e.SourceId)));
 
-                        var referenceToRemove = referencedEntity2.Referencees
-                            .FirstOrDefault(r => r.Collection == e.SourceType.Name && r.Id == e.SourceId);
-
-                        referencedEntity2.Referencees.Remove(referenceToRemove);
+                        _db.GetCollection<ContentBase>(e.TargetType.Name).UpdateOne(x => x.Id == e.TargetId, update2);
                         break;
 
                         // TODO: Handle further events

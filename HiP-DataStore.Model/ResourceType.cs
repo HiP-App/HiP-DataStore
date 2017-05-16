@@ -1,4 +1,5 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
+using System;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model
 {
@@ -18,6 +19,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
         public string Name { get; }
 
         [BsonConstructor]
-        public ResourceType(string name) => Name = name;
+        public ResourceType(string name)
+        {
+            if (string.IsNullOrEmpty(name))
+                throw new ArgumentException("Name was null or empty", nameof(name));
+
+            Name = name;
+        }
+
+        public override string ToString() => Name ?? "";
     }
 }
