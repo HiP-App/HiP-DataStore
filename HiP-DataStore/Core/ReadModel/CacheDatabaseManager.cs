@@ -37,7 +37,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 
             _eventStore.Connection.SubscribeToStreamFrom(
                 EventStoreClient.DefaultStreamName,
-                StreamPosition.Start,
+                null, // don't use StreamPosition.Start (see https://groups.google.com/forum/#!topic/event-store/8tpXJMNEMqI),
                 CatchUpSubscriptionSettings.Default,
                 OnEventAppeared);
         }
