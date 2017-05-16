@@ -169,6 +169,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.Media, id))
                 NotFound();
 
+            // ReSharper disable once PossibleInvalidOperationException (safe to use Value due to prev. Exists() call)
             var ev = new MediaUpdate
             {
                 Id = id,
@@ -238,6 +239,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (file.Length > 0)
             {
+                // ReSharper disable once 
                 using (var stream = new FileStream(filePath, FileMode.Create))
                 {
                     await file.CopyToAsync(stream);
