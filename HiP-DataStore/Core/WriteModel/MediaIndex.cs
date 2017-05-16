@@ -29,6 +29,21 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                 info.Type == MediaType.Audio;
 
         }
+       
+        public bool IsImage(int id)
+        {
+            return (_media.ContainsKey(id) && _media[id].Type == MediaType.Image) ? true : false;
+        }
+
+        public bool IsAudio(int id)
+        {
+            return (_media.ContainsKey(id) && _media[id].Type == MediaType.Audio) ? true : false;
+        }
+
+        public bool ContainsId(int id)
+        {
+            return _media.ContainsKey(id);
+        }
 
         public void ApplyEvent(IEvent e)
         {

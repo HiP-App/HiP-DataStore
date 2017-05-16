@@ -11,6 +11,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         public string Title { get; set; }
 
+        public bool IsUsed { get; set; }
+
         public string Description { get; set; }
 
         public DocRef<MediaElement> Image => _image;

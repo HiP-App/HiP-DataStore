@@ -2,9 +2,11 @@
 using MongoDB.Bson;
 using MongoDB.Driver;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
+using Tag = PaderbornUniversity.SILab.Hip.DataStore.Model.Entity.Tag;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using System;
 using System.Linq;
+
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 {
@@ -116,6 +118,20 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                       bsonDoc = new BsonDocument("$set",fileDocBson);
                       _db.GetCollection<MediaElement>(MediaElement.CollectionName).UpdateOne(x => x.Id == e.Id, bsonDoc);
                         break;
+                case TagCreated e:
+                    var newTag = new Tag
+                    {
+                        Id = e.Id,
+                        Title = e.Properties.Tille,
+                        Description = e.Properties.Description,
+                        Status = e.Properties.Status,
+                        Timestamp=DateTimeOffset.Now,
+                        IsUsed=false
+                    };
+
+                    newTag.Image.Id = e.Properties.Image;
+                    _db.GetCollection<Tag>(Tag.CollectionName).InsertOne(newTag);
+                    break;
 
                     // TODO: Handle further events
             }
