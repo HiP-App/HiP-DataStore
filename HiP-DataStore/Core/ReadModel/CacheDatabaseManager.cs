@@ -130,13 +130,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     case ReferenceRemoved e:
                         // a reference (source -> target) was removed, so we have to delete the DocRef pointing to the
                         // source from the target's referencees list
-                        var update2 = Builders<ContentBase>.Update.PullFilter(
-                            nameof(ContentBase.Referencees),
-                            Builders<ContentBase>.Filter.And(
-                                Builders<ContentBase>.Filter.Eq(nameof(DocRefBase.Collection), e.SourceType.Name),
-                                Builders<ContentBase>.Filter.Eq(nameof(DocRef<int>.Id), e.SourceId)));
 
-                        _db.GetCollection<ContentBase>(e.TargetType.Name).UpdateOne(x => x.Id == e.TargetId, update2);
+                        // ladies and gentlemen, fasten your seatbelts and prepare for the
+                        // ugly truth of the MongoDB API:
+                        var update2 = Builders<dynamic>.Update.PullFilter(
+                            nameof(ContentBase.Referencees),
+                            Builders<dynamic>.Filter.And(
+                                Builders<dynamic>.Filter.Eq(nameof(DocRefBase.Collection), e.SourceType.Name),
+                                Builders<dynamic>.Filter.Eq("_id", e.SourceId)));
+                        
+                        _db.GetCollection<dynamic>(e.TargetType.Name).UpdateOne(
+                            Builders<dynamic>.Filter.Eq("_id", e.TargetId), update2);
                         break;
 
                         // TODO: Handle further events

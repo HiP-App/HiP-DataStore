@@ -8,6 +8,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -167,7 +168,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> DeleteAsync(int id)
+        public async Task<IActionResult> DeleteAsync([Required]int id)
         {
             if (!_entityIndex.Exists(ResourceType.Route, id))
                 return NotFound();
@@ -179,7 +180,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             await _eventStore.AppendEventAsync(ev);
 
             // remove references to image, audio, exhibits and tags
-            // TODO: For this we need the full Route entity!!
+            foreach (var reference in _referencesIndex.ReferencesOf(ResourceType.Route, id))
+            {
+                var refRemoved = new ReferenceRemoved(ResourceType.Route, id, reference.Type, reference.Id);
+                await _eventStore.AppendEventAsync(refRemoved);
+            }
 
             return NoContent();
         }

@@ -8,6 +8,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -140,7 +141,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpDelete]
         [ProducesResponseType(204)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> DeleteAsync(int id)
+        public async Task<IActionResult> DeleteAsync([Required]int id)
         {
             if (!_entityIndex.Exists(ResourceType.Exhibit, id))
                 return NotFound();
@@ -150,6 +151,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             var ev = new ExhibitDeleted { Id = id };
             await _eventStore.AppendEventAsync(ev);
+
+            // remove references to image and tags
+            foreach (var reference in _referencesIndex.ReferencesOf(ResourceType.Exhibit, id))
+            {
+                var refRemoved = new ReferenceRemoved(ResourceType.Exhibit, id, reference.Type, reference.Id);
+                await _eventStore.AppendEventAsync(refRemoved);
+            }
+
             return NoContent();
         }
     }
