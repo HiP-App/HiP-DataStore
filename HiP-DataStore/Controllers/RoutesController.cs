@@ -47,6 +47,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             try
             {
+                // TODO: What to do with timestamp?
                 var routes = query
                     .FilterByIds(args.ExcludedIds, args.IncludedIds)
                     .FilterByStatus(args.Status)
@@ -57,26 +58,22 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                         ("id", x => x.Id),
                         ("title", x => x.Title),
                         ("timestamp", x => x.Timestamp))
-                    .Paginate(args.Page, args.PageSize)
-                    .ToList();
+                    .PaginateAndSelect(args.Page, args.PageSize, x => new RouteResult
+                    {
+                        Id = x.Id,
+                        Title = x.Title,
+                        Description = x.Description,
+                        Duration = x.Duration,
+                        Distance = x.Distance,
+                        Image = (int?)x.Image.Id,
+                        Audio = (int?)x.Audio.Id,
+                        Exhibits = x.Exhibits.Select(id => (int)id).ToArray(),
+                        Status = x.Status,
+                        Tags = x.Tags.Select(id => (int)id).ToArray(),
+                        Timestamp = x.Timestamp
+                    });
 
-                // TODO: What to do with timestamp?
-                var results = routes.Select(x => new RouteResult
-                {
-                    Id = x.Id,
-                    Title = x.Title,
-                    Description = x.Description,
-                    Duration = x.Duration,
-                    Distance = x.Distance,
-                    Image = (int?)x.Image.Id,
-                    Audio = (int?)x.Audio.Id,
-                    Exhibits = x.Exhibits.Select(id => (int)id).ToArray(),
-                    Status = x.Status,
-                    Tags = x.Tags.Select(id => (int)id).ToArray(),
-                    Timestamp = x.Timestamp
-                }).ToList();
-
-                return Ok(new AllItemsResult<RouteResult>(results));
+                return Ok(routes);
             }
             catch (InvalidSortKeyException e)
             {

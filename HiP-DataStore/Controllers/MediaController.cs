@@ -85,8 +85,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                         ("id", x => x.Id),
                         ("title", x => x.Title),
                         ("timestamp", x => x.Timestamp))
-                    .Paginate(args.Page, args.PageSize)
-                    .Select(x => new MediaResult
+                    .PaginateAndSelect(args.Page, args.PageSize, x => new MediaResult
                     {
                         Id = x.Id,
                         Title = x.Title,
@@ -95,10 +94,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                         Type = x.Type,
                         Status = x.Status,
                         Timestamp = x.Timestamp
-                    })
-                    .ToList();
+                    });
 
-                return Ok(new AllItemsResult<MediaResult>(medias));
+                return Ok(medias);
             }
             catch (InvalidSortKeyException e)
             {

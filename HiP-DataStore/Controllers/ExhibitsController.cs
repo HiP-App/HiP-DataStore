@@ -50,6 +50,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             try
             {
+                // TODO: What to do with timestamp?
                 var exhibits = query
                     .FilterByIds(args.ExcludedIds, args.IncludedIds)
                     .FilterByStatus(args.Status)
@@ -62,25 +63,21 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                         ("id", x => x.Id),
                         ("name", x => x.Name),
                         ("timestamp", x => x.Timestamp))
-                    .Paginate(args.Page, args.PageSize)
-                    .ToList();
+                    .PaginateAndSelect(args.Page, args.PageSize, x => new ExhibitResult
+                    {
+                        Id = x.Id,
+                        Name = x.Name,
+                        Description = x.Description,
+                        Image = (int?)x.Image.Id,
+                        Latitude = x.Latitude,
+                        Longitude = x.Longitude,
+                        Used = x.Referencees.Count > 0,
+                        Status = x.Status,
+                        Tags = x.Tags.Select(id => (int)id).ToArray(),
+                        Timestamp = x.Timestamp
+                    });
 
-                // TODO: What to do with timestamp?
-                var results = exhibits.Select(x => new ExhibitResult
-                {
-                    Id = x.Id,
-                    Name = x.Name,
-                    Description = x.Description,
-                    Image = (int?)x.Image.Id,
-                    Latitude = x.Latitude,
-                    Longitude = x.Longitude,
-                    Used = x.Referencees.Count > 0,
-                    Status = x.Status,
-                    Tags = x.Tags.Select(id => (int)id).ToArray(),
-                    Timestamp = x.Timestamp
-                }).ToList();
-
-                return Ok(new AllItemsResult<ExhibitResult>(results));
+                return Ok(exhibits);
             }
             catch (InvalidSortKeyException e)
             {
