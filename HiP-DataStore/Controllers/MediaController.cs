@@ -61,6 +61,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         [HttpGet]
         [ProducesResponseType(typeof(AllItemsResult<MediaResult>), 200)]
+        [ProducesResponseType(304)]
         [ProducesResponseType(400)]
         [ProducesResponseType(422)]
         public IActionResult Get(MediaQueryArgs args)
@@ -78,8 +79,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                     .FilterByStatus(args.Status)
                     .FilterIf(args.Used != null, x => x.IsUsed == args.Used)
                     .FilterIf(args.Type != null, x => x.Type == args.Type)
-                    .FilterIf(args.Timestamp != null, x => DateTimeOffset.Compare(x.Timestamp, args.Timestamp.GetValueOrDefault()) == 1)
-                    .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
+                     .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
                         x.Title.ToLower().Contains(args.Query.ToLower()) ||
                         x.Description.ToLower().Contains(args.Query.ToLower()))
                     .Sort(args.OrderBy,
@@ -87,7 +87,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                         ("title", x => x.Title),
                         ("timestamp", x => x.Timestamp))
                     .Paginate(args.Page, args.PageSize)
-                    .Select(x => new MediaResult
+                    .ToList();
+
+                medias = medias.AsQueryable().FilterIf(args.Timestamp != null, x => DateTimeOffset.Compare(x.Timestamp, args.Timestamp.GetValueOrDefault()) == 1).ToList();
+                if (medias.Count == 0 && args.Timestamp != null)
+                    return StatusCode(304);
+
+
+                var mediasResult=medias.Select(x => new MediaResult
                     {
                         Id = x.Id,
                         Title = x.Title,
@@ -101,7 +108,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
 
 
-                var output = new AllItemsResult<MediaResult> { Total = medias.Count, Items = medias };
+                var output = new AllItemsResult<MediaResult> { Total = medias.Count, Items = mediasResult };
 
                 return Ok(output);
             }
