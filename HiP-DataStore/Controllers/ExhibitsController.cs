@@ -138,10 +138,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return Ok(ev.Id);
         }
 
-        [HttpDelete]
+        [HttpDelete("{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> DeleteAsync([Required]int id)
+        public async Task<IActionResult> DeleteAsync(int id)
         {
             if (!_entityIndex.Exists(ResourceType.Exhibit, id))
                 return NotFound();

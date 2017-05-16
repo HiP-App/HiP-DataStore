@@ -106,7 +106,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             }
         }
 
-        [HttpGet("{id:int}")]
+        [HttpGet("{id}")]
         [ProducesResponseType(typeof(MediaResult), 200)]
         [ProducesResponseType(304)]
         [ProducesResponseType(400)]
@@ -116,9 +116,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var media = _db.Database.GetCollection<MediaElement>(ResourceType.Media.Name).AsQueryable()
-                .Where(x => x.Id == id)
-                .FirstOrDefault();
+            var media = _db.Database.GetCollection<MediaElement>(ResourceType.Media.Name)
+                .AsQueryable()
+                .FirstOrDefault(x => x.Id == id);
 
             if (media == null)
                 return NotFound();
@@ -141,38 +141,37 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return Ok(result);
         }
 
-        [HttpDelete("{id:int}")]
+        [HttpDelete("{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
         public async Task<IActionResult> DeleteById(int id)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            if (!_entityIndex.Exists(ResourceType.Media, id))
+                return NotFound();
+
             if (_referencesIndex.IsUsed(ResourceType.Media, id))
-                return BadRequest();
+                return BadRequest(ErrorMessages.ResourceInUse);
 
-            var ev = new MediaDeleted
-            {
-                Id = id
-            };
-
+            var ev = new MediaDeleted { Id = id };
             await _eventStore.AppendEventAsync(ev);
-
             return StatusCode(204);
-
         }
 
-        [HttpPut("{id:int}")]
+        [HttpPut("{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
         public async Task<IActionResult> PutById(int id, [FromBody]MediaUpdateArgs args)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
             if (!_entityIndex.Exists(ResourceType.Media, id))
-                BadRequest();
+                NotFound();
 
             var ev = new MediaUpdate
             {
@@ -186,28 +185,25 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return StatusCode(204);
         }
 
-        [HttpGet("{id:int}/File")]
+        [HttpGet("{id}/File")]
         [ProducesResponseType(200)]
         [ProducesResponseType(404)]
         public IActionResult GetFileById(int id)
         {
-            var query = _db.Database.GetCollection<MediaElement>(ResourceType.Media.Name).AsQueryable();
-            var media = query.Where(x => x.Id == id)
-                             .FirstOrDefault();
+            var media = _db.Database.GetCollection<MediaElement>(ResourceType.Media.Name)
+                .AsQueryable()
+                .FirstOrDefault(x => x.Id == id);
 
-            if (media == null || media.File == null || !System.IO.File.Exists(media.File))
+            if (media?.File == null || !System.IO.File.Exists(media.File))
                 return NotFound();
 
             new FileExtensionContentTypeProvider().TryGetContentType(media.File, out string mimeType);
             mimeType = mimeType ?? "application/octet-stream";
 
-
             return File(new FileStream(media.File, FileMode.Open), mimeType, Path.GetFileName(media.File));
-
-
         }
 
-        [HttpPut("{id:int}/File")]
+        [HttpPut("{id}/File")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
@@ -218,9 +214,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             // TODO: This method requires rework - we should not query the read model here
 
-            var query = _db.Database.GetCollection<MediaElement>(ResourceType.Media.Name).AsQueryable();
-            var media = query.Where(x => x.Id == id)
-                             .FirstOrDefault();
+            var media = _db.Database.GetCollection<MediaElement>(ResourceType.Media.Name)
+                .AsQueryable()
+                .FirstOrDefault(x => x.Id == id);
+
             if (media == null)
                 return NotFound();
 
