@@ -41,7 +41,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         }
 
         [HttpPost]
-        [ProducesResponseType(200)]
+        [ProducesResponseType(typeof(int), 200)]
         [ProducesResponseType(400)]
         public async Task<IActionResult> PostAsync([FromBody]MediaArgs args)
         {
@@ -55,7 +55,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             };
 
             await _eventStore.AppendEventAsync(ev);
-            return Ok();
+            return Ok(ev.Id);
         }
 
         [HttpGet]
