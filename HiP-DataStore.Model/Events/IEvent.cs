@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
+﻿namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 {
     /// <summary>
     /// Marker interface for events.

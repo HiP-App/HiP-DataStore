@@ -1,10 +1,5 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
-using Newtonsoft.Json;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Text;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 {
@@ -21,7 +16,5 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 
         [BsonIgnoreIfNull]
         public ContentStatus? Status { get; set; }
-
-              
     }
 }

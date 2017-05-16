@@ -51,12 +51,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 
                 switch (e)
                 {
-                    case ReferenceAdded addedEvent:
+                    case ReferenceAdded _:
                         GetOrCreateSet(_referencesOf, source).Add(target);
                         GetOrCreateSet(_referencesTo, target).Add(source);
                         break;
 
-                    case ReferenceRemoved removedEvent:
+                    case ReferenceRemoved _:
                         var referencesOfSource = GetOrCreateSet(_referencesOf, source);
                         referencesOfSource.Remove(target);
                         if (referencesOfSource.Count == 0)
