@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 {
@@ -8,6 +6,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
     {
         public int Total { get; set; }
 
-        public List<T> Items { get; set; }
+        public IReadOnlyCollection<T> Items { get; set; }
     }
 }

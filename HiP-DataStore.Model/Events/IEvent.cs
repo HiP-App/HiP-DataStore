@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
+﻿namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 {
     /// <summary>
     /// Marker interface for events.
@@ -17,7 +15,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
         /// <summary>
         /// The type of the created, updated or deleted entity.
         /// </summary>
-        Type EntityType { get; }
+        ResourceType EntityType { get; }
 
         /// <summary>
         /// The ID of the created, updated or deleted entity.

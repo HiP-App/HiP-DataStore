@@ -4,10 +4,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 {
     public class Tag : ContentBase
     {
-        public const string CollectionName = "tags";
-
         [BsonElement(nameof(Image))]
-        private DocRef<MediaElement> _image = new DocRef<MediaElement>(MediaElement.CollectionName);
+        private DocRef<MediaElement> _image = new DocRef<MediaElement>(ResourceType.Media.Name);
 
         public string Title { get; set; }
 
