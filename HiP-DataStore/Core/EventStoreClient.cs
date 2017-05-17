@@ -40,7 +40,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
             PopulateIndices();
         }
 
-        public async Task AppendEventAsync(IEvent ev, Guid eventId)
+        public async Task AppendEventAsync(IEvent ev)
         {
             if (ev == null)
                 throw new ArgumentNullException(nameof(ev));
@@ -50,6 +50,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
                 index.ApplyEvent(ev);
 
             // persist event in Event Store
+            var eventId = Guid.NewGuid();
             await Connection.AppendToStreamAsync(DefaultStreamName, ExpectedVersion.Any, ev.ToEventData(eventId));
         }
 

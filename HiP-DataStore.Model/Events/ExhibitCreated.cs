@@ -1,6 +1,4 @@
-﻿using System;
-using Newtonsoft.Json;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
+﻿using Newtonsoft.Json;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
@@ -12,7 +10,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
         public ExhibitArgs Properties { get; set; }
 
         [JsonIgnore]
-        public Type EntityType => typeof(Exhibit);
+        public ResourceType EntityType => ResourceType.Exhibit;
 
         [JsonIgnore]
         public ContentStatus Status => Properties.Status;

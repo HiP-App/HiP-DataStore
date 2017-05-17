@@ -1,7 +1,5 @@
 ﻿using Newtonsoft.Json;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
-using System;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 {
@@ -12,7 +10,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
         public RouteArgs Properties { get; set; }
 
         [JsonIgnore]
-        public Type EntityType => typeof(Exhibit);
+        public ResourceType EntityType => ResourceType.Route;
 
         [JsonIgnore]
         public ContentStatus Status => Properties.Status;

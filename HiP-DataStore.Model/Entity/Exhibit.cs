@@ -5,10 +5,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 {
     public class Exhibit : ContentBase
     {
-        public const string CollectionName = "exhibits";
-
         [BsonElement(nameof(Image))]
-        private DocRef<MediaElement> _image = new DocRef<MediaElement>(MediaElement.CollectionName);
+        private DocRef<MediaElement> _image = new DocRef<MediaElement>(ResourceType.Media.Name);
 
         [BsonElement(nameof(Pages))]
         private List<ExhibitPage> _pages = new List<ExhibitPage>();
@@ -23,8 +21,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
         public float Latitude { get; set; }
 
         public float Longitude { get; set; }
-
-        public bool Used { get; set; }
 
         public DocRef<MediaElement> Image => _image;
 
