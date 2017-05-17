@@ -7,7 +7,6 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -24,6 +23,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly CacheDatabaseManager _db;
         private readonly MediaIndex _mediaIndex;
         private readonly EntityIndex _entityIndex;
+        private readonly ReferencesIndex _referencesIndex;
 
         public ExhibitsController(EventStoreClient eventStore, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices)
         {
@@ -31,10 +31,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             _db = db;
             _mediaIndex = indices.OfType<MediaIndex>().First();
             _entityIndex = indices.OfType<EntityIndex>().First();
+            _referencesIndex = indices.OfType<ReferencesIndex>().First();
         }
 
         [HttpGet]
-        [ProducesResponseType(typeof(IEnumerable<ExhibitResult>), 200)]
+        [ProducesResponseType(typeof(AllItemsResult<ExhibitResult>), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(422)]
         public IActionResult Get(ExhibitQueryArgs args)
@@ -44,10 +45,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             args = args ?? new ExhibitQueryArgs();
 
-            var query = _db.Database.GetCollection<Exhibit>(Exhibit.CollectionName).AsQueryable();
+            var query = _db.Database.GetCollection<Exhibit>(ResourceType.Exhibit.Name).AsQueryable();
 
             try
             {
+                // TODO: What to do with timestamp?
                 var exhibits = query
                     .FilterByIds(args.ExcludedIds, args.IncludedIds)
                     .FilterByStatus(args.Status)
@@ -60,25 +62,21 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                         ("id", x => x.Id),
                         ("name", x => x.Name),
                         ("timestamp", x => x.Timestamp))
-                    .Paginate(args.Page, args.PageSize)
-                    .ToList();
+                    .PaginateAndSelect(args.Page, args.PageSize, x => new ExhibitResult
+                    {
+                        Id = x.Id,
+                        Name = x.Name,
+                        Description = x.Description,
+                        Image = (int?)x.Image.Id,
+                        Latitude = x.Latitude,
+                        Longitude = x.Longitude,
+                        Used = x.Referencees.Count > 0,
+                        Status = x.Status,
+                        Tags = x.Tags.Select(id => (int)id).ToArray(),
+                        Timestamp = x.Timestamp
+                    });
 
-                // TODO: What to do with timestamp?
-                var results = exhibits.Select(x => new ExhibitResult
-                {
-                    Id = x.Id,
-                    Name = x.Name,
-                    Description = x.Description,
-                    Image = (int?)x.Image.Id,
-                    Latitude = x.Latitude,
-                    Longitude = x.Longitude,
-                    Used = x.Used,
-                    Status = x.Status,
-                    Tags = x.Tags.Select(id => (int)id).ToArray(),
-                    Timestamp = x.Timestamp
-                }).ToList();
-
-                return Ok(results);
+                return Ok(exhibits);
             }
             catch (InvalidSortKeyException e)
             {
@@ -87,7 +85,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         }
 
         [HttpPost]
-        [ProducesResponseType(200)]
+        [ProducesResponseType(typeof(int), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(422)]
         public async Task<IActionResult> PostAsync([FromBody]ExhibitArgs args)
@@ -96,28 +94,68 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return BadRequest(ModelState);
 
             // ensure referenced image exists and is published
-            if (args.Image.HasValue && !_mediaIndex.IsPublishedImage(args.Image.Value))
+            if (args.Image != null && !_mediaIndex.IsPublishedImage(args.Image.Value))
                 return StatusCode(422, ErrorMessages.ImageNotFoundOrNotPublished(args.Image.Value));
 
             // ensure referenced tags exist and are published
             if (args.Tags != null)
             {
                 var invalidIds = args.Tags
-                    .Where(id => _entityIndex.Status<Model.Entity.Tag>(id) != ContentStatus.Published)
+                    .Where(id => _entityIndex.Status(ResourceType.Tag, id) != ContentStatus.Published)
                     .ToList();
 
                 if (invalidIds.Count > 0)
                     return StatusCode(422, ErrorMessages.TagNotFoundOrNotPublished(invalidIds[0]));
             }
 
+            // validation passed, emit events (create exhibit, add references to image and tags)
             var ev = new ExhibitCreated
             {
-                Id = _entityIndex.NextId<Exhibit>(),
+                Id = _entityIndex.NextId(ResourceType.Exhibit),
                 Properties = args
             };
+            await _eventStore.AppendEventAsync(ev);
 
-            await _eventStore.AppendEventAsync(ev, Guid.NewGuid());
-            return Ok();
+            if (args.Image != null)
+            {
+                var imageRef = new ReferenceAdded(ResourceType.Exhibit, ev.Id, ResourceType.Media, args.Image.Value);
+                await _eventStore.AppendEventAsync(imageRef);
+            }
+
+            if (args.Tags != null)
+            {
+                foreach (var tagId in args.Tags)
+                {
+                    var tagRef = new ReferenceAdded(ResourceType.Exhibit, ev.Id, ResourceType.Tag, tagId);
+                    await _eventStore.AppendEventAsync(tagRef);
+                }
+            }
+
+            return Ok(ev.Id);
+        }
+
+        [HttpDelete("{id}")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> DeleteAsync(int id)
+        {
+            if (!_entityIndex.Exists(ResourceType.Exhibit, id))
+                return NotFound();
+
+            if (_referencesIndex.IsUsed(ResourceType.Exhibit, id))
+                return BadRequest(ErrorMessages.ResourceInUse);
+
+            var ev = new ExhibitDeleted { Id = id };
+            await _eventStore.AppendEventAsync(ev);
+
+            // remove references to image and tags
+            foreach (var reference in _referencesIndex.ReferencesOf(ResourceType.Exhibit, id))
+            {
+                var refRemoved = new ReferenceRemoved(ResourceType.Exhibit, id, reference.Type, reference.Id);
+                await _eventStore.AppendEventAsync(refRemoved);
+            }
+
+            return NoContent();
         }
     }
 }
