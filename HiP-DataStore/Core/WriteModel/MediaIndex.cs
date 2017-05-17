@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
@@ -11,6 +11,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
     public class MediaIndex : IDomainIndex
     {
         private readonly Dictionary<int, MediaInfo> _media = new Dictionary<int, MediaInfo>();
+        private readonly object _lockObject = new object();
 
         public bool IsPublishedImage(int id)
         {
@@ -24,6 +25,24 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
             return _media.TryGetValue(id, out var info) &&
                 info.Status == ContentStatus.Published &&
                 info.Type == MediaType.Audio;
+        }
+        public MediaType? GetMediaType(int id)
+        {
+            lock (_lockObject)
+            {
+                if (_media.TryGetValue(id, out var mediaInfo))
+                    return mediaInfo.Type;
+                return null;
+            }
+        }
+        public string GetFilePath(int id)
+        {
+            lock (_lockObject)
+            {
+                if (_media.TryGetValue(id, out var mediaInfo))
+                    return mediaInfo.FilePath;
+                return null;
+            }
         }
 
         public void ApplyEvent(IEvent e)
@@ -41,6 +60,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                 case MediaUpdate ev:
                     _media[ev.Id].Status = ev.Status;
                     break;
+
+                case MediaFileUpdated ev:
+                    _media[ev.Id].FilePath = ev.File;
+                    break;
             }
         }
 
@@ -48,6 +71,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
         {
             public ContentStatus Status { get; set; }
             public MediaType Type { get; set; }
+            public string FilePath { get; set; }
+
         }
     }
 }
