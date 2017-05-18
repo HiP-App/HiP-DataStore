@@ -63,7 +63,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 
         public bool ContainsId(int id)
         {
-            return _media.ContainsKey(id);
+            lock (_lockObject)
+                return  _media.ContainsKey(id); 
         }
 
         public void ApplyEvent(IEvent e)
@@ -82,7 +83,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 
                 case MediaUpdate ev:
                     lock (_lockObject)
-                        _media[ev.Id].Status = ev.Status; 
+                        _media[ev.Id].Status = ev.Properties.Status??_media[ev.Id].Status; 
                     break;
 
                 case MediaFileUpdated ev:

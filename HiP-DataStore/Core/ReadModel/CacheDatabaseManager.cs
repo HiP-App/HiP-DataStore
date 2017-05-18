@@ -10,7 +10,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using System;
 using System.Linq;
-
+using System.Collections.Generic;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 {
@@ -151,6 +151,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         Description = e.Properties.Description,
                         Status = e.Properties.Status,
                         Timestamp=DateTimeOffset.Now,
+                        Image = { Id=e.Properties.Image },
                         IsUsed=false
                     };
 
@@ -158,9 +159,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     _db.GetCollection<Tag>(ResourceType.Tag.Name).InsertOne(newTag);
                     break;
                 case TagUpdated e:
-                    var bsonDoc = e.ToBsonDocument();
-                    bsonDoc = new BsonDocument("$set", bsonDoc);
-                    _db.GetCollection<Tag>(ResourceType.Tag.Name).UpdateOne(x => x.Id == e.Id, bsonDoc);
+                        timestamp = new { Timestamp = e.Timestamp }.ToBsonDocument();
+                        bsonDoc = e.Properties.ToBsonDocument();
+                        bsonDoc.AddRange(timestamp);
+                        if (bsonDoc.Contains("Image"))
+                            bsonDoc["Image"] = e.Image.ToBsonDocument();
+
+                        bsonDoc = new BsonDocument("$set", bsonDoc);
+                        _db.GetCollection<Tag>(ResourceType.Tag.Name).UpdateOne(x => x.Id == e.Id, bsonDoc);
                     break;
 
                     case ReferenceRemoved e:

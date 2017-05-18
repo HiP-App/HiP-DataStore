@@ -30,10 +30,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             _db = db;
             _entityIndex = indices.OfType<EntityIndex>().First();
             _mediaIndex = indices.OfType<MediaIndex>().First();
+            _referencesIndex = indices.OfType<ReferencesIndex>().First();
         }
 
         [HttpPost]
-        [ProducesResponseType(typeof(string), 200)]
+        [ProducesResponseType(typeof(int), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(422)]
         [ProducesResponseType(409)]
@@ -42,7 +43,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest();
 
-            if (tag.Image != null&& _mediaIndex.IsPublishedImage(tag.Image.Value)) 
+            if (tag.Image != null&& !_mediaIndex.IsPublishedImage(tag.Image.Value)) 
                 return StatusCode(422, ErrorMessages.ImageNotFoundOrNotPublished(tag.Image.Value));
 
             int id = _entityIndex.NextId(ResourceType.Tag);
@@ -54,18 +55,24 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             await _ev.AppendEventAsync(ev);
 
-            return Ok(new { Id = id });
+            if (tag.Image != null)
+            {
+                var newRef = new ReferenceAdded(ResourceType.Tag, id, ResourceType.Media, tag.Image.Value);
+                await _ev.AppendEventAsync(newRef);
+            }
+
+            return Ok(id);
 
         }
 
         [HttpGet]
         [ProducesResponseType(typeof(AllItemsResult<TagResult>), 200)]
         [ProducesResponseType(304)]
+        [ProducesResponseType(422)]
         public IActionResult GetAll(TagQueryArgs args)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-
 
             var query = _db.Database.GetCollection<Tag>(ResourceType.Tag.Name).AsQueryable();
 
@@ -124,6 +131,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
+        [ProducesResponseType(422)]
         public async Task<IActionResult> UpdateById(int id,[FromBody]TagUpdateArgs args)
         {
             if (!ModelState.IsValid)
@@ -132,7 +140,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.Tag, id))
                 return NotFound();
 
-            if (args.Image != null && _mediaIndex.IsPublishedImage(args.Image.Value))
+            if (args.Image != null && !_mediaIndex.IsPublishedImage(args.Image.Value))
                 return StatusCode(422, ErrorMessages.ImageNotFoundOrNotPublished(args.Image.Value));
 
             var ev = new TagUpdated
@@ -144,7 +152,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             };
             await _ev.AppendEventAsync(ev);
 
-            return StatusCode(204);
+            if (args.Image != null)
+            {
+                var newRef = new ReferenceAdded(ResourceType.Tag, id, ResourceType.Media, args.Image.Value);
+                await _ev.AppendEventAsync(newRef);
+            }
+
+            return NoContent();
         }
 
         [HttpDelete("id")]
@@ -170,12 +184,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             foreach(var reference in _referencesIndex.ReferencesOf(ResourceType.Tag, id))
             {
                 var refRemoved = new ReferenceRemoved(ResourceType.Tag, id, reference.Type, reference.Id);
-                _referencesIndex.ApplyEvent(refRemoved);
+               await _ev.AppendEventAsync(refRemoved);
             }
 
             return NoContent();
-
-
         }
 
 

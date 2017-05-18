@@ -13,6 +13,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
         public DateTimeOffset Timestamp { get; set; }
 
         [JsonIgnore]
+        public DocRef<MediaElement> Image => new DocRef<MediaElement>(Properties.Image,ResourceType.Media.Name);
+
+        [JsonIgnore]
         public ContentStatus Status { get; set; }
 
         [JsonIgnore]
