@@ -15,16 +15,22 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 
         public bool IsPublishedImage(int id)
         {
-            return _media.TryGetValue(id, out var info) &&
+            lock (_lockObject)
+            {
+                return _media.TryGetValue(id, out var info) &&
                 info.Status == ContentStatus.Published &&
                 info.Type == MediaType.Image;
+            }
         }
 
         public bool IsPublishedAudio(int id)
         {
-            return _media.TryGetValue(id, out var info) &&
+            lock (_lockObject)
+            {
+                return _media.TryGetValue(id, out var info) &&
                 info.Status == ContentStatus.Published &&
                 info.Type == MediaType.Audio;
+            }
         }
         public MediaType? GetMediaType(int id)
         {
@@ -50,19 +56,23 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
             switch (e)
             {
                 case MediaCreated ev:
-                    _media.Add(ev.Id, new MediaInfo { Status = ev.Status, Type = ev.Properties.Type });
+                    lock (_lockObject)
+                        _media.Add(ev.Id, new MediaInfo { Status = ev.Status, Type = ev.Properties.Type }); 
                     break;
 
                 case MediaDeleted ev:
-                    _media.Remove(ev.Id);
+                    lock (_lockObject)
+                        _media.Remove(ev.Id); 
                     break;
 
                 case MediaUpdate ev:
-                    _media[ev.Id].Status = ev.Status;
+                    lock (_lockObject)
+                        _media[ev.Id].Status = ev.Status; 
                     break;
 
                 case MediaFileUpdated ev:
-                    _media[ev.Id].FilePath = ev.File;
+                    lock (_lockObject)
+                        _media[ev.Id].FilePath = ev.File; 
                     break;
             }
         }

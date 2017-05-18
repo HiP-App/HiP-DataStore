@@ -225,9 +225,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
 
             // Remove old file
-            string FilePath = _mediaIndex.GetFilePath(id);
-            if (FilePath != null && System.IO.File.Exists(FilePath))
-                System.IO.File.Delete(FilePath);
+            string oldFilePath = _mediaIndex.GetFilePath(id);
+            if (oldFilePath != null && System.IO.File.Exists(oldFilePath))
+                System.IO.File.Delete(oldFilePath);
 
 
 
