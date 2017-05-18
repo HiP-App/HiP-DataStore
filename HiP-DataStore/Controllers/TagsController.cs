@@ -11,6 +11,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using MongoDB.Driver;
 using Tag = PaderbornUniversity.SILab.Hip.DataStore.Model.Entity.Tag;
+using PaderbornUniversity.SILab.Hip.DataStore.Model;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
@@ -21,6 +22,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly CacheDatabaseManager _db;
         private readonly EntityIndex _entityIndex;
         private readonly MediaIndex _mediaIndex;
+        private readonly ReferencesIndex _referencesIndex;
 
         public TagsController(EventStoreClient eventStore, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices)
         {
@@ -33,30 +35,24 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpPost]
         [ProducesResponseType(typeof(string), 200)]
         [ProducesResponseType(400)]
-        [ProducesResponseType(404)]
+        [ProducesResponseType(422)]
         [ProducesResponseType(409)]
         public async Task<IActionResult> PostAsync([FromBody]TagArgs tag)
         {
             if (!ModelState.IsValid)
                 return BadRequest();
 
-            if (tag.Image != null) {
+            if (tag.Image != null&& _mediaIndex.IsPublishedImage(tag.Image.Value)) 
+                return StatusCode(422, ErrorMessages.ImageNotFoundOrNotPublished(tag.Image.Value));
 
-                if (!_mediaIndex.ContainsId(tag.Image.GetValueOrDefault()))
-                    return NotFound(new { Message = $"Media with {tag.Image} haven`t found" });
-
-                if (!_mediaIndex.IsImage(tag.Image.GetValueOrDefault()))
-                    return BadRequest(new { Message = $"Media with id: {tag.Image} is not of the Type: Audio" });
-            }
-
-            int id = _entityIndex.NextId<Tag>();
+            int id = _entityIndex.NextId(ResourceType.Tag);
             var ev = new TagCreated()
             {
                 Id = id,
                 Properties = tag
             };
 
-            await _ev.AppendEventAsync(ev, Guid.NewGuid());
+            await _ev.AppendEventAsync(ev);
 
             return Ok(new { Id = id });
 
@@ -71,14 +67,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return BadRequest(ModelState);
 
 
-            var query = _db.Database.GetCollection<Tag>(Tag.CollectionName).AsQueryable();
+            var query = _db.Database.GetCollection<Tag>(ResourceType.Tag.Name).AsQueryable();
 
             try
             {
+                // TODO Add filtering by timestamp
                 var tags = query
                     .FilterByIds(args.ExcludedIds, args.IncludedIds)
                     .FilterByStatus(args.Status)
-                    .FilterIf(args.Used != null, x => x.IsUsed == args.Used)
+                    .FilterByUsage(args.Used)
                     .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
                         x.Title.ToLower().Contains(args.Query.ToLower()) ||
                         x.Description.ToLower().Contains(args.Query.ToLower()))
@@ -86,20 +83,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                         ("id", x => x.Id),
                         ("title", x => x.Title),
                         ("timestamp", x => x.Timestamp))
-                    .Paginate(args.Page, args.PageSize)
-                    .ToList();
-                    
-
-                tags = tags.AsQueryable().FilterIf(args.Timestamp != null, x => DateTimeOffset.Compare(x.Timestamp, args.Timestamp.GetValueOrDefault()) == 1).ToList();
-                if (args.Timestamp != null && tags.Count() == 0)
-                    return StatusCode(304);
-
-
-                var tagsResult = tags.Select(x => TagResult.ConvertFrom(x)).ToList();
-
-                var output = new AllItemsResult<TagResult> { Total = tagsResult.Count(), Items = tagsResult };
-
-                return Ok(output);
+                    .PaginateAndSelect(args.Page, args.PageSize, x => TagResult.ConvertFromTag(x));
+                   
+        
+                return Ok(tags);
             }
             catch (InvalidSortKeyException e)
             {
@@ -107,7 +94,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             }
         }
 
-        [HttpGet("{id:int}")]
+        [HttpGet("{id}")]
         [ProducesResponseType(typeof(TagResult),200)]
         [ProducesResponseType(304)]
         [ProducesResponseType(400)]
@@ -117,7 +104,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest();
 
-            var query = _db.Database.GetCollection<Tag>(Tag.CollectionName).AsQueryable();
+            var query = _db.Database.GetCollection<Tag>(ResourceType.Tag.Name).AsQueryable();
 
             var tag = query.Where(x => x.Id == id).FirstOrDefault();
 
@@ -127,13 +114,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (timestamp != null && DateTimeOffset.Compare(tag.Timestamp, timestamp.GetValueOrDefault()) != 1)
                 return StatusCode(304);
 
-            var tagResult = TagResult.ConvertFrom(tag);
+            var tagResult = TagResult.ConvertFromTag(tag);
 
             return Ok(tagResult);
 
         }
 
-        [HttpPut("{id:int}")]
+        [HttpPut("{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
@@ -142,32 +129,25 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest();
 
-            var tagDb = _db.Database.GetCollection<Tag>(Tag.CollectionName).AsQueryable().Where(x => x.Id == id).FirstOrDefault();
+            if (!_entityIndex.Exists(ResourceType.Tag, id))
+                return NotFound();
 
-            if (tagDb == null)
-                return StatusCode(404);
+            if (args.Image != null && _mediaIndex.IsPublishedImage(args.Image.Value))
+                return StatusCode(422, ErrorMessages.ImageNotFoundOrNotPublished(args.Image.Value));
 
-            if (args.Image != null)
-            {
-                if (!_mediaIndex.ContainsId(args.Image.GetValueOrDefault()))
-                    return NotFound(new { Message = $"Media with {args.Image} haven`t found" });
-
-                if (!_mediaIndex.IsImage(args.Image.GetValueOrDefault()))
-                    return BadRequest(new { Message = $"Media with id: {args.Image} is not of the Type: Audio" });
-            }
             var ev = new TagUpdated
             {
                 Id = id,
                 Properties = args,
                 Timestamp = DateTimeOffset.Now,
-                Status = args.Status ?? tagDb.Status
+                Status = args.Status ?? _entityIndex.Status(ResourceType.Tag,id).Value
             };
-            await _ev.AppendEventAsync(ev, Guid.NewGuid());
+            await _ev.AppendEventAsync(ev);
 
             return StatusCode(204);
         }
 
-        [HttpDelete("id:int")]
+        [HttpDelete("id")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
@@ -175,6 +155,25 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest();
+
+            if (!_entityIndex.Exists(ResourceType.Tag, id))
+                return NotFound();
+
+            if (!_referencesIndex.IsUsed(ResourceType.Tag, id))
+                return BadRequest(ErrorMessages.ResourceInUse);
+
+
+            var ev = new TagDeleted { Id = id };
+           await _ev.AppendEventAsync(ev);
+
+            //Remove references
+            foreach(var reference in _referencesIndex.ReferencesOf(ResourceType.Tag, id))
+            {
+                var refRemoved = new ReferenceRemoved(ResourceType.Tag, id, reference.Type, reference.Id);
+                _referencesIndex.ApplyEvent(refRemoved);
+            }
+
+            return NoContent();
 
 
         }

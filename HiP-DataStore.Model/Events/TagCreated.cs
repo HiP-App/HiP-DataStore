@@ -12,7 +12,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
         public TagArgs Properties { get; set; }
 
         [JsonIgnore]
-        public Type EntityType => typeof(Tag);
+        public ResourceType EntityType => ResourceType.Tag;
 
         [JsonIgnore]
         public ContentStatus Status => Properties.Status;

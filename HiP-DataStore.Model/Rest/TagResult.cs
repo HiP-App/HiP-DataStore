@@ -20,7 +20,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         public ContentStatus Status { get; set; }
 
 
-        public static TagResult ConvertFrom(Tag tag)
+        public static TagResult ConvertFromTag(Tag tag)
         {
            return new TagResult
             {
