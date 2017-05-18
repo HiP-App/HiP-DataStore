@@ -7,6 +7,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -78,6 +79,40 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             {
                 return StatusCode(422, e.Message);
             }
+        }
+
+        [HttpGet("{id}")]
+        [ProducesResponseType(typeof(RouteResult), 200)]
+        [ProducesResponseType(404)]
+        public IActionResult GetById(int id, DateTimeOffset? timestamp = null)
+        {
+            var route = _db.Database.GetCollection<Route>(ResourceType.Route.Name)
+                .AsQueryable()
+                .FirstOrDefault(x => x.Id == id);
+
+            if (route == null)
+                return NotFound();
+
+            // Route instance wasn`t modified after timestamp
+            if (timestamp != null && route.Timestamp <= timestamp.Value)
+                return StatusCode(304);
+
+            var result = new RouteResult
+            {
+                Id = route.Id,
+                Title = route.Title,
+                Description = route.Description,
+                Duration = route.Duration,
+                Distance = route.Distance,
+                Image = (int?)route.Image.Id,
+                Audio = (int?)route.Audio.Id,
+                Exhibits = route.Exhibits.Select(i => (int)i).ToArray(),
+                Status = route.Status,
+                Tags = route.Tags.Select(i => (int)i).ToArray(),
+                Timestamp = route.Timestamp
+            };
+
+            return Ok(result);
         }
 
         [HttpPost]
