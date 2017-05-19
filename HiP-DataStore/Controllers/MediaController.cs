@@ -161,7 +161,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> PutById(int id, [FromBody]MediaUpdateArgs args)
+        public async Task<IActionResult> PutById(int id, [FromBody]MediaArgs args)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -169,13 +169,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.Media, id))
                 NotFound();
 
-            // ReSharper disable once PossibleInvalidOperationException (safe to use Value due to prev. Exists() call)
             var ev = new MediaUpdate
             {
                 Id = id,
                 Properties = args,
                 Timestamp = DateTimeOffset.Now,
-                Status = args.Status ?? _entityIndex.Status(ResourceType.Media, id).Value
             };
 
             await _eventStore.AppendEventAsync(ev);

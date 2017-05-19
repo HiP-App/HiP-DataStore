@@ -58,16 +58,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                 switch (ev)
                 {
                     case ExhibitCreated e:
-                        var newExhibit = new Exhibit
+                        var newExhibit = new Exhibit(e.Properties)
                         {
                             Id = e.Id,
-                            Name = e.Properties.Name,
-                            Description = e.Properties.Description,
-                            Image = { Id = e.Properties.Image },
-                            Latitude = e.Properties.Latitude,
-                            Longitude = e.Properties.Longitude,
-                            Status = e.Properties.Status,
-                            Tags = { e.Properties.Tags?.Select(id => (BsonValue)id) },
                             Timestamp = DateTimeOffset.Now
                         };
 
@@ -79,22 +72,23 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         break;
 
                     case RouteCreated e:
-                        var newRoute = new Route
+                        var newRoute = new Route(e.Properties)
                         {
                             Id = e.Id,
-                            Title = e.Properties.Title,
-                            Description = e.Properties.Description,
-                            Duration = e.Properties.Duration,
-                            Distance = e.Properties.Distance,
-                            Image = { Id = e.Properties.Image },
-                            Audio = { Id = e.Properties.Audio },
-                            Exhibits = { e.Properties.Exhibits?.Select(id => (BsonValue)id) },
-                            Status = e.Properties.Status,
-                            Tags = { e.Properties.Tags?.Select(id => (BsonValue)id) },
                             Timestamp = DateTimeOffset.Now
                         };
 
                         _db.GetCollection<Route>(ResourceType.Route.Name).InsertOne(newRoute);
+                        break;
+
+                    case RouteUpdated e:
+                        var updatedRoute = new Route(e.Properties)
+                        {
+                            Id = e.Id,
+                            Timestamp = e.Timestamp
+                        };
+
+                        _db.GetCollection<Route>(ResourceType.Route.Name).ReplaceOne(r => r.Id == e.Id, updatedRoute);
                         break;
 
                     case RouteDeleted e:
@@ -102,17 +96,23 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         break;
 
                     case MediaCreated e:
-                        var newMedia = new MediaElement
+                        var newMedia = new MediaElement(e.Properties)
                         {
                             Id = e.Id,
-                            Title = e.Properties.Title,
-                            Description = e.Properties.Description,
-                            Type = e.Properties.Type,
-                            Status = e.Properties.Status,
                             Timestamp = DateTimeOffset.Now
                         };
 
                         _db.GetCollection<MediaElement>(ResourceType.Media.Name).InsertOne(newMedia);
+                        break;
+
+                    case MediaUpdate e:
+                        var updatedMedia = new MediaElement(e.Properties)
+                        {
+                            Id = e.Id,
+                            Timestamp = DateTimeOffset.Now
+                        };
+
+                        _db.GetCollection<MediaElement>(ResourceType.Media.Name).ReplaceOne(m => m.Id == e.Id, updatedMedia);
                         break;
 
                     case MediaDeleted e:

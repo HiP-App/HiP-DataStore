@@ -20,7 +20,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
     /// </remarks>
     public class EventStoreClient
     {
-        public const string DefaultStreamName = "main-stream"; // TODO: Make configurable
+        public const string DefaultStreamName = "main-stream";
         public static readonly IPEndPoint LocalhostEndpoint = new IPEndPoint(IPAddress.Loopback, 1113);
 
         private readonly IReadOnlyCollection<IDomainIndex> _indices;
@@ -62,18 +62,25 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
             var start = 0;
             StreamEventsSlice readResult;
 
-            do
+            try
             {
-                readResult = Connection.ReadStreamEventsForwardAsync(DefaultStreamName, start, pageSize, false).Result;
-                var events = readResult.Events.Select(e => e.Event.ToIEvent());
+                do
+                {
+                    readResult = Connection.ReadStreamEventsForwardAsync(DefaultStreamName, start, pageSize, false).Result;
+                    var events = readResult.Events.Select(e => e.Event.ToIEvent());
 
-                foreach (var e in events)
-                    foreach (var index in _indices)
-                        index.ApplyEvent(e);
+                    foreach (var e in events)
+                        foreach (var index in _indices)
+                            index.ApplyEvent(e);
 
-                start += pageSize;
+                    start += pageSize;
+                }
+                while (!readResult.IsEndOfStream);
             }
-            while (!readResult.IsEndOfStream);
+            catch
+            {
+                // DEBUG
+            }
         }
     }
 }

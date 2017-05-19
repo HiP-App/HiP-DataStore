@@ -36,8 +36,8 @@
     public interface IDeleteEvent : ICrudEvent
     {
     }
+
     public interface IUpdateFileEvent : ICrudEvent
     {
-
     }
 }

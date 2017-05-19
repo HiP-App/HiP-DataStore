@@ -31,7 +31,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             _entityIndex = indices.OfType<EntityIndex>().First();
             _referencesIndex = indices.OfType<ReferencesIndex>().First();
         }
-
+        
         [HttpGet]
         [ProducesResponseType(typeof(AllItemsResult<RouteResult>), 200)]
         [ProducesResponseType(400)]
@@ -193,6 +193,29 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             await _eventStore.AppendEventAsync(ev);
             return Ok(ev.Id);
+        }
+
+        [HttpPut("{id}")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> PutAsync(int id, RouteArgs args)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!_entityIndex.Exists(ResourceType.Media, id))
+                NotFound();
+
+            var ev = new RouteUpdated
+            {
+                Id = id,
+                Properties = args,
+                Timestamp = DateTimeOffset.Now,
+            };
+
+            await _eventStore.AppendEventAsync(ev);
+            return StatusCode(204);
         }
 
         [HttpDelete("{id}")]
