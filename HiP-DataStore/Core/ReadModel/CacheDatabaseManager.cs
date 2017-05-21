@@ -1,14 +1,12 @@
 ﻿using EventStore.ClientAPI;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using MongoDB.Bson;
 using MongoDB.Driver;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using System;
-using System.Linq;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 {

@@ -6,7 +6,6 @@ using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core
@@ -21,7 +20,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
     public class EventStoreClient
     {
         public const string DefaultStreamName = "main-stream";
-        public static readonly IPEndPoint LocalhostEndpoint = new IPEndPoint(IPAddress.Loopback, 1113);
 
         private readonly IReadOnlyCollection<IDomainIndex> _indices;
 
