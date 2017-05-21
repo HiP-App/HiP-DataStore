@@ -62,25 +62,18 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
             var start = 0;
             StreamEventsSlice readResult;
 
-            try
+            do
             {
-                do
-                {
-                    readResult = Connection.ReadStreamEventsForwardAsync(DefaultStreamName, start, pageSize, false).Result;
-                    var events = readResult.Events.Select(e => e.Event.ToIEvent());
+                readResult = Connection.ReadStreamEventsForwardAsync(DefaultStreamName, start, pageSize, false).Result;
+                var events = readResult.Events.Select(e => e.Event.ToIEvent());
 
-                    foreach (var e in events)
-                        foreach (var index in _indices)
-                            index.ApplyEvent(e);
+                foreach (var e in events)
+                    foreach (var index in _indices)
+                        index.ApplyEvent(e);
 
-                    start += pageSize;
-                }
-                while (!readResult.IsEndOfStream);
+                start += pageSize;
             }
-            catch
-            {
-                // DEBUG
-            }
+            while (!readResult.IsEndOfStream);
         }
     }
 }
