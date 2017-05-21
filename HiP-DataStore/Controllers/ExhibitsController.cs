@@ -7,6 +7,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -112,7 +113,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             var ev = new ExhibitCreated
             {
                 Id = _entityIndex.NextId(ResourceType.Exhibit),
-                Properties = args
+                Properties = args,
+                Timestamp = DateTimeOffset.Now
             };
             await _eventStore.AppendEventAsync(ev);
 

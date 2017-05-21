@@ -158,7 +158,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             var ev = new RouteCreated
             {
                 Id = _entityIndex.NextId(ResourceType.Route),
-                Properties = args
+                Properties = args,
+                Timestamp = DateTimeOffset.Now
             };
 
             if (args.Image != null)

@@ -10,8 +10,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 
         public RouteArgs Properties { get; set; }
 
-        // TODO: Timestamp should be moved to ICrudEvent, since every create/update/delete should have a timestamp
-        // (timestamp is currently missing in *Created-events and determined through the cache DB which is not nice)
         public DateTimeOffset Timestamp { get; set; }
 
         [JsonIgnore]

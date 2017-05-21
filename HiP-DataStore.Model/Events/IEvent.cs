@@ -1,4 +1,6 @@
-﻿namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
+﻿using System;
+
+namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 {
     /// <summary>
     /// Marker interface for events.
@@ -26,11 +28,13 @@
     public interface ICreateEvent : ICrudEvent
     {
         ContentStatus Status { get; }
+        DateTimeOffset Timestamp { get; }
     }
 
     public interface IUpdateEvent : ICrudEvent
     {
         ContentStatus Status { get; }
+        DateTimeOffset Timestamp { get; }
     }
 
     public interface IDeleteEvent : ICrudEvent

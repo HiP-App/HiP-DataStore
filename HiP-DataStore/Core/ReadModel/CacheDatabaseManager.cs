@@ -61,7 +61,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         var newExhibit = new Exhibit(e.Properties)
                         {
                             Id = e.Id,
-                            Timestamp = DateTimeOffset.Now
+                            Timestamp = e.Timestamp
                         };
 
                         _db.GetCollection<Exhibit>(ResourceType.Exhibit.Name).InsertOne(newExhibit);
@@ -75,7 +75,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         var newRoute = new Route(e.Properties)
                         {
                             Id = e.Id,
-                            Timestamp = DateTimeOffset.Now
+                            Timestamp = e.Timestamp
                         };
 
                         _db.GetCollection<Route>(ResourceType.Route.Name).InsertOne(newRoute);
@@ -99,7 +99,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         var newMedia = new MediaElement(e.Properties)
                         {
                             Id = e.Id,
-                            Timestamp = DateTimeOffset.Now
+                            Timestamp = e.Timestamp
                         };
 
                         _db.GetCollection<MediaElement>(ResourceType.Media.Name).InsertOne(newMedia);
@@ -109,7 +109,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         var updatedMedia = new MediaElement(e.Properties)
                         {
                             Id = e.Id,
-                            Timestamp = DateTimeOffset.Now
+                            Timestamp = e.Timestamp
                         };
 
                         _db.GetCollection<MediaElement>(ResourceType.Media.Name).ReplaceOne(m => m.Id == e.Id, updatedMedia);

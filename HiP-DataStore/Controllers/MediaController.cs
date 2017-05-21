@@ -49,7 +49,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             var ev = new MediaCreated
             {
                 Id = _entityIndex.NextId(ResourceType.Media),
-                Properties = args
+                Properties = args,
+                Timestamp = DateTimeOffset.Now
             };
 
             await _eventStore.AppendEventAsync(ev);

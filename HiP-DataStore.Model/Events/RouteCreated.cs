@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using System;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 {
@@ -8,6 +9,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
         public int Id { get; set; }
 
         public RouteArgs Properties { get; set; }
+
+        public DateTimeOffset Timestamp { get; set; }
 
         [JsonIgnore]
         public ResourceType EntityType => ResourceType.Route;
