@@ -31,7 +31,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
             switch (e)
             {
                 case MediaCreated ev:
-                    _media.Add(ev.Id, new MediaInfo { Status = ev.Status, Type = ev.Properties.Type });
+                    _media.Add(ev.Id, new MediaInfo { Status = ev.GetStatus(), Type = ev.Properties.Type });
                     break;
 
                 case MediaDeleted ev:
@@ -39,7 +39,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                     break;
 
                 case MediaUpdate ev:
-                    _media[ev.Id].Status = ev.Status;
+                    _media[ev.Id].Status = ev.GetStatus();
                     break;
             }
         }

@@ -17,7 +17,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
         /// <summary>
         /// The type of the created, updated or deleted entity.
         /// </summary>
-        ResourceType EntityType { get; }
+        ResourceType GetEntityType();
 
         /// <summary>
         /// The ID of the created, updated or deleted entity.
@@ -27,13 +27,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 
     public interface ICreateEvent : ICrudEvent
     {
-        ContentStatus Status { get; }
+        ContentStatus GetStatus();
         DateTimeOffset Timestamp { get; }
     }
 
     public interface IUpdateEvent : ICrudEvent
     {
-        ContentStatus Status { get; }
+        ContentStatus GetStatus();
         DateTimeOffset Timestamp { get; }
     }
 

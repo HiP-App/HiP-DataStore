@@ -1,5 +1,4 @@
 ﻿using System;
-using Newtonsoft.Json;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
@@ -12,10 +11,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 
         public DateTimeOffset Timestamp { get; set; }
 
-        [JsonIgnore]
-        public ContentStatus Status => Properties.Status;
+        public ContentStatus GetStatus() => Properties.Status;
 
-        [JsonIgnore]
-        public ResourceType EntityType => ResourceType.Route;
+        public ResourceType GetEntityType() => ResourceType.Route;
     }
 }
