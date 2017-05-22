@@ -2,8 +2,6 @@
 using Newtonsoft.Json.Converters;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 {

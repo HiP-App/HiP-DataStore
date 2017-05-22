@@ -1,7 +1,5 @@
 ﻿using Newtonsoft.Json;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
-using System;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 {

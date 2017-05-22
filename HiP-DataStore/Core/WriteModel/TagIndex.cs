@@ -12,7 +12,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 
         public bool IsTitleExist(string title)
         {
-            return _tag.Any(x => x.Value.Title == title);
+            lock(_lockObject)
+               return _tag.Any(x => x.Value.Title == title);
         }
 
         public void ApplyEvent(IEvent e)

@@ -10,7 +10,6 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using System;
 using System.Linq;
-using System.Collections.Generic;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 {
@@ -124,8 +123,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     case MediaUpdate e:
 
                         var filter = Builders<MediaElement>.Filter.Eq(x => x.Id, e.Id);
-                        var timestamp = new { Timestamp = e.Timestamp }.ToBsonDocument();
-                        var bsonDoc = new BsonDocument("$set", e.Properties.ToBsonDocument().AddRange(timestamp));
+                        var bsonDoc = new BsonDocument("$set", e.Properties.ToBsonDocument().AddRange(new { Timestamp = e.Timestamp }.ToBsonDocument()));
 
                         _db.GetCollection<MediaElement>(ResourceType.Media.Name).UpdateOne(filter, bsonDoc);
                         break;
@@ -161,9 +159,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         _db.GetCollection<Tag>(ResourceType.Tag.Name).DeleteOne(x => x.Id == e.Id);
                         break;
                 case TagUpdated e:
-                        timestamp = new { Timestamp = e.Timestamp }.ToBsonDocument();
                         bsonDoc = e.Properties.ToBsonDocument();
-                        bsonDoc.AddRange(timestamp);
+                        bsonDoc.AddRange(new { Timestamp = e.Timestamp }.ToBsonDocument());
                         if (bsonDoc.Contains("Image"))
                             bsonDoc["Image"] = e.Image.ToBsonDocument();
 
