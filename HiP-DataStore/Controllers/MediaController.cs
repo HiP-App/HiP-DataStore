@@ -38,6 +38,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         }
 
+        [HttpGet("ids")]
+        [ProducesResponseType(typeof(IReadOnlyCollection<int>), 200)]
+        public IActionResult GetIds(ContentStatus? status)
+        {
+            return Ok(_entityIndex.AllIds(ResourceType.Media, status ?? ContentStatus.Published));
+        }
+
         [HttpPost]
         [ProducesResponseType(typeof(int), 200)]
         [ProducesResponseType(400)]

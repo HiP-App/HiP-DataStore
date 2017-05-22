@@ -32,6 +32,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             _referencesIndex = indices.OfType<ReferencesIndex>().First();
         }
 
+        [HttpGet("ids")]
+        [ProducesResponseType(typeof(IReadOnlyCollection<int>), 200)]
+        public IActionResult GetIds(ContentStatus? status)
+        {
+            return Ok(_entityIndex.AllIds(ResourceType.Exhibit, status ?? ContentStatus.Published));
+        }
+
         [HttpGet]
         [ProducesResponseType(typeof(AllItemsResult<ExhibitResult>), 200)]
         [ProducesResponseType(400)]
