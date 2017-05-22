@@ -83,6 +83,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(RouteResult), 200)]
+        [ProducesResponseType(304)]
         [ProducesResponseType(404)]
         public IActionResult GetById(int id, DateTimeOffset? timestamp = null)
         {
