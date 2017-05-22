@@ -118,6 +118,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
+        [ProducesResponseType(422)]
         public async Task<IActionResult> PutAsync(int id, RouteArgs args)
         {
             if (!ModelState.IsValid)
@@ -126,8 +127,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!IsRouteArgsValid(args, out var validationError))
                 return validationError;
 
-            if (!_entityIndex.Exists(ResourceType.Media, id))
-                NotFound();
+            if (!_entityIndex.Exists(ResourceType.Route, id))
+                return NotFound();
 
             // validation passed, emit events (remove old references, update route, add new references)
             var ev = new RouteUpdated

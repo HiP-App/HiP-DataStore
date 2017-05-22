@@ -168,7 +168,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return BadRequest(ModelState);
 
             if (!_entityIndex.Exists(ResourceType.Media, id))
-                NotFound();
+                return NotFound();
 
             var ev = new MediaUpdate
             {
