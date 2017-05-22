@@ -46,6 +46,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             services.Configure<UploadFilesConfig>(Configuration.GetSection("UploadingFiles"));
 
             services.AddMvc();
+            services.AddCors();
             services.AddSingleton<EventStoreClient>();
             services.AddSingleton<CacheDatabaseManager>();
             services.AddSingleton<IDomainIndex, MediaIndex>();
@@ -64,6 +65,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             app.ApplicationServices.GetService<CacheDatabaseManager>();
 
             app.UseMvc();
+
+            app.UseCors(builder =>
+                // This will allow any request from any server. Tweak to fit your needs!
+                    builder.AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowAnyOrigin()
+            );
 
             // Swagger / Swashbuckle configuration:
 
