@@ -55,6 +55,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         }
 
         [HttpGet("{exhibitId}/Pages/ids")]
+        [ProducesResponseType(typeof(IReadOnlyCollection<int>), 200)]
         public IActionResult GetIdsForExhibit(int exhibitId, ContentStatus? status)
         {
             var exhibit = _db.Database.GetCollection<Exhibit>(ResourceType.Exhibit.Name)
@@ -73,6 +74,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         }
 
         [HttpGet("{exhibitId}/Pages")]
+        [ProducesResponseType(typeof(AllItemsResult<ExhibitPageResult>), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(422)]
         public IActionResult GetPagesForExhibit(int exhibitId, ExhibitPageQueryArgs args)
         {
             if (!ModelState.IsValid)
@@ -126,7 +131,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!IsExhibitPageArgsValid(args, out var validationError))
                 return validationError;
 
-            // validation passed, emit events (create page, add references to TODO)
+            // validation passed, emit events (create page, add references to image(s) and additional info pages)
             var ev = new ExhibitPageCreated
             {
                 Id = _entityIndex.NextId(ResourceType.Exhibit),
@@ -224,6 +229,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         private bool IsExhibitPageArgsValid(ExhibitPageArgs args, out IActionResult response)
         {
+            // constrain properties Image, Images and HideYearNumbers to their respective page types
             if (args.Image != null &&
                 args.Type != PageType.AppetizerPage &&
                 args.Type != PageType.ImagePage)
@@ -285,6 +291,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         private async Task AddExhibitPageReferencesAsync(ExhibitPageArgs args, int pageId)
         {
+            if (args.Audio != null)
+            {
+                var audioRef = new ReferenceAdded(ResourceType.ExhibitPage, pageId, ResourceType.Media, args.Audio.Value);
+                await _eventStore.AppendEventAsync(audioRef);
+            }
+
             if (args.Image != null)
             {
                 var imageRef = new ReferenceAdded(ResourceType.ExhibitPage, pageId, ResourceType.Media, args.Image.Value);
