@@ -53,12 +53,18 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
        
         public bool IsImage(int id)
         {
-            return (_media.ContainsKey(id) && _media[id].Type == MediaType.Image) ? true : false;
+            lock (_lockObject)
+            {
+                return _media.ContainsKey(id) && _media[id].Type == MediaType.Image;
+            }
         }
 
         public bool IsAudio(int id)
         {
-            return (_media.ContainsKey(id) && _media[id].Type == MediaType.Audio) ? true : false;
+            lock (_lockObject)
+            {
+                return _media.ContainsKey(id) && _media[id].Type == MediaType.Audio;
+            }
         }
 
         public bool ContainsId(int id)

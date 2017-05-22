@@ -8,7 +8,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
     public class TagArgs
     {
         [Required]
-        public string Tille { get; set; }
+        public string Title { get; set; }
 
         public string Description { get; set; }
 

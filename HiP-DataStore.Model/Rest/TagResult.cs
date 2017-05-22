@@ -27,7 +27,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
                 Id = tag.Id,
                 Title = tag.Title,
                 Description = tag.Description,
-                Used = tag.IsUsed,
                 Image = tag.Image.Id.AsNullableInt32,
                 Status = tag.Status,
                 Timestamp = tag.Timestamp,

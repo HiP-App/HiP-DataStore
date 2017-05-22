@@ -147,17 +147,19 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     var newTag = new Tag
                     {
                         Id = e.Id,
-                        Title = e.Properties.Tille,
+                        Title = e.Properties.Title,
                         Description = e.Properties.Description,
                         Status = e.Properties.Status,
                         Timestamp=DateTimeOffset.Now,
                         Image = { Id=e.Properties.Image },
-                        IsUsed=false
                     };
 
                     newTag.Image.Id = e.Properties.Image;
                     _db.GetCollection<Tag>(ResourceType.Tag.Name).InsertOne(newTag);
                     break;
+                case TagDeleted e:
+                        _db.GetCollection<Tag>(ResourceType.Tag.Name).DeleteOne(x => x.Id == e.Id);
+                        break;
                 case TagUpdated e:
                         timestamp = new { Timestamp = e.Timestamp }.ToBsonDocument();
                         bsonDoc = e.Properties.ToBsonDocument();

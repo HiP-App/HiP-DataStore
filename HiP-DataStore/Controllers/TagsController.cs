@@ -36,8 +36,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpPost]
         [ProducesResponseType(typeof(int), 200)]
         [ProducesResponseType(400)]
-        [ProducesResponseType(422)]
         [ProducesResponseType(409)]
+        [ProducesResponseType(422)]     
         public async Task<IActionResult> PostAsync([FromBody]TagArgs tag)
         {
             if (!ModelState.IsValid)
@@ -113,7 +113,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             var query = _db.Database.GetCollection<Tag>(ResourceType.Tag.Name).AsQueryable();
 
-            var tag = query.Where(x => x.Id == id).FirstOrDefault();
+            var tag = query.FirstOrDefault(x => x.Id == id);
 
             if (tag == null)
                 return NotFound();
@@ -173,7 +173,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.Tag, id))
                 return NotFound();
 
-            if (!_referencesIndex.IsUsed(ResourceType.Tag, id))
+            if (_referencesIndex.IsUsed(ResourceType.Tag, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
 
 
