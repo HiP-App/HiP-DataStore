@@ -45,8 +45,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             services.Configure<EndpointConfig>(Configuration.GetSection("Endpoints"));
             services.Configure<UploadFilesConfig>(Configuration.GetSection("UploadingFiles"));
 
-            services.AddMvc();
             services.AddCors();
+            services.AddMvc();
             services.AddSingleton<EventStoreClient>();
             services.AddSingleton<CacheDatabaseManager>();
             services.AddSingleton<IDomainIndex, MediaIndex>();
@@ -64,14 +64,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             // something), so we manually request an instance here
             app.ApplicationServices.GetService<CacheDatabaseManager>();
 
-            app.UseMvc();
-
+            // Use CORS (important: must be before app.UseMvc())
             app.UseCors(builder =>
                 // This will allow any request from any server. Tweak to fit your needs!
                     builder.AllowAnyHeader()
                         .AllowAnyMethod()
                         .AllowAnyOrigin()
             );
+
+            app.UseMvc();
 
             // Swagger / Swashbuckle configuration:
 
