@@ -14,7 +14,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
         private DocRefList<ExhibitPage> _pages = new DocRefList<ExhibitPage>(ResourceType.ExhibitPage.Name);
 
         [BsonElement(nameof(Tags))]
-        private DocRefList<Tag> _tags = new DocRefList<Tag>();
+        private DocRefList<Tag> _tags = new DocRefList<Tag>(ResourceType.Tag.Name);
 
         public string Name { get; set; }
 
