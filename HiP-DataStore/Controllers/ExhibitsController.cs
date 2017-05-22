@@ -134,7 +134,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             // validation passed, emit events (remove old references, update exhibit, add new references)
             var ev = new ExhibitUpdated
             {
-                Id = _entityIndex.NextId(ResourceType.Exhibit),
+                Id = id,
                 Properties = args,
                 Timestamp = DateTimeOffset.Now
             };
