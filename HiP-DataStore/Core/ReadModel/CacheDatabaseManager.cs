@@ -122,8 +122,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     case MediaUpdate e:
 
                         var filter = Builders<MediaElement>.Filter.Eq(x => x.Id, e.Id);
-                        var timestamp = new { Timestamp = e.Timestamp }.ToBsonDocument();
-                        var bsonDoc = new BsonDocument("$set", e.Properties.ToBsonDocument().AddRange(timestamp));
+                        var bsonDoc = new BsonDocument("$set", e.Properties.ToBsonDocument().AddRange(e.Timestamp.ToBsonDocument()));
 
                         _db.GetCollection<MediaElement>(ResourceType.Media.Name).UpdateOne(filter, bsonDoc);
                         break;
