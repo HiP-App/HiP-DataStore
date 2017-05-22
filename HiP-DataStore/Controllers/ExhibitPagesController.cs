@@ -134,7 +134,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             // validation passed, emit events (create page, add references to image(s) and additional info pages)
             var ev = new ExhibitPageCreated
             {
-                Id = _entityIndex.NextId(ResourceType.Exhibit),
+                Id = _entityIndex.NextId(ResourceType.ExhibitPage),
                 Properties = args,
                 Timestamp = DateTimeOffset.Now
             };
