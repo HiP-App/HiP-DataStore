@@ -51,41 +51,44 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             args = args ?? new ExhibitPageQueryArgs();
 
             var query = _db.Database.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name).AsQueryable();
-
-            try
-            {
-                // TODO: What to do with timestamp?
-                var pages = query
-                    .FilterByIds(args.ExcludedIds, args.IncludedIds)
-                    .FilterByStatus(args.Status)
-                    .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
-                        x.Title.ToLower().Contains(args.Query.ToLower()) ||
-                        x.Text.ToLower().Contains(args.Query.ToLower()) ||
-                        x.Description.ToLower().Contains(args.Query.ToLower()))
-                    .Sort(args.OrderBy,
-                        ("id", x => x.Id),
-                        ("title", x => x.Title),
-                        ("timestamp", x => x.Timestamp))
-                    .PaginateAndSelect(args.Page, args.PageSize, x => new ExhibitPageResult(x));
-
-                return Ok(pages);
-            }
-            catch (InvalidSortKeyException e)
-            {
-                return StatusCode(422, e.Message);
-            }
+            return QueryExhibitPages(query, args);
         }
 
         [HttpGet("{exhibitId}/Pages/ids")]
         public IActionResult GetIdsForExhibit(int exhibitId, ContentStatus? status)
         {
-            throw new NotImplementedException();
+            var exhibit = _db.Database.GetCollection<Exhibit>(ResourceType.Exhibit.Name)
+                .AsQueryable()
+                .FirstOrDefault(x => x.Id == exhibitId);
+
+            if (exhibit == null)
+                return NotFound();
+
+            var ids = exhibit.Pages.LoadAll(_db.Database)
+                .Where(p => status == ContentStatus.All || p.Status == status)
+                .Select(p => p.Id)
+                .ToList();
+
+            return Ok(ids);
         }
 
         [HttpGet("{exhibitId}/Pages")]
         public IActionResult GetPagesForExhibit(int exhibitId, ExhibitPageQueryArgs args)
         {
-            throw new NotImplementedException();
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            args = args ?? new ExhibitPageQueryArgs();
+
+            var exhibit = _db.Database.GetCollection<Exhibit>(ResourceType.Exhibit.Name)
+                .AsQueryable()
+                .FirstOrDefault(x => x.Id == exhibitId);
+
+            if (exhibit == null)
+                return NotFound();
+
+            var query = exhibit.Pages.LoadAll(_db.Database).AsQueryable();
+            return QueryExhibitPages(query, args);
         }
 
         [HttpGet("Pages/{id}")]
@@ -190,6 +193,33 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             }
 
             return NoContent();
+        }
+
+
+        private IActionResult QueryExhibitPages(IQueryable<ExhibitPage> allPages, ExhibitPageQueryArgs args)
+        {
+            try
+            {
+                // TODO: What to do with timestamp?
+                var pages = allPages
+                    .FilterByIds(args.ExcludedIds, args.IncludedIds)
+                    .FilterByStatus(args.Status)
+                    .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
+                        x.Title.ToLower().Contains(args.Query.ToLower()) ||
+                        x.Text.ToLower().Contains(args.Query.ToLower()) ||
+                        x.Description.ToLower().Contains(args.Query.ToLower()))
+                    .Sort(args.OrderBy,
+                        ("id", x => x.Id),
+                        ("title", x => x.Title),
+                        ("timestamp", x => x.Timestamp))
+                    .PaginateAndSelect(args.Page, args.PageSize, x => new ExhibitPageResult(x));
+
+                return Ok(pages);
+            }
+            catch (InvalidSortKeyException e)
+            {
+                return StatusCode(422, e.Message);
+            }
         }
 
         private bool IsExhibitPageArgsValid(ExhibitPageArgs args, out IActionResult response)
