@@ -22,7 +22,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly CacheDatabaseManager _db;
         private readonly EntityIndex _entityIndex;
         private readonly MediaIndex _mediaIndex;
+        private readonly TagIndex _tagIndex;
         private readonly ReferencesIndex _referencesIndex;
+       
 
         public TagsController(EventStoreClient eventStore, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices)
         {
@@ -30,6 +32,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             _db = db;
             _entityIndex = indices.OfType<EntityIndex>().First();
             _mediaIndex = indices.OfType<MediaIndex>().First();
+            _tagIndex = indices.OfType<TagIndex>().First();
             _referencesIndex = indices.OfType<ReferencesIndex>().First();
         }
 
@@ -38,26 +41,29 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(409)]
         [ProducesResponseType(422)]     
-        public async Task<IActionResult> PostAsync([FromBody]TagArgs tag)
+        public async Task<IActionResult> PostAsync([FromBody]TagArgs args)
         {
             if (!ModelState.IsValid)
                 return BadRequest();
 
-            if (tag.Image != null&& !_mediaIndex.IsPublishedImage(tag.Image.Value)) 
-                return StatusCode(422, ErrorMessages.ImageNotFoundOrNotPublished(tag.Image.Value));
+            if (_tagIndex.IsTitleExist(args.Title))
+                return StatusCode(409);
+
+            if (args.Image != null&& !_mediaIndex.IsPublishedImage(args.Image.Value)) 
+                return StatusCode(422, ErrorMessages.ImageNotFoundOrNotPublished(args.Image.Value));
 
             int id = _entityIndex.NextId(ResourceType.Tag);
             var ev = new TagCreated()
             {
                 Id = id,
-                Properties = tag
+                Properties = args
             };
 
             await _ev.AppendEventAsync(ev);
 
-            if (tag.Image != null)
+            if (args.Image != null)
             {
-                var newRef = new ReferenceAdded(ResourceType.Tag, id, ResourceType.Media, tag.Image.Value);
+                var newRef = new ReferenceAdded(ResourceType.Tag, id, ResourceType.Media, args.Image.Value);
                 await _ev.AppendEventAsync(newRef);
             }
 
@@ -131,14 +137,18 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
+        [ProducesResponseType(409)]
         [ProducesResponseType(422)]
-        public async Task<IActionResult> UpdateById(int id,[FromBody]TagUpdateArgs args)
+        public async Task<IActionResult> UpdateById(int id,[FromBody]TagArgs args)
         {
             if (!ModelState.IsValid)
                 return BadRequest();
 
             if (!_entityIndex.Exists(ResourceType.Tag, id))
                 return NotFound();
+
+            if (_tagIndex.IsTitleExist(args.Title))
+                return StatusCode(409);
 
             if (args.Image != null && !_mediaIndex.IsPublishedImage(args.Image.Value))
                 return StatusCode(422, ErrorMessages.ImageNotFoundOrNotPublished(args.Image.Value));
@@ -148,14 +158,23 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 Id = id,
                 Properties = args,
                 Timestamp = DateTimeOffset.Now,
-                Status = args.Status ?? _entityIndex.Status(ResourceType.Tag,id).Value
+                Status = args.Status
             };
             await _ev.AppendEventAsync(ev);
 
+            
+                var oldReferences= _referencesIndex.ReferencesOf(ResourceType.Tag, ev.Id).Where(x=>x.Type.Name==ResourceType.Media.Name);
+                if (oldReferences.Count() > 0)
+                {
+                    var oldRef = oldReferences.FirstOrDefault();
+                    var oldRefEvent = new ReferenceRemoved(ResourceType.Tag, ev.Id, oldRef.Type, oldRef.Id);
+                    await _ev.AppendEventAsync(oldRefEvent);
+                }
+
             if (args.Image != null)
             {
-                var newRef = new ReferenceAdded(ResourceType.Tag, id, ResourceType.Media, args.Image.Value);
-                await _ev.AppendEventAsync(newRef);
+                var newRefEvent = new ReferenceAdded(ResourceType.Tag, id, ResourceType.Media, args.Image.Value);
+                await _ev.AppendEventAsync(newRefEvent);
             }
 
             return NoContent();

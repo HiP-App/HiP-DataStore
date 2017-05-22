@@ -8,7 +8,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
     public class TagUpdated : IUpdateEvent
     {
         public int Id { get; set; }
-        public TagUpdateArgs Properties { get; set; }
+        public TagArgs Properties { get; set; }
 
         public DateTimeOffset Timestamp { get; set; }
 
