@@ -65,6 +65,16 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         _db.GetCollection<Exhibit>(ResourceType.Exhibit.Name).InsertOne(newExhibit);
                         break;
 
+                    case ExhibitUpdated e:
+                        var updatedExhibit = new Exhibit(e.Properties)
+                        {
+                            Id = e.Id,
+                            Timestamp = e.Timestamp
+                        };
+
+                        _db.GetCollection<Exhibit>(ResourceType.Exhibit.Name).ReplaceOne(x => x.Id == e.Id, updatedExhibit);
+                        break;
+
                     case ExhibitDeleted e:
                         _db.GetCollection<Exhibit>(ResourceType.Exhibit.Name).DeleteOne(x => x.Id == e.Id);
                         break;
