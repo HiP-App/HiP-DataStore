@@ -127,7 +127,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(422)]
-        public async Task<IActionResult> PutAsync(int id, ExhibitArgs args)
+        public async Task<IActionResult> PutAsync(int id, [FromBody]ExhibitArgs args)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
