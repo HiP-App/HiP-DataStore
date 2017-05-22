@@ -3,15 +3,15 @@ using System;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 {
-    public class ExhibitUpdated : IUpdateEvent
+    public class ExhibitPageCreated : ICreateEvent
     {
         public int Id { get; set; }
 
-        public ExhibitArgs Properties { get; set; }
+        public ExhibitPageArgs Properties { get; set; }
 
         public DateTimeOffset Timestamp { get; set; }
 
-        public ResourceType GetEntityType() => ResourceType.Exhibit;
+        public ResourceType GetEntityType() => ResourceType.ExhibitPage;
 
         public ContentStatus GetStatus() => Properties.Status;
     }

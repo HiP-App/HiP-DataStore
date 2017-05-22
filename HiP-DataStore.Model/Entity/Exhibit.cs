@@ -1,7 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
@@ -12,7 +11,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
         private DocRef<MediaElement> _image = new DocRef<MediaElement>(ResourceType.Media.Name);
 
         [BsonElement(nameof(Pages))]
-        private List<ExhibitPage> _pages = new List<ExhibitPage>();
+        private DocRefList<ExhibitPage> _pages = new DocRefList<ExhibitPage>(ResourceType.ExhibitPage.Name);
 
         [BsonElement(nameof(Tags))]
         private DocRefList<Tag> _tags = new DocRefList<Tag>();
@@ -27,7 +26,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         public DocRef<MediaElement> Image => _image;
 
-        public IList<ExhibitPage> Pages => _pages;
+        public DocRefList<ExhibitPage> Pages => _pages;
 
         public DocRefList<Tag> Tags => _tags;
 
