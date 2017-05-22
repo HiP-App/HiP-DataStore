@@ -63,19 +63,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                         ("id", x => x.Id),
                         ("name", x => x.Name),
                         ("timestamp", x => x.Timestamp))
-                    .PaginateAndSelect(args.Page, args.PageSize, x => new ExhibitResult
-                    {
-                        Id = x.Id,
-                        Name = x.Name,
-                        Description = x.Description,
-                        Image = (int?)x.Image.Id,
-                        Latitude = x.Latitude,
-                        Longitude = x.Longitude,
-                        Used = x.Referencees.Count > 0,
-                        Status = x.Status,
-                        Tags = x.Tags.Select(id => (int)id).ToArray(),
-                        Timestamp = x.Timestamp
-                    });
+                    .PaginateAndSelect(args.Page, args.PageSize, x => new ExhibitResult(x));
 
                 return Ok(exhibits);
             }
@@ -83,6 +71,26 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             {
                 return StatusCode(422, e.Message);
             }
+        }
+
+        [HttpGet("{id}")]
+        [ProducesResponseType(typeof(ExhibitResult), 200)]
+        [ProducesResponseType(304)]
+        [ProducesResponseType(404)]
+        public IActionResult GetById(int id, DateTimeOffset? timestamp = null)
+        {
+            var exhibit = _db.Database.GetCollection<Exhibit>(ResourceType.Exhibit.Name)
+                .AsQueryable()
+                .FirstOrDefault(x => x.Id == id);
+
+            if (exhibit == null)
+                return NotFound();
+
+            if (timestamp != null && exhibit.Timestamp <= timestamp.Value)
+                return StatusCode(304);
+
+            var result = new ExhibitResult(exhibit);
+            return Ok(result);
         }
 
         [HttpPost]

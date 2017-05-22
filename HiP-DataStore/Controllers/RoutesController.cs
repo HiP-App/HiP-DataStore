@@ -58,20 +58,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                         ("id", x => x.Id),
                         ("title", x => x.Title),
                         ("timestamp", x => x.Timestamp))
-                    .PaginateAndSelect(args.Page, args.PageSize, x => new RouteResult
-                    {
-                        Id = x.Id,
-                        Title = x.Title,
-                        Description = x.Description,
-                        Duration = x.Duration,
-                        Distance = x.Distance,
-                        Image = (int?)x.Image.Id,
-                        Audio = (int?)x.Audio.Id,
-                        Exhibits = x.Exhibits.Select(id => (int)id).ToArray(),
-                        Status = x.Status,
-                        Tags = x.Tags.Select(id => (int)id).ToArray(),
-                        Timestamp = x.Timestamp
-                    });
+                    .PaginateAndSelect(args.Page, args.PageSize, x => new RouteResult(x));
 
                 return Ok(routes);
             }
@@ -83,6 +70,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(RouteResult), 200)]
+        [ProducesResponseType(304)]
         [ProducesResponseType(404)]
         public IActionResult GetById(int id, DateTimeOffset? timestamp = null)
         {
@@ -97,21 +85,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (timestamp != null && route.Timestamp <= timestamp.Value)
                 return StatusCode(304);
 
-            var result = new RouteResult
-            {
-                Id = route.Id,
-                Title = route.Title,
-                Description = route.Description,
-                Duration = route.Duration,
-                Distance = route.Distance,
-                Image = (int?)route.Image.Id,
-                Audio = (int?)route.Audio.Id,
-                Exhibits = route.Exhibits.Select(i => (int)i).ToArray(),
-                Status = route.Status,
-                Tags = route.Tags.Select(i => (int)i).ToArray(),
-                Timestamp = route.Timestamp
-            };
-
+            var result = new RouteResult(route);
             return Ok(result);
         }
 
