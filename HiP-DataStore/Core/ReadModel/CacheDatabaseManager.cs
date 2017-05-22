@@ -123,7 +123,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     case MediaUpdate e:
 
                         var filter = Builders<MediaElement>.Filter.Eq(x => x.Id, e.Id);
-                        var bsonDoc = new BsonDocument("$set", e.Properties.ToBsonDocument().AddRange(new { Timestamp = e.Timestamp }.ToBsonDocument()));
+                        var bsonDoc = new BsonDocument("$set", e.Properties.ToBsonDocument().AddRange(e.Timestamp.ToBsonDocument()));
 
                         _db.GetCollection<MediaElement>(ResourceType.Media.Name).UpdateOne(filter, bsonDoc);
                         break;
@@ -160,7 +160,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         break;
                 case TagUpdated e:
                         bsonDoc = e.Properties.ToBsonDocument();
-                        bsonDoc.AddRange(new { Timestamp = e.Timestamp }.ToBsonDocument());
+                        bsonDoc.AddRange(e.Timestamp.ToBsonDocument());
                         if (bsonDoc.Contains("Image"))
                             bsonDoc["Image"] = e.Image.ToBsonDocument();
 
