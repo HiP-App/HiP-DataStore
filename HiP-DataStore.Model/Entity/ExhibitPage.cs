@@ -1,4 +1,7 @@
-﻿using MongoDB.Bson.Serialization.Attributes;
+﻿using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using System.Linq;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 {
@@ -36,5 +39,23 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
         [BsonElement]
         public DocRefList<ExhibitPage> AdditionalInformationPages { get; private set; } =
             new DocRefList<ExhibitPage>(ResourceType.ExhibitPage.Name);
+
+        public ExhibitPage()
+        {
+        }
+
+        public ExhibitPage(ExhibitPageArgs args)
+        {
+            Type = args.Type;
+            Title = args.Title;
+            Text = args.Text;
+            Description = args.Description;
+            FontFamily = args.FontFamily;
+            Audio.Id = args.Audio;
+            Image.Id = args.Image;
+            Images.Add(args.Images?.Select(id => (BsonValue)id));
+            HideYearNumbers = args.HideYearNumbers ?? false;
+            AdditionalInformationPages.Add(args.AdditionalInformationPages?.Select(id => (BsonValue)id));
+        }
     }
 }

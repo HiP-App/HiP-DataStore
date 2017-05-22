@@ -79,6 +79,30 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         _db.GetCollection<Exhibit>(ResourceType.Exhibit.Name).DeleteOne(x => x.Id == e.Id);
                         break;
 
+                    case ExhibitPageCreated e:
+                        var newPage = new ExhibitPage(e.Properties)
+                        {
+                            Id = e.Id,
+                            Timestamp = e.Timestamp
+                        };
+
+                        _db.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name).InsertOne(newPage);
+                        break;
+
+                    case ExhibitPageUpdated e:
+                        var updatedPage = new ExhibitPage(e.Properties)
+                        {
+                            Id = e.Id,
+                            Timestamp = e.Timestamp
+                        };
+
+                        _db.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name).ReplaceOne(x => x.Id == e.Id, updatedPage);
+                        break;
+
+                    case ExhibitPageDeleted e:
+                        _db.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name).DeleteOne(x => x.Id == e.Id);
+                        break;
+
                     case RouteCreated e:
                         var newRoute = new Route(e.Properties)
                         {

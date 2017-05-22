@@ -165,13 +165,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             var ev = new ExhibitDeleted { Id = id };
             await _eventStore.AppendEventAsync(ev);
+            await RemoveExhibitReferencesAsync(id);
 
-            // remove references to image and tags
-            foreach (var reference in _referencesIndex.ReferencesOf(ResourceType.Exhibit, id))
-            {
-                var refRemoved = new ReferenceRemoved(ResourceType.Exhibit, id, reference.Type, reference.Id);
-                await _eventStore.AppendEventAsync(refRemoved);
-            }
+            // TODO: Delete all pages belonging to the exhibit (cascading deletion)
 
             return NoContent();
         }
