@@ -45,6 +45,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             services.Configure<EndpointConfig>(Configuration.GetSection("Endpoints"));
             services.Configure<UploadFilesConfig>(Configuration.GetSection("UploadingFiles"));
 
+            services.AddCors();
             services.AddMvc();
             services.AddSingleton<EventStoreClient>();
             services.AddSingleton<CacheDatabaseManager>();
@@ -62,6 +63,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             // CacheDatabaseManager should start up immediately (not only when injected into a controller or
             // something), so we manually request an instance here
             app.ApplicationServices.GetService<CacheDatabaseManager>();
+
+            // Use CORS (important: must be before app.UseMvc())
+            app.UseCors(builder =>
+                // This will allow any request from any server. Tweak to fit your needs!
+                    builder.AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowAnyOrigin()
+            );
 
             app.UseMvc();
 

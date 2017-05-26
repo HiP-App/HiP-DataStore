@@ -26,6 +26,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly CacheDatabaseManager _db;
         private readonly UploadFilesConfig _uploadConfig;
         private readonly EntityIndex _entityIndex;
+        private readonly MediaIndex _mediaIndex;
         private readonly ReferencesIndex _referencesIndex;
 
         public MediaController(EventStoreClient eventStore, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices, IOptions<UploadFilesConfig> uploadConfig)
@@ -33,6 +34,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             _eventStore = eventStore;
             _db = db;
             _entityIndex = indices.OfType<EntityIndex>().First();
+            _mediaIndex = indices.OfType<MediaIndex>().First();
             _referencesIndex = indices.OfType<ReferencesIndex>().First();
             _uploadConfig = uploadConfig.Value;
 
@@ -215,27 +217,23 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            // TODO: This method requires rework - we should not query the read model here
-
-            var media = _db.Database.GetCollection<MediaElement>(ResourceType.Media.Name)
-                .AsQueryable()
-                .FirstOrDefault(x => x.Id == id);
-
-            if (media == null)
+            
+            if (!_entityIndex.Exists(ResourceType.Media,id))
                 return NotFound();
 
             var extension = file.FileName.Split('.').Last();
-            var fileType = Enum.GetName(typeof(MediaType), media.Type);
+            var fileType = Enum.GetName(typeof(MediaType),_mediaIndex.GetMediaType(id));
 
             /* Checking supported extensions
              * Configuration catalogue has to have same key name as on of MediaType constant names */
-            if (!_uploadConfig.SupportedFormats[fileType].Contains(extension))
+            if (!_uploadConfig.SupportedFormats[fileType].Contains(extension.ToLower()))
                 return BadRequest(new { Message = $"Extension '{extension}' is not supported for type '{fileType}'" });
 
 
             // Remove old file
-            if (media.File != null && System.IO.File.Exists(media.File))
-                System.IO.File.Delete(media.File);
+            string oldFilePath = _mediaIndex.GetFilePath(id);
+            if (oldFilePath != null && System.IO.File.Exists(oldFilePath))
+                System.IO.File.Delete(oldFilePath);
 
 
 
@@ -254,7 +252,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             var ev = new MediaFileUpdated
             {
-                Id = media.Id,
+                Id = id,
                 File = filePath,
                 Timestamp = DateTimeOffset.Now
             };
