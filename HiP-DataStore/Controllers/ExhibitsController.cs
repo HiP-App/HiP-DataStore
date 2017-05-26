@@ -7,6 +7,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -85,7 +86,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         }
 
         [HttpPost]
-        [ProducesResponseType(typeof(int), 200)]
+        [ProducesResponseType(typeof(int), 201)]
         [ProducesResponseType(400)]
         [ProducesResponseType(422)]
         public async Task<IActionResult> PostAsync([FromBody]ExhibitArgs args)
@@ -112,7 +113,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             var ev = new ExhibitCreated
             {
                 Id = _entityIndex.NextId(ResourceType.Exhibit),
-                Properties = args
+                Properties = args,
+                Timestamp = DateTimeOffset.Now
             };
             await _eventStore.AppendEventAsync(ev);
 
@@ -131,7 +133,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 }
             }
 
-            return Ok(ev.Id);
+            return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/{ev.Id}", ev.Id);
         }
 
         [HttpDelete("{id}")]

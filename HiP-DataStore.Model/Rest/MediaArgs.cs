@@ -10,8 +10,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 
         public string Description { get; set; }
 
-
         public MediaType Type { get; set; }
+
         public ContentStatus Status { get; set; }
     }
 }
