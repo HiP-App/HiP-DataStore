@@ -117,7 +117,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         }
 
         [HttpPost("{exhibitId}/Pages")]
-        [ProducesResponseType(typeof(int), 200)]
+        [ProducesResponseType(typeof(int), 201)]
         [ProducesResponseType(400)]
         [ProducesResponseType(422)]
         public async Task<IActionResult> PostForExhibitAsync(int exhibitId, [FromBody]ExhibitPageArgs args)
@@ -141,7 +141,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             await _eventStore.AppendEventAsync(ev);
             await AddExhibitPageReferencesAsync(args, ev.Id);
-            return Ok(ev.Id);
+            return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Pages/{ev.Id}", ev.Id);
         }
 
         [HttpPut("Pages/{id}")]
