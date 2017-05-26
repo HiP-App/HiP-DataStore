@@ -50,6 +50,28 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                 return null;
             }
         }
+       
+        public bool IsImage(int id)
+        {
+            lock (_lockObject)
+            {
+                return _media.ContainsKey(id) && _media[id].Type == MediaType.Image;
+            }
+        }
+
+        public bool IsAudio(int id)
+        {
+            lock (_lockObject)
+            {
+                return _media.ContainsKey(id) && _media[id].Type == MediaType.Audio;
+            }
+        }
+
+        public bool ContainsId(int id)
+        {
+            lock (_lockObject)
+                return  _media.ContainsKey(id); 
+        }
 
         public void ApplyEvent(IEvent e)
         {
@@ -67,7 +89,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 
                 case MediaUpdate ev:
                     lock (_lockObject)
-                        _media[ev.Id].Status = ev.GetStatus(); 
+                        _media[ev.Id].Status = ev.GetStatus();
                     break;
 
                 case MediaFileUpdated ev:
@@ -82,7 +104,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
             public ContentStatus Status { get; set; }
             public MediaType Type { get; set; }
             public string FilePath { get; set; }
-
         }
     }
 }
