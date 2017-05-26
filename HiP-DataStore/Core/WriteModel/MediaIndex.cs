@@ -89,7 +89,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 
                 case MediaUpdate ev:
                     lock (_lockObject)
-                        _media[ev.Id].Status = ev.Properties.Status ?? _media[ev.Id].Status;
+                        _media[ev.Id].Status = ev.GetStatus();
                     break;
 
                 case MediaFileUpdated ev:
@@ -104,7 +104,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
             public ContentStatus Status { get; set; }
             public MediaType Type { get; set; }
             public string FilePath { get; set; }
-
         }
     }
 }

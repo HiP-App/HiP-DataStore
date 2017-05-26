@@ -8,18 +8,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
     public class TagUpdated : IUpdateEvent
     {
         public int Id { get; set; }
+
         public TagArgs Properties { get; set; }
 
         public DateTimeOffset Timestamp { get; set; }
 
         [JsonIgnore]
-        public DocRef<MediaElement> Image => new DocRef<MediaElement>(Properties.Image,ResourceType.Media.Name);
+        public DocRef<MediaElement> Image => new DocRef<MediaElement>(Properties.Image, ResourceType.Media.Name);
 
-        [JsonIgnore]
-        public ContentStatus Status { get; set; }
+        public ContentStatus GetStatus() => Properties.Status;
 
-        [JsonIgnore]
-        public ResourceType EntityType => ResourceType.Tag;
+        public ResourceType GetEntityType() => ResourceType.Tag;
 
 
     }
