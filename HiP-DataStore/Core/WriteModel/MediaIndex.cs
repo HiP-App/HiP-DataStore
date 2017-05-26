@@ -79,7 +79,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
             {
                 case MediaCreated ev:
                     lock (_lockObject)
-                        _media.Add(ev.Id, new MediaInfo { Status = ev.Status, Type = ev.Properties.Type }); 
+                        _media.Add(ev.Id, new MediaInfo { Status = ev.GetStatus(), Type = ev.Properties.Type }); 
                     break;
 
                 case MediaDeleted ev:
@@ -89,12 +89,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 
                 case MediaUpdate ev:
                     lock (_lockObject)
-                        _media[ev.Id].Status = ev.Properties.Status??_media[ev.Id].Status; 
+                        _media[ev.Id].Status = ev.Properties.Status ?? _media[ev.Id].Status;
                     break;
 
                 case MediaFileUpdated ev:
                     lock (_lockObject)
-                        _media[ev.Id].FilePath = ev.File; 
+                        _media[ev.Id].FilePath = ev.File;
                     break;
             }
         }

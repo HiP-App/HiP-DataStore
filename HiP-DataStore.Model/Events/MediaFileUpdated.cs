@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 {
@@ -11,7 +10,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 
         public DateTimeOffset Timestamp { get; set; }
 
-        [JsonIgnore]
-        public ResourceType EntityType => ResourceType.Media;
+        public ResourceType GetEntityType() => ResourceType.Media;
     }
 }
