@@ -7,6 +7,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using System;
+using MongoDB.Bson;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 {
@@ -150,18 +151,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     case MediaDeleted e:
                         _db.GetCollection<MediaElement>(ResourceType.Media.Name).DeleteOne(m => m.Id == e.Id);
                         break;
-
-                    case MediaUpdate e:
-
-                        var filter = Builders<MediaElement>.Filter.Eq(x => x.Id, e.Id);
-                        var bsonDoc = new BsonDocument("$set", e.Properties.ToBsonDocument().AddRange(e.Timestamp.ToBsonDocument()));
-
-                        _db.GetCollection<MediaElement>(ResourceType.Media.Name).UpdateOne(filter, bsonDoc);
-                        break;
+                        
                     case MediaFileUpdated e:
                         var fileDocBson = e.ToBsonDocument();
                         fileDocBson.Remove("Id");
-                        bsonDoc = new BsonDocument("$set", fileDocBson);
+                        var bsonDoc = new BsonDocument("$set", fileDocBson);
                         _db.GetCollection<MediaElement>(ResourceType.Media.Name).UpdateOne(x => x.Id == e.Id, bsonDoc);
                         break;
 
