@@ -70,7 +70,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
             do
             {
                 readResult = Connection.ReadStreamEventsForwardAsync(DefaultStreamName, start, pageSize, false).Result;
-                var events = readResult.Events;
 
                 foreach (var eventData in readResult.Events)
                 {
