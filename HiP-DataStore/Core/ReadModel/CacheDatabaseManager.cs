@@ -136,6 +136,35 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         _db.GetCollection<MediaElement>(ResourceType.Media.Name).UpdateOne(x => x.Id == e.Id, bsonDoc);
                         break;
 
+                    case TagCreated e:
+                        var newTag = new Tag
+                        {
+                            Id = e.Id,
+                            Title = e.Properties.Title,
+                            Description = e.Properties.Description,
+                            Status = e.Properties.Status,
+                            Timestamp = DateTimeOffset.Now,
+                            Image = { Id = e.Properties.Image }
+                        };
+
+                        newTag.Image.Id = e.Properties.Image;
+                        _db.GetCollection<Tag>(ResourceType.Tag.Name).InsertOne(newTag);
+                        break;
+
+                    case TagDeleted e:
+                        _db.GetCollection<Tag>(ResourceType.Tag.Name).DeleteOne(x => x.Id == e.Id);
+                        break;
+
+                    case TagUpdated e:
+                        bsonDoc = e.Properties.ToBsonDocument();
+                        bsonDoc.AddRange(e.Timestamp.ToBsonDocument());
+                        if (bsonDoc.Contains("Image"))
+                            bsonDoc["Image"] = new DocRef<MediaElement>(e.Properties.Image, ResourceType.Media.Name).ToBsonDocument();
+
+                        bsonDoc = new BsonDocument("$set", bsonDoc);
+                        _db.GetCollection<Tag>(ResourceType.Tag.Name).UpdateOne(x => x.Id == e.Id, bsonDoc);
+                        break;
+
                     case ReferenceAdded e:
                         // a reference (source -> target) was added, so we have to create a new DocRef pointing to the
                         // source and add it to the target's referencees list
@@ -143,32 +172,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         var update = Builders<ContentBase>.Update.Push(nameof(ContentBase.Referencees), newReference);
                         _db.GetCollection<ContentBase>(e.TargetType.Name).UpdateOne(x => x.Id == e.TargetId, update);
                         break;
-                case TagCreated e:
-                    var newTag = new Tag
-                    {
-                        Id = e.Id,
-                        Title = e.Properties.Title,
-                        Description = e.Properties.Description,
-                        Status = e.Properties.Status,
-                        Timestamp=DateTimeOffset.Now,
-                        Image = { Id=e.Properties.Image },
-                    };
-
-                    newTag.Image.Id = e.Properties.Image;
-                    _db.GetCollection<Tag>(ResourceType.Tag.Name).InsertOne(newTag);
-                    break;
-                case TagDeleted e:
-                        _db.GetCollection<Tag>(ResourceType.Tag.Name).DeleteOne(x => x.Id == e.Id);
-                        break;
-                case TagUpdated e:
-                        bsonDoc = e.Properties.ToBsonDocument();
-                        bsonDoc.AddRange(e.Timestamp.ToBsonDocument());
-                        if (bsonDoc.Contains("Image"))
-                            bsonDoc["Image"] = e.Image.ToBsonDocument();
-
-                        bsonDoc = new BsonDocument("$set", bsonDoc);
-                        _db.GetCollection<Tag>(ResourceType.Tag.Name).UpdateOne(x => x.Id == e.Id, bsonDoc);
-                    break;
 
                     case ReferenceRemoved e:
                         // a reference (source -> target) was removed, so we have to delete the DocRef pointing to the
@@ -181,12 +184,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                             Builders<dynamic>.Filter.And(
                                 Builders<dynamic>.Filter.Eq(nameof(DocRefBase.Collection), e.SourceType.Name),
                                 Builders<dynamic>.Filter.Eq("_id", e.SourceId)));
-                        
+
                         _db.GetCollection<dynamic>(e.TargetType.Name).UpdateOne(
                             Builders<dynamic>.Filter.Eq("_id", e.TargetId), update2);
                         break;
-
-                        // TODO: Handle further events
                 }
             }
             catch (Exception e)

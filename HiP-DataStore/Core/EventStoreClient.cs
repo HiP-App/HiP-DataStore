@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core
 {
@@ -21,12 +22,18 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
     {
         public const string DefaultStreamName = "main-stream";
 
+        private readonly ILogger<EventStoreClient> _logger;
         private readonly IReadOnlyCollection<IDomainIndex> _indices;
 
         public IEventStoreConnection Connection { get; }
 
-        public EventStoreClient(IEnumerable<IDomainIndex> indices, IOptions<EndpointConfig> config)
+        public EventStoreClient(
+            IEnumerable<IDomainIndex> indices,
+            IOptions<EndpointConfig> config,
+            ILogger<EventStoreClient> logger)
         {
+            _logger = logger;
+
             var settings = ConnectionSettings.Create()
                 .EnableVerboseLogging()
                 .Build();
@@ -63,11 +70,22 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
             do
             {
                 readResult = Connection.ReadStreamEventsForwardAsync(DefaultStreamName, start, pageSize, false).Result;
-                var events = readResult.Events.Select(e => e.Event.ToIEvent());
+                var events = readResult.Events;
 
-                foreach (var e in events)
-                    foreach (var index in _indices)
-                        index.ApplyEvent(e);
+                foreach (var eventData in readResult.Events)
+                {
+                    try
+                    {
+                        var ev = eventData.Event.ToIEvent();
+
+                        foreach (var index in _indices)
+                            index.ApplyEvent(ev);
+                    }
+                    catch (ArgumentException e)
+                    {
+                        _logger.LogWarning($"{nameof(EventStoreClient)} could not process an event: {e}");
+                    }
+                }
 
                 start += pageSize;
             }
