@@ -3,7 +3,7 @@ using System;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model
 {
-    public struct ResourceType
+    public struct ResourceType : IEquatable<ResourceType>
     {
         public static readonly ResourceType Exhibit = new ResourceType("Exhibit");
         public static readonly ResourceType Route = new ResourceType("Route");
@@ -29,8 +29,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
 
         public override string ToString() => Name ?? "";
 
-        public static bool operator ==(ResourceType a, ResourceType b) => a.Name == b.Name;
+        public override bool Equals(object obj) => obj is ResourceType other && Equals(other);
 
-        public static bool operator !=(ResourceType a, ResourceType b) => a.Name != b.Name;
+        public bool Equals(ResourceType other) => Name == other.Name;
+
+        public static bool operator ==(ResourceType a, ResourceType b) => a.Equals(b);
+
+        public static bool operator !=(ResourceType a, ResourceType b) => !a.Equals(b);
     }
 }
