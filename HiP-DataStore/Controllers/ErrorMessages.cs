@@ -24,5 +24,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         public static string ResourceInUse =>
             "The resource cannot be deleted because it is referenced by other resources";
+
+        public static string CannotChangeExhibitPageType(PageType currentType, PageType newType) =>
+            $"The type of an exhibit page cannot be changed (current type is '{currentType}', attempted to change to '{newType}')";
     }
 }

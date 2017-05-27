@@ -22,6 +22,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly MediaIndex _mediaIndex;
         private readonly EntityIndex _entityIndex;
         private readonly ReferencesIndex _referencesIndex;
+        private readonly ExhibitPageIndex _exhibitPageIndex;
 
         public ExhibitPagesController(EventStoreClient eventStore, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices)
         {
@@ -30,6 +31,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             _mediaIndex = indices.OfType<MediaIndex>().First();
             _entityIndex = indices.OfType<EntityIndex>().First();
             _referencesIndex = indices.OfType<ReferencesIndex>().First();
+            _exhibitPageIndex = indices.OfType<ExhibitPageIndex>().First();
         }
 
         [HttpGet("Pages/ids")]
@@ -160,7 +162,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.Exhibit, id))
                 return NotFound();
 
-            // TODO: Check if page type was modified!
+            var currentPageType = _exhibitPageIndex.PageType(id).Value;
+            if (currentPageType != args.Type)
+                return StatusCode(422, ErrorMessages.CannotChangeExhibitPageType(currentPageType, args.Type));
 
             // validation passed, emit events (remove old references, update exhibit, add new references)
             var ev = new ExhibitPageUpdated
