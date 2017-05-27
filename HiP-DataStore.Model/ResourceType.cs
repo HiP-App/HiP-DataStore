@@ -29,6 +29,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
 
         public override string ToString() => Name ?? "";
 
+        public override int GetHashCode() => Name.GetHashCode();
+
         public override bool Equals(object obj) => obj is ResourceType other && Equals(other);
 
         public bool Equals(ResourceType other) => Name == other.Name;

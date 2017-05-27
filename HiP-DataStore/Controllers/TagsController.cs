@@ -147,8 +147,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.Tag, id))
                 return NotFound();
 
-            if (_tagIndex.IsTitleExist(args.Title))
-                return StatusCode(409);
+            var tagIdWithSameTitle = _tagIndex.GetIdByTagTitle(args.Title);
+
+            if (tagIdWithSameTitle != null && tagIdWithSameTitle != id)
+                return StatusCode(409, ErrorMessages.TagNameAlreadyUsed);
 
             if (args.Image != null && !_mediaIndex.IsPublishedImage(args.Image.Value))
                 return StatusCode(422, ErrorMessages.ImageNotFoundOrNotPublished(args.Image.Value));
