@@ -28,5 +28,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
         }
 
         public override string ToString() => Name ?? "";
+
+        public static bool operator ==(ResourceType a, ResourceType b) => a.Name == b.Name;
+
+        public static bool operator !=(ResourceType a, ResourceType b) => a.Name != b.Name;
     }
 }

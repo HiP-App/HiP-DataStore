@@ -162,7 +162,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             await _ev.AppendEventAsync(ev);
 
-            var oldReferences = _referencesIndex.ReferencesOf(ResourceType.Tag, ev.Id).Where(x => x.Type.Name == ResourceType.Media.Name);
+            var oldReferences = _referencesIndex.ReferencesOf(ResourceType.Tag, ev.Id).Where(x => x.Type == ResourceType.Media);
             if (oldReferences.Count() > 0)
             {
                 var oldRef = oldReferences.FirstOrDefault();

@@ -1,14 +1,14 @@
 ﻿using EventStore.ClientAPI;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
-using Tag = PaderbornUniversity.SILab.Hip.DataStore.Model.Entity.Tag;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using System;
-using MongoDB.Bson;
+using Tag = PaderbornUniversity.SILab.Hip.DataStore.Model.Entity.Tag;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 {
@@ -137,32 +137,27 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         break;
 
                     case TagCreated e:
-                        var newTag = new Tag
+                        var newTag = new Tag(e.Properties)
                         {
                             Id = e.Id,
-                            Title = e.Properties.Title,
-                            Description = e.Properties.Description,
-                            Status = e.Properties.Status,
                             Timestamp = DateTimeOffset.Now,
-                            Image = { Id = e.Properties.Image }
                         };
 
-                        newTag.Image.Id = e.Properties.Image;
                         _db.GetCollection<Tag>(ResourceType.Tag.Name).InsertOne(newTag);
+                        break;
+
+                    case TagUpdated e:
+                        var updatedTag = new Tag(e.Properties)
+                        {
+                            Id = e.Id,
+                            Timestamp = DateTimeOffset.Now,
+                        };
+
+                        _db.GetCollection<Tag>(ResourceType.Tag.Name).ReplaceOne(x => x.Id == e.Id, updatedTag);
                         break;
 
                     case TagDeleted e:
                         _db.GetCollection<Tag>(ResourceType.Tag.Name).DeleteOne(x => x.Id == e.Id);
-                        break;
-
-                    case TagUpdated e:
-                        bsonDoc = e.Properties.ToBsonDocument();
-                        bsonDoc.AddRange(e.Timestamp.ToBsonDocument());
-                        if (bsonDoc.Contains("Image"))
-                            bsonDoc["Image"] = new DocRef<MediaElement>(e.Properties.Image, ResourceType.Media.Name).ToBsonDocument();
-
-                        bsonDoc = new BsonDocument("$set", bsonDoc);
-                        _db.GetCollection<Tag>(ResourceType.Tag.Name).UpdateOne(x => x.Id == e.Id, bsonDoc);
                         break;
 
                     case ReferenceAdded e:
