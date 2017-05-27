@@ -1,6 +1,8 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using System;
+using System.Linq;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 {
@@ -18,5 +20,24 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         public ContentStatus Status { get; set; }
         public int[] Tags { get; set; }
         public DateTimeOffset Timestamp { get; set; }
+
+        public RouteResult()
+        {
+        }
+
+        public RouteResult(Route route)
+        {
+            Id = route.Id;
+            Title = route.Title;
+            Description = route.Description;
+            Duration = route.Duration;
+            Distance = route.Distance;
+            Image = (int?)route.Image.Id;
+            Audio = (int?)route.Audio.Id;
+            Exhibits = route.Exhibits.Select(id => (int)id).ToArray();
+            Status = route.Status;
+            Tags = route.Tags.Select(id => (int)id).ToArray();
+            Timestamp = route.Timestamp;
+        }
     }
 }

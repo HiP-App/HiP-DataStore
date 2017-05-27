@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
+using System.Linq;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 {
@@ -38,6 +39,24 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                     return entity.Status;
 
                 return null;
+            }
+        }
+
+        /// <summary>
+        /// Gets the IDs of all entities of the given type and status.
+        /// </summary>
+        /// <param name="entityType"></param>
+        /// <param name="status"></param>
+        /// <returns></returns>
+        public IReadOnlyCollection<int> AllIds(ResourceType entityType, ContentStatus status)
+        {
+            lock (_lockObject)
+            {
+                var info = GetOrCreateEntityTypeInfo(entityType);
+                return info.Entities
+                    .Where(x => status == ContentStatus.All || x.Value.Status == status)
+                    .Select(x => x.Key)
+                    .ToList();
             }
         }
 
