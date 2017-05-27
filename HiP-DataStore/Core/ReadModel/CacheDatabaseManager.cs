@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
+using Tag = PaderbornUniversity.SILab.Hip.DataStore.Model.Entity.Tag;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using System;
@@ -166,6 +167,32 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         var update = Builders<ContentBase>.Update.Push(nameof(ContentBase.Referencees), newReference);
                         _db.GetCollection<ContentBase>(e.TargetType.Name).UpdateOne(x => x.Id == e.TargetId, update);
                         break;
+                case TagCreated e:
+                    var newTag = new Tag
+                    {
+                        Id = e.Id,
+                        Title = e.Properties.Title,
+                        Description = e.Properties.Description,
+                        Status = e.Properties.Status,
+                        Timestamp=DateTimeOffset.Now,
+                        Image = { Id=e.Properties.Image },
+                    };
+
+                    newTag.Image.Id = e.Properties.Image;
+                    _db.GetCollection<Tag>(ResourceType.Tag.Name).InsertOne(newTag);
+                    break;
+                case TagDeleted e:
+                        _db.GetCollection<Tag>(ResourceType.Tag.Name).DeleteOne(x => x.Id == e.Id);
+                        break;
+                case TagUpdated e:
+                        bsonDoc = e.Properties.ToBsonDocument();
+                        bsonDoc.AddRange(e.Timestamp.ToBsonDocument());
+                        if (bsonDoc.Contains("Image"))
+                            bsonDoc["Image"] = e.Image.ToBsonDocument();
+
+                        bsonDoc = new BsonDocument("$set", bsonDoc);
+                        _db.GetCollection<Tag>(ResourceType.Tag.Name).UpdateOne(x => x.Id == e.Id, bsonDoc);
+                    break;
 
                     case ReferenceRemoved e:
                         // a reference (source -> target) was removed, so we have to delete the DocRef pointing to the

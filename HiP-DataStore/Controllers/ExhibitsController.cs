@@ -98,7 +98,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         }
 
         [HttpPost]
-        [ProducesResponseType(typeof(int), 200)]
+        [ProducesResponseType(typeof(int), 201)]
         [ProducesResponseType(400)]
         [ProducesResponseType(422)]
         public async Task<IActionResult> PostAsync([FromBody]ExhibitArgs args)
@@ -119,7 +119,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             await _eventStore.AppendEventAsync(ev);
             await AddExhibitReferencesAsync(args, ev.Id);
-            return Ok(ev.Id);
+            return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/{ev.Id}", ev.Id);
         }
 
         [HttpPut("{id}")]
