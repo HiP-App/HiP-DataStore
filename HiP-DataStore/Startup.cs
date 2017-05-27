@@ -45,12 +45,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             services.Configure<EndpointConfig>(Configuration.GetSection("Endpoints"));
             services.Configure<UploadFilesConfig>(Configuration.GetSection("UploadingFiles"));
 
+            services.AddCors();
             services.AddMvc();
             services.AddSingleton<EventStoreClient>();
             services.AddSingleton<CacheDatabaseManager>();
             services.AddSingleton<IDomainIndex, MediaIndex>();
             services.AddSingleton<IDomainIndex, EntityIndex>();
             services.AddSingleton<IDomainIndex, ReferencesIndex>();
+            services.AddSingleton<IDomainIndex, TagIndex>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -62,6 +64,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             // CacheDatabaseManager should start up immediately (not only when injected into a controller or
             // something), so we manually request an instance here
             app.ApplicationServices.GetService<CacheDatabaseManager>();
+
+            // Use CORS (important: must be before app.UseMvc())
+            app.UseCors(builder =>
+                // This will allow any request from any server. Tweak to fit your needs!
+                    builder.AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowAnyOrigin()
+            );
 
             app.UseMvc();
 
