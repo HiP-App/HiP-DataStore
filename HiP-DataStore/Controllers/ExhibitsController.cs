@@ -192,7 +192,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
                 foreach (var id in invalidIds)
                     ModelState.AddModelError(nameof(args.Tags),
-                        ErrorMessages.TagNotFoundOrNotPublished(invalidIds[0]));
+                        ErrorMessages.TagNotFoundOrNotPublished(id));
             }
         }
 
