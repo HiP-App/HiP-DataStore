@@ -84,10 +84,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             try
             {
-                // TODO Add filtering by timestamp
                 var tags = query
                     .FilterByIds(args.ExcludedIds, args.IncludedIds)
                     .FilterByStatus(args.Status)
+                    .FilterByTimestamp(args.Timestamp)
                     .FilterByUsage(args.Used)
                     .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
                         x.Title.ToLower().Contains(args.Query.ToLower()) ||
@@ -124,7 +124,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (tag == null)
                 return NotFound();
 
-            if (timestamp != null && DateTimeOffset.Compare(tag.Timestamp, timestamp.GetValueOrDefault()) != 1)
+            if (timestamp != null && tag.Timestamp <= timestamp.Value)
                 return StatusCode(304);
 
             var tagResult = TagResult.ConvertFromTag(tag);
