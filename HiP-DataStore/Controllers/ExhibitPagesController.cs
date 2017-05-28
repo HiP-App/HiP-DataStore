@@ -162,6 +162,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.Exhibit, id))
                 return NotFound();
 
+            // ReSharper disable once PossibleInvalidOperationException (.Value is safe here since we know the entity exists)
             var currentPageType = _exhibitPageIndex.PageType(id).Value;
             if (currentPageType != args.Type)
                 return StatusCode(422, ErrorMessages.CannotChangeExhibitPageType(currentPageType, args.Type));
