@@ -140,7 +140,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         var newTag = new Tag(e.Properties)
                         {
                             Id = e.Id,
-                            Timestamp = DateTimeOffset.Now,
+                            Timestamp = e.Timestamp,
                         };
 
                         _db.GetCollection<Tag>(ResourceType.Tag.Name).InsertOne(newTag);
@@ -150,7 +150,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         var updatedTag = new Tag(e.Properties)
                         {
                             Id = e.Id,
-                            Timestamp = DateTimeOffset.Now,
+                            Timestamp = e.Timestamp,
                         };
 
                         _db.GetCollection<Tag>(ResourceType.Tag.Name).ReplaceOne(x => x.Id == e.Id, updatedTag);
