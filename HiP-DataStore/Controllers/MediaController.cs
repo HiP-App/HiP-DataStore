@@ -69,7 +69,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet]
         [ProducesResponseType(typeof(AllItemsResult<MediaResult>), 200)]
         [ProducesResponseType(400)]
-        [ProducesResponseType(422)]
         public IActionResult Get(MediaQueryArgs args)
         {
 
@@ -108,7 +107,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             }
             catch (InvalidSortKeyException e)
             {
-                return StatusCode(422, e.Message);
+                ModelState.AddModelError(nameof(args.OrderBy), e.Message);
+                return BadRequest(ModelState);
             }
         }
 
