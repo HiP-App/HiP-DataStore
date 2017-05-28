@@ -39,17 +39,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(typeof(int), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(409)]
-        [ProducesResponseType(422)]
         public async Task<IActionResult> PostAsync([FromBody]TagArgs args)
         {
+            ValidateTagArgs(args);
+
             if (!ModelState.IsValid)
-                return BadRequest();
+                return BadRequest(ModelState);
 
             if (_tagIndex.IsTitleExist(args.Title))
                 return StatusCode(409);
-
-            if (args.Image != null && !_mediaIndex.IsPublishedImage(args.Image.Value))
-                return StatusCode(422, ErrorMessages.ImageNotFoundOrNotPublished(args.Image.Value));
 
             int id = _entityIndex.NextId(ResourceType.Tag);
             var ev = new TagCreated
@@ -74,7 +72,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet]
         [ProducesResponseType(typeof(AllItemsResult<TagResult>), 200)]
         [ProducesResponseType(304)]
-        [ProducesResponseType(422)]
         public IActionResult GetAll(TagQueryArgs args)
         {
             if (!ModelState.IsValid)
@@ -103,7 +100,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             }
             catch (InvalidSortKeyException e)
             {
-                return StatusCode(422, e.Message);
+                ModelState.AddModelError(nameof(args.OrderBy), e.Message);
+                return BadRequest(ModelState);
             }
         }
 
@@ -115,7 +113,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         public IActionResult GetById(int id, DateTimeOffset? timestamp = null)
         {
             if (!ModelState.IsValid)
-                return BadRequest();
+                return BadRequest(ModelState);
 
             var query = _db.Database.GetCollection<Tag>(ResourceType.Tag.Name).AsQueryable();
 
@@ -138,20 +136,18 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(409)]
-        [ProducesResponseType(422)]
         public async Task<IActionResult> UpdateById(int id, [FromBody]TagArgs args)
         {
+            ValidateTagArgs(args);
+
             if (!ModelState.IsValid)
-                return BadRequest();
+                return BadRequest(ModelState);
 
             if (!_entityIndex.Exists(ResourceType.Tag, id))
                 return NotFound();
 
             if (_tagIndex.IsTitleExist(args.Title))
                 return StatusCode(409);
-
-            if (args.Image != null && !_mediaIndex.IsPublishedImage(args.Image.Value))
-                return StatusCode(422, ErrorMessages.ImageNotFoundOrNotPublished(args.Image.Value));
 
             var ev = new TagUpdated
             {
@@ -186,7 +182,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         public async Task<IActionResult> DeleteById(int id)
         {
             if (!ModelState.IsValid)
-                return BadRequest();
+                return BadRequest(ModelState);
 
             if (!_entityIndex.Exists(ResourceType.Tag, id))
                 return NotFound();
@@ -209,6 +205,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         }
 
 
+        private void ValidateTagArgs(TagArgs args)
+        {
+            if (args == null)
+                return;
+
+            if (args.Image != null && !_mediaIndex.IsPublishedImage(args.Image.Value))
+                ModelState.AddModelError(nameof(args.Image),
+                    ErrorMessages.ImageNotFoundOrNotPublished(args.Image.Value));
+        }
     }
 
 }
