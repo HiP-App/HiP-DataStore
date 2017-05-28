@@ -42,7 +42,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet]
         [ProducesResponseType(typeof(AllItemsResult<RouteResult>), 200)]
         [ProducesResponseType(400)]
-        [ProducesResponseType(422)]
         public IActionResult Get(RouteQueryArgs args)
         {
             if (!ModelState.IsValid)
@@ -71,7 +70,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             }
             catch (InvalidSortKeyException e)
             {
-                return StatusCode(422, e.Message);
+                ModelState.AddModelError(nameof(args.OrderBy), e.Message);
+                return BadRequest(ModelState);
             }
         }
 
@@ -99,7 +99,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpPost]
         [ProducesResponseType(typeof(int), 201)]
         [ProducesResponseType(400)]
-        [ProducesResponseType(422)]
         public async Task<IActionResult> PostAsync([FromBody]RouteArgs args)
         {
             ValidateRouteArgs(args);
@@ -124,7 +123,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        [ProducesResponseType(422)]
         public async Task<IActionResult> PutAsync(int id, RouteArgs args)
         {
             ValidateRouteArgs(args);
