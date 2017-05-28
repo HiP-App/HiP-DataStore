@@ -102,11 +102,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(422)]
         public async Task<IActionResult> PostAsync([FromBody]RouteArgs args)
         {
+            ValidateRouteArgs(args);
+
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-
-            if (!IsRouteArgsValid(args, out var validationError))
-                return validationError;
 
             // validation passed, emit events (create route, add references to image, audio, exhibits and tags)
             var ev = new RouteCreated
@@ -128,11 +127,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(422)]
         public async Task<IActionResult> PutAsync(int id, RouteArgs args)
         {
+            ValidateRouteArgs(args);
+
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-
-            if (!IsRouteArgsValid(args, out var validationError))
-                return validationError;
 
             if (!_entityIndex.Exists(ResourceType.Route, id))
                 return NotFound();
@@ -171,21 +169,20 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         }
 
 
-        private bool IsRouteArgsValid(RouteArgs args, out IActionResult response)
+        private void ValidateRouteArgs(RouteArgs args)
         {
+            if (args == null)
+                return;
+
             // ensure referenced image exists and is published
             if (args.Image != null && !_mediaIndex.IsPublishedImage(args.Image.Value))
-            {
-                response = StatusCode(422, ErrorMessages.ImageNotFoundOrNotPublished(args.Image.Value));
-                return false;
-            }
+                ModelState.AddModelError(nameof(args.Image),
+                    ErrorMessages.ImageNotFoundOrNotPublished(args.Image.Value));
 
             // ensure referenced audio exists and is published
             if (args.Audio != null && !_mediaIndex.IsPublishedAudio(args.Audio.Value))
-            {
-                response = StatusCode(422, ErrorMessages.AudioNotFoundOrNotPublished(args.Audio.Value));
-                return false;
-            }
+                ModelState.AddModelError(nameof(args.Audio),
+                    ErrorMessages.AudioNotFoundOrNotPublished(args.Audio.Value));
 
             // ensure referenced exhibits exist and are published
             if (args.Exhibits != null)
@@ -194,11 +191,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                     .Where(id => _entityIndex.Status(ResourceType.Exhibit, id) != ContentStatus.Published)
                     .ToList();
 
-                if (invalidIds.Count > 0)
-                {
-                    response = StatusCode(422, ErrorMessages.ExhibitNotFoundOrNotPublished(invalidIds[0]));
-                    return false;
-                }
+                foreach (var id in invalidIds)
+                    ModelState.AddModelError(nameof(args.Exhibits),
+                        ErrorMessages.ExhibitNotFoundOrNotPublished(id));
             }
 
             // ensure referenced tags exist and are published
@@ -208,15 +203,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                     .Where(id => _entityIndex.Status(ResourceType.Tag, id) != ContentStatus.Published)
                     .ToList();
 
-                if (invalidIds.Count > 0)
-                {
-                    response = StatusCode(422, ErrorMessages.TagNotFoundOrNotPublished(invalidIds[0]));
-                    return false;
-                }
+                foreach (var id in invalidIds)
+                    ModelState.AddModelError(nameof(args.Tags),
+                        ErrorMessages.TagNotFoundOrNotPublished(id));
             }
-
-            response = null;
-            return true;
         }
 
         private async Task AddRouteReferencesAsync(RouteArgs args, int routeId)
