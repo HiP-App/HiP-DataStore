@@ -86,7 +86,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             {
                 // TODO Add filtering by timestamp
                 var tags = query
-                    .FilterByIds(args.ExcludedIds, args.IncludedIds)
+                    .FilterByIds(args.Exclude, args.IncludeOnly)
                     .FilterByStatus(args.Status)
                     .FilterByUsage(args.Used)
                     .FilterIf(!string.IsNullOrEmpty(args.Query), x =>

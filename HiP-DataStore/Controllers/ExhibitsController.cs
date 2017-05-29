@@ -55,16 +55,16 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             try
             {
-                var routeIds = args.RouteIds?.Select(id => (BsonValue)id).ToList();
+                var routeIds = args.OnlyRoute?.Select(id => (BsonValue)id).ToList();
 
                 // TODO: What to do with timestamp?
                 var exhibits = query
-                    .FilterByIds(args.ExcludedIds, args.IncludedIds)
+                    .FilterByIds(args.Exclude, args.IncludeOnly)
                     .FilterByStatus(args.Status)
                     .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
                         x.Name.ToLower().Contains(args.Query.ToLower()) ||
                         x.Description.ToLower().Contains(args.Query.ToLower()))
-                    .FilterIf(args.RouteIds != null, x => x.Referencees
+                    .FilterIf(args.OnlyRoute != null, x => x.Referencees
                         .Any(r => r.Collection == ResourceType.Route.Name && routeIds.Contains(r.Id)))
                     .Sort(args.OrderBy,
                         ("id", x => x.Id),

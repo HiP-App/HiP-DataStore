@@ -3,6 +3,5 @@
     public class TagQueryArgs : QueryArgs
     {
         public bool? Used;
-        
     }
 }

@@ -11,16 +11,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         /// <summary>
         /// IDs excluded from the response.
         /// </summary>
-        [JsonProperty("exclude")]
-        public List<int> ExcludedIds { get; set; }
+        public List<int> Exclude { get; set; }
 
         /// <summary>
         /// If set, only these IDs are included in the response.
         /// If null, all IDs are included in the response.
-        /// In both cases, the filter <see cref="ExcludedIds"/> still applies.
+        /// In both cases, the filter <see cref="Exclude"/> still applies.
         /// </summary>
-        [JsonProperty("includeOnly")]
-        public List<int> IncludedIds { get; set; }
+        public List<int> IncludeOnly { get; set; }
 
         /// <summary>
         /// The page number. Defaults to zero, which is the first page.
