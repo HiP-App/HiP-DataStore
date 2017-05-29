@@ -86,6 +86,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(404)]
         public IActionResult GetById(int id, DateTimeOffset? timestamp = null)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             var exhibit = _db.Database.GetCollection<Exhibit>(ResourceType.Exhibit.Name)
                 .AsQueryable()
                 .FirstOrDefault(x => x.Id == id);
@@ -160,6 +163,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(404)]
         public async Task<IActionResult> DeleteAsync(int id)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             if (!_entityIndex.Exists(ResourceType.Exhibit, id))
                 return NotFound();
 

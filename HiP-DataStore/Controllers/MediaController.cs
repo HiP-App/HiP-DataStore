@@ -195,6 +195,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(404)]
         public IActionResult GetFileById(int id)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             var media = _db.Database.GetCollection<MediaElement>(ResourceType.Media.Name)
                 .AsQueryable()
                 .FirstOrDefault(x => x.Id == id);
