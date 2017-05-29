@@ -1,18 +1,15 @@
-﻿using Newtonsoft.Json;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
-using System;
+﻿using System;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 {
     public class MediaFileUpdated : IUpdateFileEvent
     {
-       public int Id { get; set; }
+        public int Id { get; set; }
 
-       public string File { get; set; }
+        public string File { get; set; }
 
-       public DateTimeOffset Timestamp { get; set; }
+        public DateTimeOffset Timestamp { get; set; }
 
-        [JsonIgnore]
-        public Type EntityType => typeof(MediaElement);
+        public ResourceType GetEntityType() => ResourceType.Media;
     }
 }

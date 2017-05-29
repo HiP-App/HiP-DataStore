@@ -12,13 +12,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
         // TODO: What about the page type? (AppetizerPage, ImagePage, SliderPage)
 
         [BsonElement(nameof(Image))]
-        private DocRef<MediaElement> _image = new DocRef<MediaElement>(MediaElement.CollectionName);
+        private DocRef<MediaElement> _image = new DocRef<MediaElement>(ResourceType.Media.Name);
 
         [BsonElement(nameof(Audio))]
-        private DocRef<MediaElement> _audio = new DocRef<MediaElement>(MediaElement.CollectionName);
+        private DocRef<MediaElement> _audio = new DocRef<MediaElement>(ResourceType.Media.Name);
 
         [BsonElement(nameof(Images))]
-        private DocRefList<MediaElement> _images = new DocRefList<MediaElement>(MediaElement.CollectionName);
+        private DocRefList<MediaElement> _images = new DocRefList<MediaElement>(ResourceType.Media.Name);
 
         public string Text { get; set; }
 

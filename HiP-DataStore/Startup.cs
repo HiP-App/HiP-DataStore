@@ -14,8 +14,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
 {
     public class Startup
     {
-        private const string _Version = "v1";
-        private const string _Name = "HiP Data Store API";
+        private const string Version = "v1";
+        private const string Name = "HiP Data Store API";
 
         public Startup(IHostingEnvironment env)
         {
@@ -36,21 +36,23 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             services.AddSwaggerGen(c =>
             {
                 // Define a Swagger document
-                c.SwaggerDoc("v1", new Info { Title = _Name, Version = _Version });
+                c.SwaggerDoc("v1", new Info { Title = Name, Version = Version });
                 c.OperationFilter<SwaggerOperationFilter>();
                 c.OperationFilter<SwaggerFileUploadOperationFilter>();
                 c.DescribeAllEnumsAsStrings();
-                
             });
 
             services.Configure<EndpointConfig>(Configuration.GetSection("Endpoints"));
             services.Configure<UploadFilesConfig>(Configuration.GetSection("UploadingFiles"));
 
+            services.AddCors();
             services.AddMvc();
             services.AddSingleton<EventStoreClient>();
             services.AddSingleton<CacheDatabaseManager>();
             services.AddSingleton<IDomainIndex, MediaIndex>();
             services.AddSingleton<IDomainIndex, EntityIndex>();
+            services.AddSingleton<IDomainIndex, ReferencesIndex>();
+            services.AddSingleton<IDomainIndex, TagIndex>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -62,6 +64,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             // CacheDatabaseManager should start up immediately (not only when injected into a controller or
             // something), so we manually request an instance here
             app.ApplicationServices.GetService<CacheDatabaseManager>();
+
+            // Use CORS (important: must be before app.UseMvc())
+            app.UseCors(builder =>
+                // This will allow any request from any server. Tweak to fit your needs!
+                    builder.AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowAnyOrigin()
+            );
 
             app.UseMvc();
 
@@ -78,7 +88,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             {
                 // TODO: Only a hack, if HiP-Swagger is running, SwaggerUI can be disabled for Production
                 c.SwaggerEndpoint((env.IsDevelopment() ? "/swagger" : "..") +
-                                  "/" + _Version + "/swagger.json", _Name + _Version);
+                                  "/" + Version + "/swagger.json", Name + Version);
             });
         }
     }

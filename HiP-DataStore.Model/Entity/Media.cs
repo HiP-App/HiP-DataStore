@@ -1,14 +1,12 @@
-﻿namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
+﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+
+namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 {
     public class MediaElement : ContentBase
     {
-        public const string CollectionName = "media";
-
         public string Title { get; set; }
 
         public string Description { get; set; }
-
-        public bool IsUsed { get; set; }
 
         /// <summary>
         /// The path to the actual file.
@@ -16,6 +14,18 @@
         public string File { get; set; }
 
         public MediaType Type { get; set; }
+
+        public MediaElement()
+        {
+        }
+
+        public MediaElement(MediaArgs args)
+        {
+            Title = args.Title;
+            Description = args.Description;
+            Type = args.Type;
+            Status = args.Status;
+        }
     }
 
     public enum MediaType

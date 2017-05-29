@@ -1,6 +1,8 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using System;
+using System.Linq;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 {
@@ -17,5 +19,23 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         public ContentStatus Status { get; set; }
         public int[] Tags { get; set; }
         public DateTimeOffset Timestamp { get; set; }
+
+        public ExhibitResult()
+        {
+        }
+
+        public ExhibitResult(Exhibit x)
+        {
+            Id = x.Id;
+            Name = x.Name;
+            Description = x.Description;
+            Image = (int?)x.Image.Id;
+            Latitude = x.Latitude;
+            Longitude = x.Longitude;
+            Used = x.Referencees.Count > 0;
+            Status = x.Status;
+            Tags = x.Tags.Select(id => (int)id).ToArray();
+            Timestamp = x.Timestamp;
+        }
     }
 }
