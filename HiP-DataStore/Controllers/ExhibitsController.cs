@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using PaderbornUniversity.SILab.Hip.DataStore.Core;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
@@ -54,6 +55,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             try
             {
+                var routeIds = args.RouteIds?.Select(id => (BsonValue)id).ToList();
+
                 // TODO: What to do with timestamp?
                 var exhibits = query
                     .FilterByIds(args.ExcludedIds, args.IncludedIds)
@@ -61,8 +64,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                     .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
                         x.Name.ToLower().Contains(args.Query.ToLower()) ||
                         x.Description.ToLower().Contains(args.Query.ToLower()))
-                    .FilterIf(args.RouteIds != null,
-                        x => true) // TODO: Filter by route
+                    .FilterIf(args.RouteIds != null, x => x.Referencees
+                        .Any(r => r.Collection == ResourceType.Route.Name && routeIds.Contains(r.Id)))
                     .Sort(args.OrderBy,
                         ("id", x => x.Id),
                         ("name", x => x.Name),
