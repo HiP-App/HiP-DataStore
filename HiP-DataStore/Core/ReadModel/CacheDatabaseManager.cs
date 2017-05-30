@@ -82,11 +82,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         break;
 
                     case ExhibitPageCreated e:
-
-                        // TODO: We need references from page to exhibit
-                        // => Page.ExhibitID  directly stored
-                        // => Exhibit.Pages can be calculated based on Exhibit.Referencees
-
                         var newPage = new ExhibitPage(e.Properties)
                         {
                             Id = e.Id,
