@@ -43,7 +43,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet]
         [ProducesResponseType(typeof(AllItemsResult<ExhibitResult>), 200)]
         [ProducesResponseType(400)]
-        [ProducesResponseType(422)]
         public IActionResult Get(ExhibitQueryArgs args)
         {
             if (!ModelState.IsValid)
@@ -74,7 +73,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             }
             catch (InvalidSortKeyException e)
             {
-                return StatusCode(422, e.Message);
+                ModelState.AddModelError(nameof(args.OrderBy), e.Message);
+                return BadRequest(ModelState);
             }
         }
 
@@ -104,14 +104,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpPost]
         [ProducesResponseType(typeof(int), 201)]
         [ProducesResponseType(400)]
-        [ProducesResponseType(422)]
         public async Task<IActionResult> PostAsync([FromBody]ExhibitArgs args)
         {
+            ValidateExhibitArgs(args);
+
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-
-            if (!IsExhibitArgsValid(args, out var validationError))
-                return validationError;
 
             // validation passed, emit events (create exhibit, add references to image and tags)
             var ev = new ExhibitCreated
@@ -130,14 +128,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        [ProducesResponseType(422)]
         public async Task<IActionResult> PutAsync(int id, [FromBody]ExhibitArgs args)
         {
+            ValidateExhibitArgs(args);
+
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-
-            if (!IsExhibitArgsValid(args, out var validationError))
-                return validationError;
 
             if (!_entityIndex.Exists(ResourceType.Exhibit, id))
                 return NotFound();
@@ -196,14 +192,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         }
 
 
-        private bool IsExhibitArgsValid(ExhibitArgs args, out IActionResult response)
+        private void ValidateExhibitArgs(ExhibitArgs args)
         {
+            if (args == null)
+                return;
+
             // ensure referenced image exists and is published
             if (args.Image != null && !_mediaIndex.IsPublishedImage(args.Image.Value))
-            {
-                response = StatusCode(422, ErrorMessages.ImageNotFoundOrNotPublished(args.Image.Value));
-                return false;
-            }
+                ModelState.AddModelError(nameof(args.Image),
+                    ErrorMessages.ImageNotFoundOrNotPublished(args.Image.Value));
 
             // ensure referenced tags exist and are published
             if (args.Tags != null)
@@ -212,15 +209,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                     .Where(id => _entityIndex.Status(ResourceType.Tag, id) != ContentStatus.Published)
                     .ToList();
 
-                if (invalidIds.Count > 0)
-                {
-                    response = StatusCode(422, ErrorMessages.TagNotFoundOrNotPublished(invalidIds[0]));
-                    return false;
-                }
+                foreach (var id in invalidIds)
+                    ModelState.AddModelError(nameof(args.Tags),
+                        ErrorMessages.TagNotFoundOrNotPublished(id));
             }
-
-            response = null;
-            return true;
         }
 
         private async Task AddExhibitReferencesAsync(ExhibitArgs args, int exhibitId)
