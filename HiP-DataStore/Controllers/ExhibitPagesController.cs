@@ -68,6 +68,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            status = status ?? ContentStatus.Published;
+
             var exhibit = _db.Database.GetCollection<Exhibit>(ResourceType.Exhibit.Name)
                 .AsQueryable()
                 .FirstOrDefault(x => x.Id == exhibitId);
@@ -75,9 +77,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (exhibit == null)
                 return NotFound();
 
-            var pageIds = exhibit.Referencees
+            var allPageIds = exhibit.Referencees
                 .Where(r => r.Collection == ResourceType.ExhibitPage.Name)
-                .Select(r => r.Load(_db.Database))
+                .Select(r => r.Id);
+
+            var pageIds = new DocRefList<ExhibitPage>(allPageIds, ResourceType.ExhibitPage.Name)
+                .LoadAll(_db.Database)
                 .Where(p => status == ContentStatus.All || p.Status == status)
                 .Select(p => p.Id)
                 .ToList();
