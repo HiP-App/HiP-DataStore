@@ -134,16 +134,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return validationError;
 
             // validation passed, emit events (create page, add references to image(s) and additional info pages)
-            var ev = new ExhibitPageCreated
-            {
-                Id = _entityIndex.NextId(ResourceType.ExhibitPage),
-                Properties = args,
-                Timestamp = DateTimeOffset.Now
-            };
+            var newPageId = _entityIndex.NextId(ResourceType.ExhibitPage);
+            var events = ExhibitPageCommands.Create(newPageId, args);
+            await _eventStore.AppendEventsAsync(events);
 
-            await _eventStore.AppendEventAsync(ev);
-            await AddExhibitPageReferencesAsync(args, ev.Id);
-            return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Pages/{ev.Id}", ev.Id);
+            return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Pages/{newPageId}", newPageId);
         }
 
         [HttpPut("Pages/{id}")]
@@ -168,16 +163,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return StatusCode(422, ErrorMessages.CannotChangeExhibitPageType(currentPageType, args.Type));
 
             // validation passed, emit events (remove old references, update exhibit, add new references)
-            var ev = new ExhibitPageUpdated
-            {
-                Id = id,
-                Properties = args,
-                Timestamp = DateTimeOffset.Now
-            };
+            var events = ExhibitPageCommands.Update(id, args, _referencesIndex);
+            await _eventStore.AppendEventsAsync(events);
 
-            await RemoveExhibitPageReferencesAsync(ev.Id);
-            await _eventStore.AppendEventAsync(ev);
-            await AddExhibitPageReferencesAsync(args, ev.Id);
             return StatusCode(204);
         }
 
@@ -192,15 +180,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (_referencesIndex.IsUsed(ResourceType.Exhibit, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
 
-            var ev = new ExhibitDeleted { Id = id };
-            await _eventStore.AppendEventAsync(ev);
-
-            // remove references to image and tags
-            foreach (var reference in _referencesIndex.ReferencesOf(ResourceType.Exhibit, id))
-            {
-                var refRemoved = new ReferenceRemoved(ResourceType.Exhibit, id, reference.Type, reference.Id);
-                await _eventStore.AppendEventAsync(refRemoved);
-            }
+            var events = ExhibitPageCommands.Delete(id, _referencesIndex);
+            await _eventStore.AppendEventsAsync(events);
 
             return NoContent();
         }
@@ -293,41 +274,75 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             response = null;
             return true;
         }
+    }
 
-        private async Task AddExhibitPageReferencesAsync(ExhibitPageArgs args, int pageId)
+    public static class ExhibitPageCommands
+    {
+        // TODO: Rewrite Add/RemoveBlaBlaReferences to not directly append to Event Store, but rather
+        //       yield return the generated events. This way it's easier to make methods static
+        //       (useful to separate controller from actual command behavior/functionality)
+
+        private static IEnumerable<IEvent> AddExhibitPageReferences(int pageId, ExhibitPageArgs args)
         {
             if (args.Audio != null)
-            {
-                var audioRef = new ReferenceAdded(ResourceType.ExhibitPage, pageId, ResourceType.Media, args.Audio.Value);
-                await _eventStore.AppendEventAsync(audioRef);
-            }
+                yield return new ReferenceAdded(ResourceType.ExhibitPage, pageId, ResourceType.Media, args.Audio.Value);
 
             if (args.Image != null)
-            {
-                var imageRef = new ReferenceAdded(ResourceType.ExhibitPage, pageId, ResourceType.Media, args.Image.Value);
-                await _eventStore.AppendEventAsync(imageRef);
-            }
+                yield return new ReferenceAdded(ResourceType.ExhibitPage, pageId, ResourceType.Media, args.Image.Value);
 
             foreach (var imageId in args.Images ?? Enumerable.Empty<int>())
-            {
-                var imageRef = new ReferenceAdded(ResourceType.ExhibitPage, pageId, ResourceType.Media, imageId);
-                await _eventStore.AppendEventAsync(imageRef);
-            }
+                yield return new ReferenceAdded(ResourceType.ExhibitPage, pageId, ResourceType.Media, imageId);
 
             foreach (var id in args.AdditionalInformationPages ?? Enumerable.Empty<int>())
-            {
-                var pageRef = new ReferenceAdded(ResourceType.ExhibitPage, pageId, ResourceType.ExhibitPage, id);
-                await _eventStore.AppendEventAsync(pageRef);
-            }
+                yield return new ReferenceAdded(ResourceType.ExhibitPage, pageId, ResourceType.ExhibitPage, id);
         }
 
-        private async Task RemoveExhibitPageReferencesAsync(int pageId)
+        private static IEnumerable<IEvent> RemoveExhibitPageReferences(int pageId, ReferencesIndex referencesIndex)
         {
-            foreach (var reference in _referencesIndex.ReferencesOf(ResourceType.ExhibitPage, pageId))
+            return referencesIndex
+                .ReferencesOf(ResourceType.ExhibitPage, pageId)
+                .Select(reference => new ReferenceRemoved(ResourceType.ExhibitPage, pageId, reference.Type, reference.Id));
+        }
+
+        public static IEnumerable<IEvent> Create(int pageId, ExhibitPageArgs args)
+        {
+            var ev = new ExhibitPageCreated
             {
-                var refRemoved = new ReferenceRemoved(ResourceType.ExhibitPage, pageId, reference.Type, reference.Id);
-                await _eventStore.AppendEventAsync(refRemoved);
-            }
+                Id = pageId,
+                Properties = args,
+                Timestamp = DateTimeOffset.Now
+            };
+
+            var addRefEvents = AddExhibitPageReferences(pageId, args);
+
+            // create the page, then add references
+            return addRefEvents.Prepend(ev);
+        }
+
+        public static IEnumerable<IEvent> Delete(int pageId, ReferencesIndex referencesIndex)
+        {
+            var ev = new ExhibitPageDeleted { Id = pageId };
+            var removeRefEvents = RemoveExhibitPageReferences(pageId, referencesIndex);
+
+            // remove references, then delete the page
+            return removeRefEvents.Append(ev);
+        }
+
+        public static IEnumerable<IEvent> Update(int pageId, ExhibitPageArgs args, ReferencesIndex referencesIndex)
+        {
+            var removeRefEvents = RemoveExhibitPageReferences(pageId, referencesIndex);
+
+            var ev = new ExhibitPageUpdated
+            {
+                Id = pageId,
+                Properties = args,
+                Timestamp = DateTimeOffset.Now
+            };
+
+            var addRefEvents = AddExhibitPageReferences(pageId, args);
+
+            // remove old references, then update the page, then add new references
+            return removeRefEvents.Append(ev).Concat(addRefEvents);
         }
     }
 }

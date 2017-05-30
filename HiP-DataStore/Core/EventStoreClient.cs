@@ -53,6 +53,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
             await Connection.AppendToStreamAsync(_streamName, ExpectedVersion.Any, ev.ToEventData(eventId));
         }
 
+        public async Task AppendEventsAsync(IEnumerable<IEvent> events)
+        {
+            foreach (var ev in events)
+                await AppendEventAsync(ev);
+        }
+
         private void PopulateIndices()
         {
             const int pageSize = 4096; // only 4096 events can be retrieved in one call

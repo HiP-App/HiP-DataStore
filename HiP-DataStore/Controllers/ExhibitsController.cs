@@ -168,6 +168,22 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             await RemoveExhibitReferencesAsync(id);
 
             // TODO: Delete all pages belonging to the exhibit (cascading deletion)
+            var pageIds = _referencesIndex.ReferencesOf(ResourceType.Exhibit, id)
+                .Where(reference => reference.Type.Name == ResourceType.ExhibitPage.Name)
+                .Select(reference => reference.Id)
+                .ToList();
+
+            foreach (var pageId in pageIds)
+            {
+                if (!_entityIndex.Exists(ResourceType.Exhibit, id))
+                    return NotFound();
+
+                if (_referencesIndex.IsUsed(ResourceType.Exhibit, id))
+                    return BadRequest(ErrorMessages.ResourceInUse);
+
+                var pageDeleted = new ExhibitPageDeleted { Id = pageId };
+                
+            }
 
             return NoContent();
         }
