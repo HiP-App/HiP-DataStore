@@ -55,6 +55,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             try
             {
+                var routeIds = args.OnlyRoutes?.Select(id => (BsonValue)id).ToList();
+
                 var exhibits = query
                     .FilterByIds(args.Exclude, args.IncludeOnly)
                     .FilterByStatus(args.Status)
