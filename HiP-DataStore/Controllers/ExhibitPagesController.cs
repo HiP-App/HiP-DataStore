@@ -1,16 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 using PaderbornUniversity.SILab.Hip.DataStore.Core;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
+using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
@@ -125,7 +125,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(404)]
         public async Task<IActionResult> PostForExhibitAsync(int exhibitId, [FromBody]ExhibitPageArgs args)
         {
-            ValidateExhibitPageArgs(args);
+            ExhibitPageCommands.ValidateExhibitPageArgs(args, ModelState.AddModelError, _entityIndex, _mediaIndex);
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -148,7 +148,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(422)]
         public async Task<IActionResult> PutAsync(int id, [FromBody]ExhibitPageArgs args)
         {
-            ValidateExhibitPageArgs(args);
+            ExhibitPageCommands.ValidateExhibitPageArgs(args, ModelState.AddModelError, _entityIndex, _mediaIndex);
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -211,121 +211,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             {
                 return StatusCode(422, e.Message);
             }
-        }
-
-        private void ValidateExhibitPageArgs(ExhibitPageArgs args)
-        {
-            // constrain properties Image, Images and HideYearNumbers to their respective page types
-            if (args.Image != null && args.Type != PageType.AppetizerPage && args.Type != PageType.ImagePage)
-                ModelState.AddModelError(nameof(args.Image),
-                    ErrorMessages.FieldNotAllowedForPageType(nameof(args.Image), args.Type));
-
-            if (args.Images != null && args.Type != PageType.SliderPage)
-                ModelState.AddModelError(nameof(args.Images),
-                    ErrorMessages.FieldNotAllowedForPageType(nameof(args.Images), args.Type));
-
-            if (args.HideYearNumbers != null && args.Type != PageType.SliderPage)
-                ModelState.AddModelError(nameof(args.HideYearNumbers),
-                    ErrorMessages.FieldNotAllowedForPageType(nameof(args.HideYearNumbers), args.Type));
-
-            // ensure referenced image exists and is published
-            if (args.Image != null && !_mediaIndex.IsPublishedImage(args.Image.Value))
-                ModelState.AddModelError(nameof(args.Image),
-                    ErrorMessages.ImageNotFoundOrNotPublished(args.Image.Value));
-
-            // ensure referenced images exist and are published
-            if (args.Images != null)
-            {
-                var invalidIds = args.Images
-                    .Where(id => !_mediaIndex.IsPublishedImage(id))
-                    .ToList();
-
-                foreach (var id in invalidIds)
-                    ModelState.AddModelError(nameof(args.Images),
-                        ErrorMessages.ImageNotFoundOrNotPublished(id));
-            }
-
-            // ensure referenced additional info pages exist and are published
-            if (args.AdditionalInformationPages != null)
-            {
-                var invalidIds = args.AdditionalInformationPages
-                    .Where(id => _entityIndex.Status(ResourceType.ExhibitPage, id) != ContentStatus.Published)
-                    .ToList();
-
-                foreach (var id in invalidIds)
-                    ModelState.AddModelError(nameof(args.AdditionalInformationPages),
-                        ErrorMessages.ExhibitPageNotFoundOrNotPublished(id));
-            }
-        }
-    }
-
-    public static class ExhibitPageCommands
-    {
-        // TODO: Rewrite Add/RemoveBlaBlaReferences to not directly append to Event Store, but rather
-        //       yield return the generated events. This way it's easier to make methods static
-        //       (useful to separate controller from actual command behavior/functionality)
-
-        private static IEnumerable<IEvent> AddExhibitPageReferences(int pageId, ExhibitPageArgs args)
-        {
-            if (args.Audio != null)
-                yield return new ReferenceAdded(ResourceType.ExhibitPage, pageId, ResourceType.Media, args.Audio.Value);
-
-            if (args.Image != null)
-                yield return new ReferenceAdded(ResourceType.ExhibitPage, pageId, ResourceType.Media, args.Image.Value);
-
-            foreach (var imageId in args.Images ?? Enumerable.Empty<int>())
-                yield return new ReferenceAdded(ResourceType.ExhibitPage, pageId, ResourceType.Media, imageId);
-
-            foreach (var id in args.AdditionalInformationPages ?? Enumerable.Empty<int>())
-                yield return new ReferenceAdded(ResourceType.ExhibitPage, pageId, ResourceType.ExhibitPage, id);
-        }
-
-        private static IEnumerable<IEvent> RemoveExhibitPageReferences(int pageId, ReferencesIndex referencesIndex)
-        {
-            return referencesIndex
-                .ReferencesOf(ResourceType.ExhibitPage, pageId)
-                .Select(reference => new ReferenceRemoved(ResourceType.ExhibitPage, pageId, reference.Type, reference.Id));
-        }
-
-        public static IEnumerable<IEvent> Create(int pageId, ExhibitPageArgs args)
-        {
-            var ev = new ExhibitPageCreated
-            {
-                Id = pageId,
-                Properties = args,
-                Timestamp = DateTimeOffset.Now
-            };
-
-            var addRefEvents = AddExhibitPageReferences(pageId, args);
-
-            // create the page, then add references
-            return addRefEvents.Prepend(ev);
-        }
-
-        public static IEnumerable<IEvent> Delete(int pageId, ReferencesIndex referencesIndex)
-        {
-            var ev = new ExhibitPageDeleted { Id = pageId };
-            var removeRefEvents = RemoveExhibitPageReferences(pageId, referencesIndex);
-
-            // remove references, then delete the page
-            return removeRefEvents.Append(ev);
-        }
-
-        public static IEnumerable<IEvent> Update(int pageId, ExhibitPageArgs args, ReferencesIndex referencesIndex)
-        {
-            var removeRefEvents = RemoveExhibitPageReferences(pageId, referencesIndex);
-
-            var ev = new ExhibitPageUpdated
-            {
-                Id = pageId,
-                Properties = args,
-                Timestamp = DateTimeOffset.Now
-            };
-
-            var addRefEvents = AddExhibitPageReferences(pageId, args);
-
-            // remove old references, then update the page, then add new references
-            return removeRefEvents.Append(ev).Concat(addRefEvents);
-        }
+        }   
     }
 }
