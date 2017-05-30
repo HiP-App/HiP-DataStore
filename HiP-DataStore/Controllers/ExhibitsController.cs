@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using PaderbornUniversity.SILab.Hip.DataStore.Core;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
@@ -54,15 +55,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             try
             {
+                var routeIds = args.OnlyRoutes?.Select(id => (BsonValue)id).ToList();
+
                 // TODO: What to do with timestamp?
                 var exhibits = query
-                    .FilterByIds(args.ExcludedIds, args.IncludedIds)
+                    .FilterByIds(args.Exclude, args.IncludeOnly)
                     .FilterByStatus(args.Status)
                     .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
                         x.Name.ToLower().Contains(args.Query.ToLower()) ||
                         x.Description.ToLower().Contains(args.Query.ToLower()))
-                    .FilterIf(args.RouteIds != null,
-                        x => true) // TODO: Filter by route
+                    .FilterIf(args.OnlyRoutes != null, x => x.Referencees
+                        .Any(r => r.Collection == ResourceType.Route.Name && routeIds.Contains(r.Id)))
                     .Sort(args.OrderBy,
                         ("id", x => x.Id),
                         ("name", x => x.Name),
@@ -83,6 +86,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(404)]
         public IActionResult GetById(int id, DateTimeOffset? timestamp = null)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             var exhibit = _db.Database.GetCollection<Exhibit>(ResourceType.Exhibit.Name)
                 .AsQueryable()
                 .FirstOrDefault(x => x.Id == id);
@@ -127,7 +133,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(422)]
-        public async Task<IActionResult> PutAsync(int id, ExhibitArgs args)
+        public async Task<IActionResult> PutAsync(int id, [FromBody]ExhibitArgs args)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -157,6 +163,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(404)]
         public async Task<IActionResult> DeleteAsync(int id)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             if (!_entityIndex.Exists(ResourceType.Exhibit, id))
                 return NotFound();
 

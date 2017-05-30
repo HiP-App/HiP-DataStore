@@ -81,7 +81,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             try
             {
                 var medias = query
-                    .FilterByIds(args.ExcludedIds, args.IncludedIds)
+                    .FilterByIds(args.Exclude, args.IncludeOnly)
                     .FilterByStatus(args.Status)
                     .FilterByUsage(args.Used)
                     .FilterIf(args.Type != null, x => x.Type == args.Type)
@@ -195,6 +195,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(404)]
         public IActionResult GetFileById(int id)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             var media = _db.Database.GetCollection<MediaElement>(ResourceType.Media.Name)
                 .AsQueryable()
                 .FirstOrDefault(x => x.Id == id);
@@ -217,12 +220,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            
-            if (!_entityIndex.Exists(ResourceType.Media,id))
+
+            if (!_entityIndex.Exists(ResourceType.Media, id))
                 return NotFound();
 
             var extension = file.FileName.Split('.').Last();
-            var fileType = Enum.GetName(typeof(MediaType),_mediaIndex.GetMediaType(id));
+            var fileType = Enum.GetName(typeof(MediaType), _mediaIndex.GetMediaType(id));
 
             /* Checking supported extensions
              * Configuration catalogue has to have same key name as on of MediaType constant names */
@@ -235,15 +238,18 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (oldFilePath != null && System.IO.File.Exists(oldFilePath))
                 System.IO.File.Delete(oldFilePath);
 
-
-
             var fileDirectory = Path.Combine(_uploadConfig.Path, fileType);
             Directory.CreateDirectory(fileDirectory);
-            var filePath = Path.Combine(fileDirectory, file.FileName);
+
+            // TODO: How should we handle file name conflicts?
+            // Currently, if someone uploads a file this overwrites any existing file with the same name.
+            // This behavior may or may not be desired. Perhaps we should isolate each media element's files
+            // so that a file for media element X can only be overwritten by uploading a new file for X but not
+            // by uploading a file for another media element Y.
+            var filePath = Path.Combine(fileDirectory, Path.GetFileName(file.FileName));
 
             if (file.Length > 0)
             {
-                // ReSharper disable once 
                 using (var stream = new FileStream(filePath, FileMode.Create))
                 {
                     await file.CopyToAsync(stream);
@@ -256,9 +262,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 File = filePath,
                 Timestamp = DateTimeOffset.Now
             };
+
             await _eventStore.AppendEventAsync(ev);
-
-
             return StatusCode(204);
         }
     }
