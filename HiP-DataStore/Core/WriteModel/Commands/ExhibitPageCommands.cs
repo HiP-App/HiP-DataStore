@@ -17,6 +17,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands
             ExhibitPageArgs args, AddValidationErrorDelegate addValidationError,
             EntityIndex entityIndex, MediaIndex mediaIndex)
         {
+            if (args == null)
+                return;
+
             // constrain properties Image, Images and HideYearNumbers to their respective page types
             if (args.Image != null && args.Type != PageType.AppetizerPage && args.Type != PageType.ImagePage)
                 addValidationError(nameof(args.Image),

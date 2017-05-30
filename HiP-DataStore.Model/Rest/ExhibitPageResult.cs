@@ -46,7 +46,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         public ExhibitPageResult(ExhibitPage page)
         {
             Id = page.Id;
-            ExhibitId = (int?)page.Referencees.SingleOrDefault()?.Id;
+            ExhibitId = (int)page.Exhibit.Id;
             Type = page.Type;
             Title = page.Title;
             Text = page.Text;
