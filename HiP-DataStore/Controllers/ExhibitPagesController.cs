@@ -38,6 +38,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(typeof(IReadOnlyCollection<int>), 200)]
         public IActionResult GetAllIds(ContentStatus? status)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             return Ok(_entityIndex.AllIds(ResourceType.ExhibitPage, status ?? ContentStatus.Published));
         }
 
@@ -56,11 +59,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return QueryExhibitPages(query, args);
         }
 
-        [HttpGet("{exhibitId}/Pages/ids")]
+        [HttpGet("{exhibitId:int}/Pages/ids")]
         [ProducesResponseType(typeof(IReadOnlyCollection<int>), 200)]
+        [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         public IActionResult GetIdsForExhibit(int exhibitId, ContentStatus? status)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             var exhibit = _db.Database.GetCollection<Exhibit>(ResourceType.Exhibit.Name)
                 .AsQueryable()
                 .FirstOrDefault(x => x.Id == exhibitId);
@@ -102,9 +109,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet("Pages/{id}")]
         [ProducesResponseType(typeof(ExhibitPageResult), 200)]
         [ProducesResponseType(304)]
+        [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         public IActionResult GetById(int id, DateTimeOffset? timestamp = null)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             var page = _db.Database.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name)
                 .AsQueryable()
                 .FirstOrDefault(x => x.Id == id);
@@ -174,6 +185,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(404)]
         public async Task<IActionResult> DeleteAsync(int id)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             if (!_entityIndex.Exists(ResourceType.Exhibit, id))
                 return NotFound();
 
