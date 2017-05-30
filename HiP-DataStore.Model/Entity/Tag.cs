@@ -1,4 +1,5 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 {
@@ -12,5 +13,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
         public string Description { get; set; }
 
         public DocRef<MediaElement> Image => _image;
+
+        public Tag()
+        {
+        }
+
+        public Tag(TagArgs args)
+        {
+            Title = args.Title;
+            Description = args.Description;
+            Image.Id = args.Image;
+            Status = args.Status;
+        }
     }
 }

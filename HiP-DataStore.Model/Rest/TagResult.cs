@@ -17,15 +17,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         [JsonConverter(typeof(StringEnumConverter))]
         public ContentStatus Status { get; set; }
 
-
         public static TagResult ConvertFromTag(Tag tag)
         {
-           return new TagResult
+            return new TagResult
             {
                 Id = tag.Id,
                 Title = tag.Title,
                 Description = tag.Description,
                 Image = tag.Image.Id.AsNullableInt32,
+                Used = tag.Referencees.Count > 0,
                 Status = tag.Status,
                 Timestamp = tag.Timestamp,
             };

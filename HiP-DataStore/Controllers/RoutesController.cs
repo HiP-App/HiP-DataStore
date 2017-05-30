@@ -55,7 +55,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             try
             {
                 var routes = query
-                    .FilterByIds(args.ExcludedIds, args.IncludedIds)
+                    .FilterByIds(args.Exclude, args.IncludeOnly)
                     .FilterByStatus(args.Status)
                     .FilterByTimestamp(args.Timestamp)
                     .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
@@ -81,6 +81,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(404)]
         public IActionResult GetById(int id, DateTimeOffset? timestamp = null)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             var route = _db.Database.GetCollection<Route>(ResourceType.Route.Name)
                 .AsQueryable()
                 .FirstOrDefault(x => x.Id == id);
@@ -157,6 +160,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(404)]
         public async Task<IActionResult> DeleteAsync(int id)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             if (!_entityIndex.Exists(ResourceType.Route, id))
                 return NotFound();
 

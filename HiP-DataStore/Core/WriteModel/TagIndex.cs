@@ -12,8 +12,20 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 
         public bool IsTitleExist(string title)
         {
-            lock(_lockObject)
-               return _tag.Any(x => x.Value.Title == title);
+            lock (_lockObject)
+                return _tag.Any(x => x.Value.Title == title);
+        }
+
+        /// <summary>
+        /// Gets the ID of the tag having the specified title, or null if no tag with that title exists.
+        /// </summary>
+        public int? GetIdByTagTitle(string title)
+        {
+            lock (_lockObject)
+            {
+                var matches = _tag.Where(x => x.Value.Title == title);
+                return matches.Any() ? matches.First().Key : default(int?);
+            }
         }
 
         public void ApplyEvent(IEvent e)
@@ -39,6 +51,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
     }
     public class TagInfo
     {
-        public string Title { get; set; }        
+        public string Title { get; set; }
     }
 }
