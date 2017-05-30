@@ -60,6 +60,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
             Images.Add(args.Images?.Select(id => (BsonValue)id));
             HideYearNumbers = args.HideYearNumbers ?? false;
             AdditionalInformationPages.Add(args.AdditionalInformationPages?.Select(id => (BsonValue)id));
+            Status = args.Status;
         }
     }
 }
