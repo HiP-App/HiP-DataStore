@@ -7,6 +7,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
     {
         public int Id { get; set; }
 
+        public int ExhibitId { get; set; }
+
         public ExhibitPageArgs Properties { get; set; }
 
         public DateTimeOffset Timestamp { get; set; }

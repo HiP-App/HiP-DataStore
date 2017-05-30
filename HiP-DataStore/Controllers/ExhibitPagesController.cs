@@ -75,12 +75,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (exhibit == null)
                 return NotFound();
 
-            var ids = exhibit.Pages.LoadAll(_db.Database)
+            var pageIds = exhibit.Referencees
+                .Where(r => r.Collection == ResourceType.ExhibitPage.Name)
+                .Select(r => r.Load(_db.Database))
                 .Where(p => status == ContentStatus.All || p.Status == status)
                 .Select(p => p.Id)
                 .ToList();
 
-            return Ok(ids);
+            return Ok(pageIds);
         }
 
         [HttpGet("{exhibitId}/Pages")]
@@ -102,7 +104,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (exhibit == null)
                 return NotFound();
 
-            var query = exhibit.Pages.LoadAll(_db.Database).AsQueryable();
+            var pageIds = exhibit.Referencees
+                .Where(r => r.Collection == ResourceType.ExhibitPage.Name)
+                .Select(r => r.Id);
+
+            var pageRefs = new DocRefList<ExhibitPage>(pageIds, ResourceType.ExhibitPage.Name);
+            var query = pageRefs.LoadAll(_db.Database).AsQueryable();
+
             return QueryExhibitPages(query, args);
         }
 
@@ -146,7 +154,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             // validation passed, emit events (create page, add references to image(s) and additional info pages)
             var newPageId = _entityIndex.NextId(ResourceType.ExhibitPage);
-            var events = ExhibitPageCommands.Create(newPageId, args);
+            var events = ExhibitPageCommands.Create(newPageId, exhibitId, args);
             await _eventStore.AppendEventsAsync(events);
 
             return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Pages/{newPageId}", newPageId);
@@ -164,7 +172,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
             
-            if (!_entityIndex.Exists(ResourceType.Exhibit, id))
+            if (!_entityIndex.Exists(ResourceType.ExhibitPage, id))
                 return NotFound();
 
             // ReSharper disable once PossibleInvalidOperationException (.Value is safe here since we know the entity exists)
@@ -173,7 +181,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return StatusCode(422, ErrorMessages.CannotChangeExhibitPageType(currentPageType, args.Type));
 
             // validation passed, emit events (remove old references, update exhibit, add new references)
-            var events = ExhibitPageCommands.Update(id, args, _referencesIndex);
+            var events = ExhibitPageCommands.Update(id, args, _referencesIndex, _exhibitPageIndex);
             await _eventStore.AppendEventsAsync(events);
 
             return StatusCode(204);
@@ -188,10 +196,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!_entityIndex.Exists(ResourceType.Exhibit, id))
+            if (!_entityIndex.Exists(ResourceType.ExhibitPage, id))
                 return NotFound();
 
-            if (_referencesIndex.IsUsed(ResourceType.Exhibit, id))
+            if (_referencesIndex.IsUsed(ResourceType.ExhibitPage, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
 
             var events = ExhibitPageCommands.Delete(id, _referencesIndex);

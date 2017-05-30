@@ -60,8 +60,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands
             }
         }
 
-        private static IEnumerable<IEvent> AddExhibitPageReferences(int pageId, ExhibitPageArgs args)
+        private static IEnumerable<IEvent> AddExhibitPageReferences(int pageId, int exhibitId, ExhibitPageArgs args)
         {
+            // pages have a reference to the exhibit they belong to, so an exhibit can determine its pages via Exhibit.Referencees
+            yield return new ReferenceAdded(ResourceType.ExhibitPage, pageId, ResourceType.Exhibit, exhibitId);
+
             if (args.Audio != null)
                 yield return new ReferenceAdded(ResourceType.ExhibitPage, pageId, ResourceType.Media, args.Audio.Value);
 
@@ -82,16 +85,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands
                 .Select(reference => new ReferenceRemoved(ResourceType.ExhibitPage, pageId, reference.Type, reference.Id));
         }
 
-        public static IEnumerable<IEvent> Create(int pageId, ExhibitPageArgs args)
+        public static IEnumerable<IEvent> Create(int pageId, int exhibitId, ExhibitPageArgs args)
         {
             var ev = new ExhibitPageCreated
             {
                 Id = pageId,
+                ExhibitId = exhibitId,
                 Properties = args,
                 Timestamp = DateTimeOffset.Now
             };
 
-            var addRefEvents = AddExhibitPageReferences(pageId, args);
+            var addRefEvents = AddExhibitPageReferences(pageId, exhibitId, args);
 
             // create the page, then add references
             return addRefEvents.Prepend(ev);
@@ -106,8 +110,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands
             return removeRefEvents.Append(ev);
         }
 
-        public static IEnumerable<IEvent> Update(int pageId, ExhibitPageArgs args, ReferencesIndex referencesIndex)
+        public static IEnumerable<IEvent> Update(int pageId, ExhibitPageArgs args, ReferencesIndex referencesIndex, ExhibitPageIndex pageIndex)
         {
+            // ReSharper disable once PossibleInvalidOperationException
+            var exhibitId = pageIndex.ExhibitId(pageId).Value;
+
             var removeRefEvents = RemoveExhibitPageReferences(pageId, referencesIndex);
 
             var ev = new ExhibitPageUpdated
@@ -117,7 +124,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands
                 Timestamp = DateTimeOffset.Now
             };
 
-            var addRefEvents = AddExhibitPageReferences(pageId, args);
+            var addRefEvents = AddExhibitPageReferences(pageId, exhibitId, args);
 
             // remove old references, then update the page, then add new references
             return removeRefEvents.Append(ev).Concat(addRefEvents);

@@ -10,9 +10,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
         [BsonElement(nameof(Image))]
         private DocRef<MediaElement> _image = new DocRef<MediaElement>(ResourceType.Media.Name);
 
-        [BsonElement(nameof(Pages))]
-        private DocRefList<ExhibitPage> _pages = new DocRefList<ExhibitPage>(ResourceType.ExhibitPage.Name);
-
         [BsonElement(nameof(Tags))]
         private DocRefList<Tag> _tags = new DocRefList<Tag>(ResourceType.Tag.Name);
 
@@ -25,8 +22,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
         public float Longitude { get; set; }
 
         public DocRef<MediaElement> Image => _image;
-
-        public DocRefList<ExhibitPage> Pages => _pages;
 
         public DocRefList<Tag> Tags => _tags;
 

@@ -166,7 +166,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.Exhibit, id))
                 return NotFound();
 
-            if (_referencesIndex.IsUsed(ResourceType.Exhibit, id))
+            // Check if exhibit is in use and can't be deleted (it's in use if and only if it is contained in a route).
+            // We can't use _referencesIndex.IsUsed(...) here as it would return true as soon as the exhibit has pages
+            // (since pages have a reference to their containing exhibit)
+            if (_referencesIndex.ReferencesTo(ResourceType.Exhibit, id).Any(r => r.Type == ResourceType.Route))
                 return BadRequest(ErrorMessages.ResourceInUse);
 
             // pages should be deleted along with the exhibit (cascading deletion) => first, remove the pages

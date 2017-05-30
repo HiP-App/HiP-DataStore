@@ -23,6 +23,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
         public string FontFamily { get; set; }
 
         [BsonElement]
+        public DocRef<Exhibit> Exhibit { get; private set; } =
+            new DocRef<Exhibit>(ResourceType.Exhibit.Name);
+
+        [BsonElement]
         public DocRef<MediaElement> Audio { get; private set; } =
             new DocRef<MediaElement>(ResourceType.Media.Name);
 
