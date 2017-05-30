@@ -173,7 +173,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return BadRequest(ErrorMessages.ResourceInUse);
 
             // pages should be deleted along with the exhibit (cascading deletion) => first, remove the pages
-            var pageIds = _referencesIndex.ReferencesOf(ResourceType.Exhibit, id)
+            var pageIds = _referencesIndex.ReferencesTo(ResourceType.Exhibit, id)
                 .Where(reference => reference.Type.Name == ResourceType.ExhibitPage.Name)
                 .Select(reference => reference.Id)
                 .ToList();
