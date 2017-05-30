@@ -58,6 +58,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         [HttpGet("{exhibitId}/Pages/ids")]
         [ProducesResponseType(typeof(IReadOnlyCollection<int>), 200)]
+        [ProducesResponseType(404)]
         public IActionResult GetIdsForExhibit(int exhibitId, ContentStatus? status)
         {
             var exhibit = _db.Database.GetCollection<Exhibit>(ResourceType.Exhibit.Name)
@@ -121,17 +122,16 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpPost("{exhibitId}/Pages")]
         [ProducesResponseType(typeof(int), 201)]
         [ProducesResponseType(400)]
-        [ProducesResponseType(422)]
+        [ProducesResponseType(404)]
         public async Task<IActionResult> PostForExhibitAsync(int exhibitId, [FromBody]ExhibitPageArgs args)
         {
+            ValidateExhibitPageArgs(args);
+
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
             if (!_entityIndex.Exists(ResourceType.Exhibit, exhibitId))
                 return NotFound();
-
-            if (!IsExhibitPageArgsValid(args, out var validationError))
-                return validationError;
 
             // validation passed, emit events (create page, add references to image(s) and additional info pages)
             var newPageId = _entityIndex.NextId(ResourceType.ExhibitPage);
@@ -148,12 +148,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(422)]
         public async Task<IActionResult> PutAsync(int id, [FromBody]ExhibitPageArgs args)
         {
+            ValidateExhibitPageArgs(args);
+
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-
-            if (!IsExhibitPageArgsValid(args, out var validationError))
-                return validationError;
-
+            
             if (!_entityIndex.Exists(ResourceType.Exhibit, id))
                 return NotFound();
 
@@ -171,6 +170,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         [HttpDelete("Pages/{id}")]
         [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         public async Task<IActionResult> DeleteAsync(int id)
         {
@@ -192,7 +192,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             try
             {
                 var pages = allPages
-                    .FilterByIds(args.ExcludedIds, args.IncludedIds)
+                    .FilterByIds(args.Exclude, args.IncludeOnly)
                     .FilterByStatus(args.Status)
                     .FilterByTimestamp(args.Timestamp)
                     .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
@@ -213,35 +213,25 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             }
         }
 
-        private bool IsExhibitPageArgsValid(ExhibitPageArgs args, out IActionResult response)
+        private void ValidateExhibitPageArgs(ExhibitPageArgs args)
         {
             // constrain properties Image, Images and HideYearNumbers to their respective page types
-            if (args.Image != null &&
-                args.Type != PageType.AppetizerPage &&
-                args.Type != PageType.ImagePage)
-            {
-                response = StatusCode(422, ErrorMessages.FieldNotAllowedForPageType(nameof(args.Image), args.Type));
-                return false;
-            }
+            if (args.Image != null && args.Type != PageType.AppetizerPage && args.Type != PageType.ImagePage)
+                ModelState.AddModelError(nameof(args.Image),
+                    ErrorMessages.FieldNotAllowedForPageType(nameof(args.Image), args.Type));
 
             if (args.Images != null && args.Type != PageType.SliderPage)
-            {
-                response = StatusCode(422, ErrorMessages.FieldNotAllowedForPageType(nameof(args.Images), args.Type));
-                return false;
-            }
+                ModelState.AddModelError(nameof(args.Images),
+                    ErrorMessages.FieldNotAllowedForPageType(nameof(args.Images), args.Type));
 
             if (args.HideYearNumbers != null && args.Type != PageType.SliderPage)
-            {
-                response = StatusCode(422, ErrorMessages.FieldNotAllowedForPageType(nameof(args.HideYearNumbers), args.Type));
-                return false;
-            }
+                ModelState.AddModelError(nameof(args.HideYearNumbers),
+                    ErrorMessages.FieldNotAllowedForPageType(nameof(args.HideYearNumbers), args.Type));
 
             // ensure referenced image exists and is published
             if (args.Image != null && !_mediaIndex.IsPublishedImage(args.Image.Value))
-            {
-                response = StatusCode(422, ErrorMessages.ImageNotFoundOrNotPublished(args.Image.Value));
-                return false;
-            }
+                ModelState.AddModelError(nameof(args.Image),
+                    ErrorMessages.ImageNotFoundOrNotPublished(args.Image.Value));
 
             // ensure referenced images exist and are published
             if (args.Images != null)
@@ -250,11 +240,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                     .Where(id => !_mediaIndex.IsPublishedImage(id))
                     .ToList();
 
-                if (invalidIds.Count > 0)
-                {
-                    response = StatusCode(422, ErrorMessages.ImageNotFoundOrNotPublished(invalidIds[0]));
-                    return false;
-                }
+                foreach (var id in invalidIds)
+                    ModelState.AddModelError(nameof(args.Images),
+                        ErrorMessages.ImageNotFoundOrNotPublished(id));
             }
 
             // ensure referenced additional info pages exist and are published
@@ -264,15 +252,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                     .Where(id => _entityIndex.Status(ResourceType.ExhibitPage, id) != ContentStatus.Published)
                     .ToList();
 
-                if (invalidIds.Count > 0)
-                {
-                    response = StatusCode(422, ErrorMessages.ExhibitPageNotFoundOrNotPublished(invalidIds[0]));
-                    return false;
-                }
+                foreach (var id in invalidIds)
+                    ModelState.AddModelError(nameof(args.AdditionalInformationPages),
+                        ErrorMessages.ExhibitPageNotFoundOrNotPublished(id));
             }
-
-            response = null;
-            return true;
         }
     }
 
