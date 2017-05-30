@@ -9,15 +9,26 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
     public class ExhibitResult
     {
         public int Id { get; set; }
+
         public string Name { get; set; }
+
         public string Description { get; set; }
+
         public int? Image { get; set; }
+
         public float Latitude { get; set; }
+
         public float Longitude { get; set; }
+
         public bool Used { get; set; }
+
+        public int[] Pages { get; set; }
+
         [JsonConverter(typeof(StringEnumConverter))]
         public ContentStatus Status { get; set; }
+
         public int[] Tags { get; set; }
+
         public DateTimeOffset Timestamp { get; set; }
 
         public ExhibitResult()
@@ -33,6 +44,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
             Latitude = x.Latitude;
             Longitude = x.Longitude;
             Used = x.Referencees.Count > 0;
+            Pages = x.Pages.Select(id => (int)id).ToArray();
             Status = x.Status;
             Tags = x.Tags.Select(id => (int)id).ToArray();
             Timestamp = x.Timestamp;
