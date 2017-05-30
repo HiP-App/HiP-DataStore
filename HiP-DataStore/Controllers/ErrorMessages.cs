@@ -16,5 +16,8 @@
 
         public static string ResourceInUse =>
             "The resource cannot be deleted because it is referenced by other resources";
+
+        public static string TagNameAlreadyUsed =>
+            "A tag with the same name already exists";
     }
 }
