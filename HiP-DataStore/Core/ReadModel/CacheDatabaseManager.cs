@@ -156,7 +156,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         
                     case MediaFileUpdated e:
                         var fileDocBson = e.ToBsonDocument();
-                        fileDocBson.Remove("Id");
+                        fileDocBson.Remove("_id");
                         var bsonDoc = new BsonDocument("$set", fileDocBson);
                         _db.GetCollection<MediaElement>(ResourceType.Media.Name).UpdateOne(x => x.Id == e.Id, bsonDoc);
                         break;
