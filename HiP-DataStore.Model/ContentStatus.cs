@@ -19,11 +19,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
         /// <summary>
         /// The content needs to be reviewed.
         /// </summary>
-        /// <remarks>
-        /// [EnumMember(...)] only applies to JSON responses, not to requests.
-        /// That's why 
-        /// </remarks>
         [EnumMember(Value = "IN_REVIEW")]
+        // ReSharper disable once InconsistentNaming
         In_Review,
 
         /// <summary>
