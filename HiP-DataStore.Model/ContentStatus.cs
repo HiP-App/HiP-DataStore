@@ -4,6 +4,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
 {
     public enum ContentStatus
     {
+        // Note:
+        // [EnumMember(...)] only applies to JSON responses, not to requests. We are only using it to make the
+        // enum values uppercase in the responses (to match the spec). In requests, upper-/lowercasing does not
+        // matter, so the enum values are named 95% according to C# conventions, we only include the underscore
+        // in "In_Review" so that we can use "IN_REVIEW" in requests.
+
         /// <summary>
         /// The content is an unpublished draft.
         /// </summary>
@@ -13,8 +19,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
         /// <summary>
         /// The content needs to be reviewed.
         /// </summary>
+        /// <remarks>
+        /// [EnumMember(...)] only applies to JSON responses, not to requests.
+        /// That's why 
+        /// </remarks>
         [EnumMember(Value = "IN_REVIEW")]
-        InReview,
+        In_Review,
 
         /// <summary>
         /// The content is approved by a supervisor.
