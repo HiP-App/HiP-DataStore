@@ -20,10 +20,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
     /// </remarks>
     public class EventStoreClient
     {
-        public const string DefaultStreamName = "main-stream";
-
-        private readonly ILogger<EventStoreClient> _logger;
         private readonly IReadOnlyCollection<IDomainIndex> _indices;
+        private readonly ILogger<EventStoreClient> _logger;
+        private readonly string _streamName;
 
         public IEventStoreConnection Connection { get; }
 
@@ -37,6 +36,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
             var settings = ConnectionSettings.Create()
                 .EnableVerboseLogging()
                 .Build();
+
+            _streamName = config.Value.EventStoreStream;
 
             Connection = EventStoreConnection.Create(settings, new Uri(config.Value.EventStoreHost));
             Connection.ConnectAsync().Wait();
@@ -56,7 +57,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
 
             // persist event in Event Store
             var eventId = Guid.NewGuid();
-            await Connection.AppendToStreamAsync(DefaultStreamName, ExpectedVersion.Any, ev.ToEventData(eventId));
+            await Connection.AppendToStreamAsync(_streamName, ExpectedVersion.Any, ev.ToEventData(eventId));
+        }
+
+        public async Task AppendEventsAsync(IEnumerable<IEvent> events)
+        {
+            foreach (var ev in events)
+                await AppendEventAsync(ev);
         }
 
         private void PopulateIndices()
@@ -69,7 +76,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
 
             do
             {
-                readResult = Connection.ReadStreamEventsForwardAsync(DefaultStreamName, start, pageSize, false).Result;
+                readResult = Connection.ReadStreamEventsForwardAsync(_streamName, start, pageSize, false).Result;
 
                 foreach (var eventData in readResult.Events)
                 {

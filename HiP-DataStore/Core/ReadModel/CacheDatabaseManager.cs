@@ -43,7 +43,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
             _eventStore = eventStore;
 
             _eventStore.Connection.SubscribeToStreamFrom(
-                EventStoreClient.DefaultStreamName,
+                config.Value.EventStoreStream,
                 null, // don't use StreamPosition.Start (see https://groups.google.com/forum/#!topic/event-store/8tpXJMNEMqI),
                 CatchUpSubscriptionSettings.Default,
                 OnEventAppeared);
@@ -79,6 +79,31 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 
                     case ExhibitDeleted e:
                         _db.GetCollection<Exhibit>(ResourceType.Exhibit.Name).DeleteOne(x => x.Id == e.Id);
+                        break;
+
+                    case ExhibitPageCreated e:
+                        var newPage = new ExhibitPage(e.Properties)
+                        {
+                            Id = e.Id,
+                            Exhibit = { Id = e.ExhibitId },
+                            Timestamp = e.Timestamp
+                        };
+
+                        _db.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name).InsertOne(newPage);
+                        break;
+
+                    case ExhibitPageUpdated e:
+                        var updatedPage = new ExhibitPage(e.Properties)
+                        {
+                            Id = e.Id,
+                            Timestamp = e.Timestamp
+                        };
+
+                        _db.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name).ReplaceOne(x => x.Id == e.Id, updatedPage);
+                        break;
+
+                    case ExhibitPageDeleted e:
+                        _db.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name).DeleteOne(x => x.Id == e.Id);
                         break;
 
                     case RouteCreated e:
@@ -128,7 +153,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     case MediaDeleted e:
                         _db.GetCollection<MediaElement>(ResourceType.Media.Name).DeleteOne(m => m.Id == e.Id);
                         break;
-
+                        
                     case MediaFileUpdated e:
                         var fileDocBson = e.ToBsonDocument();
                         fileDocBson.Remove("Id");

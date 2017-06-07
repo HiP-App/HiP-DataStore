@@ -89,12 +89,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 
                 case MediaUpdate ev:
                     lock (_lockObject)
-                        _media[ev.Id].Status = ev.GetStatus();
+                        _media[ev.Id].Status = ev.GetStatus(); 
                     break;
 
                 case MediaFileUpdated ev:
                     lock (_lockObject)
-                        _media[ev.Id].FilePath = ev.File;
+                        _media[ev.Id].FilePath = ev.File; 
                     break;
             }
         }

@@ -53,10 +53,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             try
             {
-                // TODO: What to do with timestamp?
                 var routes = query
                     .FilterByIds(args.Exclude, args.IncludeOnly)
                     .FilterByStatus(args.Status)
+                    .FilterByTimestamp(args.Timestamp)
                     .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
                         x.Title.ToLower().Contains(args.Query.ToLower()) ||
                         x.Description.ToLower().Contains(args.Query.ToLower()))
