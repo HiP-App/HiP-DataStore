@@ -82,9 +82,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 var medias = query
                     .FilterByIds(args.Exclude, args.IncludeOnly)
                     .FilterByStatus(args.Status)
+                    .FilterByTimestamp(args.Timestamp)
                     .FilterByUsage(args.Used)
                     .FilterIf(args.Type != null, x => x.Type == args.Type)
-                    .FilterIf(args.Timestamp != null, x => DateTimeOffset.Compare(x.Timestamp, args.Timestamp.GetValueOrDefault()) == 1)
                     .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
                         x.Title.ToLower().Contains(args.Query.ToLower()) ||
                         x.Description.ToLower().Contains(args.Query.ToLower()))
@@ -130,7 +130,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return NotFound();
 
             // Media instance wasn`t modified after timestamp
-            if (DateTimeOffset.Compare(media.Timestamp, timestamp.GetValueOrDefault()) != 1)
+            if (timestamp != null && media.Timestamp <= timestamp)
                 return StatusCode(304);
 
             var result = new MediaResult

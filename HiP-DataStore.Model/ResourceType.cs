@@ -6,6 +6,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
     public struct ResourceType : IEquatable<ResourceType>
     {
         public static readonly ResourceType Exhibit = new ResourceType("Exhibit");
+        public static readonly ResourceType ExhibitPage = new ResourceType("ExhibitPage");
         public static readonly ResourceType Route = new ResourceType("Route");
         public static readonly ResourceType Media = new ResourceType("Media");
         public static readonly ResourceType Tag = new ResourceType("Tag");

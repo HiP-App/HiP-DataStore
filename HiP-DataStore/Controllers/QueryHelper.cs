@@ -40,6 +40,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             }
         }
 
+        public static IQueryable<T> FilterByTimestamp<T>(this IQueryable<T> query, DateTimeOffset? timestamp) where T : ContentBase
+        {
+            return (timestamp == null)
+                ? query
+                : query.Where(x => x.Timestamp > timestamp.Value);
+        }
+
         /// <summary>
         /// Executes the query to determine the number of results, then retrieves a subset of the results
         /// (determined by <paramref name="page"/> and <paramref name="pageSize"/>) and projects them to objects of

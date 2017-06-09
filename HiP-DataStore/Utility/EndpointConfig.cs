@@ -25,5 +25,11 @@
         /// See also: http://docs.geteventstore.com/dotnet-api/4.0.0/connecting-to-a-server/
         /// </summary>
         public string EventStoreHost { get; set; }
+
+        /// <summary>
+        /// Name of the event stream to read from and write to.
+        /// For example, you can use different streams for develop and production environments.
+        /// </summary>
+        public string EventStoreStream { get; set; }
     }
 }

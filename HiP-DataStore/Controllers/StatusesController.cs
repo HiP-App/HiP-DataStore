@@ -10,7 +10,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         public IActionResult Index() => Ok(new[]
         {
             ContentStatus.Published,
-            ContentStatus.InReview,
+            ContentStatus.In_Review,
             ContentStatus.Draft
         });
     }

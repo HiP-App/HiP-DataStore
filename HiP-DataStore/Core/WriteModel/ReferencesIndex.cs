@@ -39,7 +39,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
         public IReadOnlyCollection<Entry> ReferencesTo(ResourceType type, int id)
         {
             var key = new Entry(type, id);
-            return _referencesOf.TryGetValue(key, out var set) ? set.ToArray() : Array.Empty<Entry>();
+            return _referencesTo.TryGetValue(key, out var set) ? set.ToArray() : Array.Empty<Entry>();
         }
 
         public void ApplyEvent(IEvent ev)

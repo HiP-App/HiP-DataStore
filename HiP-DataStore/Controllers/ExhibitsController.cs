@@ -4,6 +4,7 @@ using MongoDB.Driver;
 using PaderbornUniversity.SILab.Hip.DataStore.Core;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
+using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
@@ -56,10 +57,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             {
                 var routeIds = args.OnlyRoutes?.Select(id => (BsonValue)id).ToList();
 
-                // TODO: What to do with timestamp?
                 var exhibits = query
                     .FilterByIds(args.Exclude, args.IncludeOnly)
                     .FilterByStatus(args.Status)
+                    .FilterByTimestamp(args.Timestamp)
                     .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
                         x.Name.ToLower().Contains(args.Query.ToLower()) ||
                         x.Description.ToLower().Contains(args.Query.ToLower()))
@@ -165,18 +166,31 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.Exhibit, id))
                 return NotFound();
 
-            if (_referencesIndex.IsUsed(ResourceType.Exhibit, id))
+            // Check if exhibit is in use and can't be deleted (it's in use if and only if it is contained in a route).
+            // We can't use _referencesIndex.IsUsed(...) here as it would return true as soon as the exhibit has pages
+            // (since pages have a reference to their containing exhibit)
+            if (_referencesIndex.ReferencesTo(ResourceType.Exhibit, id).Any(r => r.Type == ResourceType.Route))
                 return BadRequest(ErrorMessages.ResourceInUse);
 
+            // pages should be deleted along with the exhibit (cascading deletion) => first, remove the pages
+            var pageIds = _referencesIndex.ReferencesTo(ResourceType.Exhibit, id)
+                .Where(reference => reference.Type.Name == ResourceType.ExhibitPage.Name)
+                .Select(reference => reference.Id)
+                .ToList();
+
+            foreach (var pageId in pageIds)
+            {
+                if (_referencesIndex.IsUsed(ResourceType.ExhibitPage, pageId))
+                    return BadRequest("The exhibit cannot be deleted because it contains pages that are referenced by other resources");
+
+                var pageDeleteEvents = ExhibitPageCommands.Delete(pageId, _referencesIndex);
+                await _eventStore.AppendEventsAsync(pageDeleteEvents);
+            }
+
+            // now remove the actual exhibit
             var ev = new ExhibitDeleted { Id = id };
             await _eventStore.AppendEventAsync(ev);
-
-            // remove references to image and tags
-            foreach (var reference in _referencesIndex.ReferencesOf(ResourceType.Exhibit, id))
-            {
-                var refRemoved = new ReferenceRemoved(ResourceType.Exhibit, id, reference.Type, reference.Id);
-                await _eventStore.AppendEventAsync(refRemoved);
-            }
+            await RemoveExhibitReferencesAsync(id);
 
             return NoContent();
         }
