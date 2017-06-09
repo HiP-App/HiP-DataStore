@@ -56,9 +56,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             // retrieve ALL items and then count them, which might have an even more negative performance impact.
             var totalCount = query.Count();
 
-            var itemsInPage = (page < 0 || pageSize <= 0)
+            var itemsInPage = (page < 1 || pageSize <= 0)
                 ? Enumerable.Empty<T>().AsQueryable()
-                : query.Skip(page * pageSize).Take(pageSize);
+                : query.Skip((page-1) * pageSize).Take(pageSize);
 
             return new AllItemsResult<TResult>
             {

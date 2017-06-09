@@ -20,10 +20,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         public List<int> IncludeOnly { get; set; }
 
         /// <summary>
-        /// The page number. Defaults to zero, which is the first page.
+        /// The page number. Defaults to one, which is the first page.
         /// </summary>
-        [Range(0, int.MaxValue)]
-        public int Page { get; set; }
+        [Range(1, int.MaxValue)]
+        [DefaultValue(1)]
+        public int Page { get; set; } = 1;
 
         /// <summary>
         /// Maximum number of entities in the response. The last page may have less entities,
