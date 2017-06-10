@@ -72,6 +72,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
                     builder.AllowAnyHeader()
                         .AllowAnyMethod()
                         .AllowAnyOrigin()
+                        .WithExposedHeaders(new string[] { "Content-Disposition" })
             );
 
             app.UseMvc();
