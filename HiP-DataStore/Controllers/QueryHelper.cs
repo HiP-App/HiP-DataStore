@@ -42,12 +42,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         public static IQueryable<T> FilterByTimestamp<T>(this IQueryable<T> query, DateTimeOffset? timestamp) where T : ContentBase
         {
-            if (timestamp != null)
-            {
-                var times = query.Select(x => x.Timestamp).ToList();
-                System.Diagnostics.Debug.WriteLine($"FilterByTimestamp: Request timestamp is '{timestamp.Value}', item timestamps are '{string.Join("; ", times)}'");
-            }
-
             return (timestamp == null)
                 ? query
                 : query.Where(x => x.Timestamp > timestamp.Value);

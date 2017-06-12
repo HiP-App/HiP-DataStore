@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using PaderbornUniversity.SILab.Hip.DataStore.Core;
@@ -25,13 +26,18 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly EntityIndex _entityIndex;
         private readonly ReferencesIndex _referencesIndex;
 
-        public ExhibitsController(EventStoreClient eventStore, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices)
+        // DEBUG
+        private readonly ILogger<ExhibitsController> _logger;
+
+        public ExhibitsController(EventStoreClient eventStore, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices, ILogger<ExhibitsController> logger)
         {
             _eventStore = eventStore;
             _db = db;
             _mediaIndex = indices.OfType<MediaIndex>().First();
             _entityIndex = indices.OfType<EntityIndex>().First();
             _referencesIndex = indices.OfType<ReferencesIndex>().First();
+
+            _logger = logger; // DEBUG
         }
 
         [HttpGet("ids")]
@@ -56,6 +62,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             try
             {
                 var routeIds = args.OnlyRoutes?.Select(id => (BsonValue)id).ToList();
+
+                // DEBUG
+                if (args.Timestamp != null)
+                {
+                    var times = query.Select(x => x.Timestamp).ToList();
+                    System.Diagnostics.Debug.WriteLine($"FilterByTimestamp: Request timestamp is '{args.Timestamp.Value}', item timestamps are '{string.Join("; ", times)}'");
+                }
 
                 var exhibits = query
                     .FilterByIds(args.Exclude, args.IncludeOnly)
