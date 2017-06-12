@@ -67,7 +67,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 if (args.Timestamp != null)
                 {
                     var times = query.Select(x => x.Timestamp).ToList();
-                    _logger.LogInformation($"FilterByTimestamp: Request timestamp is '{args.Timestamp.Value}', item timestamps are '{string.Join("; ", times)}'");
+                    Console.WriteLine($"FilterByTimestamp: Request timestamp is '{args.Timestamp.Value}', item timestamps are '{string.Join("; ", times)}'");
                 }
 
                 var exhibits = query
