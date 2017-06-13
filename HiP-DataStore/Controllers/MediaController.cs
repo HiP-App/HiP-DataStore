@@ -232,21 +232,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_uploadConfig.SupportedFormats[fileType].Contains(extension.ToLower()))
                 return BadRequest(new { Message = $"Extension '{extension}' is not supported for type '{fileType}'" });
 
-
             // Remove old file
             string oldFilePath = _mediaIndex.GetFilePath(id);
             if (oldFilePath != null && System.IO.File.Exists(oldFilePath))
                 System.IO.File.Delete(oldFilePath);
 
-            
             var fileDirectory = Path.Combine(_uploadConfig.Path, fileType, id.ToString());
             Directory.CreateDirectory(fileDirectory);
 
-            // TODO: How should we handle file name conflicts?
-            // Currently, if someone uploads a file this overwrites any existing file with the same name.
-            // This behavior may or may not be desired. Perhaps we should isolate each media element's files
-            // so that a file for media element X can only be overwritten by uploading a new file for X but not
-            // by uploading a file for another media element Y.
             var filePath = Path.Combine(fileDirectory, Path.GetFileName(file.FileName));
 
             if (file.Length > 0)
