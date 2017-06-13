@@ -12,7 +12,6 @@
     "MongoDbName": "main",
 
     "EventStoreHost": "tcp://localhost:1113",
-    "EventStoreStream": "DataStore",
 
     // To connect to an Event Store cluster use this instead:
     // "EventStoreHost": "discover://username:password@myserver:1113",
