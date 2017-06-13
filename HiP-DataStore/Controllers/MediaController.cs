@@ -238,7 +238,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (oldFilePath != null && System.IO.File.Exists(oldFilePath))
                 System.IO.File.Delete(oldFilePath);
 
-            var fileDirectory = Path.Combine(_uploadConfig.Path, fileType);
+            
+            var fileDirectory = Path.Combine(_uploadConfig.Path, fileType, id.ToString());
             Directory.CreateDirectory(fileDirectory);
 
             // TODO: How should we handle file name conflicts?
