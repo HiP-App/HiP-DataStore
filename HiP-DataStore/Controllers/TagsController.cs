@@ -24,7 +24,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly TagIndex _tagIndex;
         private readonly ReferencesIndex _referencesIndex;
 
-
         public TagsController(EventStoreClient eventStore, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices)
         {
             _ev = eventStore;
@@ -35,38 +34,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             _referencesIndex = indices.OfType<ReferencesIndex>().First();
         }
 
-        [HttpPost]
-        [ProducesResponseType(typeof(int), 200)]
-        [ProducesResponseType(400)]
-        [ProducesResponseType(409)]
-        public async Task<IActionResult> PostAsync([FromBody]TagArgs args)
+        [HttpGet("ids")]
+        [ProducesResponseType(typeof(IReadOnlyCollection<int>), 200)]
+        public IActionResult GetIds(ContentStatus? status)
         {
-            ValidateTagArgs(args);
-
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            if (_tagIndex.IsTitleExist(args.Title))
-                return StatusCode(409);
-
-            int id = _entityIndex.NextId(ResourceType.Tag);
-            var ev = new TagCreated
-            {
-                Id = id,
-                Properties = args,
-                Timestamp = DateTimeOffset.Now
-            };
-
-            await _ev.AppendEventAsync(ev);
-
-            if (args.Image != null)
-            {
-                var newRef = new ReferenceAdded(ResourceType.Tag, id, ResourceType.Media, args.Image.Value);
-                await _ev.AppendEventAsync(newRef);
-            }
-
-            return Ok(id);
-
+            return Ok(_entityIndex.AllIds(ResourceType.Tag, status ?? ContentStatus.Published));
         }
 
         [HttpGet]
@@ -128,6 +100,40 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             var tagResult = TagResult.ConvertFromTag(tag);
 
             return Ok(tagResult);
+
+        }
+
+        [HttpPost]
+        [ProducesResponseType(typeof(int), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(409)]
+        public async Task<IActionResult> PostAsync([FromBody]TagArgs args)
+        {
+            ValidateTagArgs(args);
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (_tagIndex.IsTitleExist(args.Title))
+                return StatusCode(409);
+
+            int id = _entityIndex.NextId(ResourceType.Tag);
+            var ev = new TagCreated
+            {
+                Id = id,
+                Properties = args,
+                Timestamp = DateTimeOffset.Now
+            };
+
+            await _ev.AppendEventAsync(ev);
+
+            if (args.Image != null)
+            {
+                var newRef = new ReferenceAdded(ResourceType.Tag, id, ResourceType.Media, args.Image.Value);
+                await _ev.AppendEventAsync(newRef);
+            }
+
+            return Ok(id);
 
         }
 
