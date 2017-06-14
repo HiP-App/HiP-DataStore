@@ -14,7 +14,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands
     public static class ExhibitPageCommands
     {
         public static void ValidateExhibitPageArgs(
-            ExhibitPageArgs args, AddValidationErrorDelegate addValidationError,
+            ExhibitPageArgs2 args, AddValidationErrorDelegate addValidationError,
             EntityIndex entityIndex, MediaIndex mediaIndex)
         {
             if (args == null)
@@ -42,6 +42,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands
             if (args.Images != null)
             {
                 var invalidIds = args.Images
+                    .Select(img => img.Image)
                     .Where(id => !mediaIndex.IsPublishedImage(id))
                     .ToList();
 
@@ -63,7 +64,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands
             }
         }
 
-        private static IEnumerable<IEvent> AddExhibitPageReferences(int pageId, int exhibitId, ExhibitPageArgs args)
+        private static IEnumerable<IEvent> AddExhibitPageReferences(int pageId, int exhibitId, ExhibitPageArgs2 args)
         {
             // pages have a reference to the exhibit they belong to, so an exhibit can determine its pages via Exhibit.Referencees
             yield return new ReferenceAdded(ResourceType.ExhibitPage, pageId, ResourceType.Exhibit, exhibitId);
@@ -74,8 +75,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands
             if (args.Image != null)
                 yield return new ReferenceAdded(ResourceType.ExhibitPage, pageId, ResourceType.Media, args.Image.Value);
 
-            foreach (var imageId in args.Images ?? Enumerable.Empty<int>())
-                yield return new ReferenceAdded(ResourceType.ExhibitPage, pageId, ResourceType.Media, imageId);
+            foreach (var img in args.Images ?? Enumerable.Empty<SliderPageImageArgs>())
+                yield return new ReferenceAdded(ResourceType.ExhibitPage, pageId, ResourceType.Media, img.Image);
 
             foreach (var id in args.AdditionalInformationPages ?? Enumerable.Empty<int>())
                 yield return new ReferenceAdded(ResourceType.ExhibitPage, pageId, ResourceType.ExhibitPage, id);
@@ -88,9 +89,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands
                 .Select(reference => new ReferenceRemoved(ResourceType.ExhibitPage, pageId, reference.Type, reference.Id));
         }
 
-        public static IEnumerable<IEvent> Create(int pageId, int exhibitId, ExhibitPageArgs args)
+        public static IEnumerable<IEvent> Create(int pageId, int exhibitId, ExhibitPageArgs2 args)
         {
-            var ev = new ExhibitPageCreated
+            var ev = new ExhibitPageCreated2
             {
                 Id = pageId,
                 ExhibitId = exhibitId,
@@ -113,14 +114,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands
             return removeRefEvents.Append(ev);
         }
 
-        public static IEnumerable<IEvent> Update(int pageId, ExhibitPageArgs args, ReferencesIndex referencesIndex, ExhibitPageIndex pageIndex)
+        public static IEnumerable<IEvent> Update(int pageId, ExhibitPageArgs2 args, ReferencesIndex referencesIndex, ExhibitPageIndex pageIndex)
         {
             // ReSharper disable once PossibleInvalidOperationException
             var exhibitId = pageIndex.ExhibitId(pageId).Value;
 
             var removeRefEvents = RemoveExhibitPageReferences(pageId, referencesIndex);
 
-            var ev = new ExhibitPageUpdated
+            var ev = new ExhibitPageUpdated2
             {
                 Id = pageId,
                 ExhibitId = exhibitId,
