@@ -68,12 +68,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
             // Event types may change over time (properties get added/removed etc.)
             // Whenever an event has multiple versions, this method should transform an event of an outdated version
             // to an event of the latest version, so that ApplyEvent(...) only has to deal with events of the current version.
-            switch (ev)
+            while (ev is IMigratable<IEvent> migratableEvent)
             {
-                // Create cases for outdated event types here
+                ev = migratableEvent.Migrate();
             }
 
-            // no migration necessary, just return the event as is
             return ev;
         }
 
@@ -105,7 +104,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     _db.GetCollection<Exhibit>(ResourceType.Exhibit.Name).DeleteOne(x => x.Id == e.Id);
                     break;
 
-                case ExhibitPageCreated e:
+                case ExhibitPageCreated2 e:
                     var newPage = new ExhibitPage(e.Properties)
                     {
                         Id = e.Id,
@@ -116,7 +115,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     _db.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name).InsertOne(newPage);
                     break;
 
-                case ExhibitPageUpdated e:
+                case ExhibitPageUpdated2 e:
                     var updatedPage = new ExhibitPage(e.Properties)
                     {
                         Id = e.Id,

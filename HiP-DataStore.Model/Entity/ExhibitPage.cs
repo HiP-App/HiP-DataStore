@@ -1,6 +1,7 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
@@ -35,8 +36,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
             new DocRef<MediaElement>(ResourceType.Media.Name);
 
         [BsonElement]
-        public DocRefList<MediaElement> Images { get; private set; } =
-            new DocRefList<MediaElement>(ResourceType.Media.Name);
+        public List<SliderPageImage> Images { get; private set; }
 
         public bool HideYearNumbers { get; set; }
 
@@ -48,7 +48,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
         {
         }
 
-        public ExhibitPage(ExhibitPageArgs args)
+        public ExhibitPage(ExhibitPageArgs2 args)
         {
             Type = args.Type;
             Title = args.Title;
@@ -57,7 +57,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
             FontFamily = args.FontFamily;
             Audio.Id = args.Audio;
             Image.Id = args.Image;
-            Images.Add(args.Images?.Select(id => (BsonValue)id));
+            Images = args.Images?.Select(img => new SliderPageImage(img)).ToList();
             HideYearNumbers = args.HideYearNumbers ?? false;
             AdditionalInformationPages.Add(args.AdditionalInformationPages?.Select(id => (BsonValue)id));
             Status = args.Status;
