@@ -96,6 +96,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         var updatedPage = new ExhibitPage(e.Properties)
                         {
                             Id = e.Id,
+                            Exhibit = { Id = e.ExhibitId },
                             Timestamp = e.Timestamp
                         };
 
