@@ -123,6 +123,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands
             var ev = new ExhibitPageUpdated
             {
                 Id = pageId,
+                ExhibitId = exhibitId,
                 Properties = args,
                 Timestamp = DateTimeOffset.Now
             };
