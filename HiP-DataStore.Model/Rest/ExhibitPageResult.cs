@@ -54,7 +54,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
             FontFamily = page.FontFamily;
             Audio = (int?)page.Audio.Id;
             Image = (int?)page.Image.Id;
-            Images = page.Images.Select(img => new SliderPageImageResult(img)).ToList();
+            Images = page.Images?.Select(img => new SliderPageImageResult(img)).ToArray() ?? Array.Empty<SliderPageImageResult>();
             HideYearNumbers = page.HideYearNumbers;
             AdditionalInformationPages = page.AdditionalInformationPages.Select(id => (int)id).ToList();
             Status = page.Status;
