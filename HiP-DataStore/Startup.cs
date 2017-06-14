@@ -54,6 +54,23 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             services.AddSingleton<IDomainIndex, ReferencesIndex>();
             services.AddSingleton<IDomainIndex, TagIndex>();
             services.AddSingleton<IDomainIndex, ExhibitPageIndex>();
+
+            services.AddCors(options =>
+           {
+               options.AddPolicy("DevelomentPolicy",
+               builder => builder.WithOrigins("https://docker-hip.cs.upd.de", "http://localhost:3000")
+                                  .AllowAnyHeader()
+                                  .AllowAnyMethod()
+                                  .WithExposedHeaders(new string[] { "Content-Disposition" })
+               );
+
+               options.AddPolicy("ProductionPolicy",
+               builder => builder.WithOrigins("https://docker-hip.cs.upd.de")
+                                  .AllowAnyHeader()
+                                  .AllowAnyMethod()
+                                  .WithExposedHeaders(new string[] { "Content-Disposition" })
+               );
+           });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -67,13 +84,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             app.ApplicationServices.GetService<CacheDatabaseManager>();
 
             // Use CORS (important: must be before app.UseMvc())
-            app.UseCors(builder =>
-                // This will allow any request from any server. Tweak to fit your needs!
-                    builder.AllowAnyHeader()
-                        .AllowAnyMethod()
-                        .AllowAnyOrigin()
-                        .WithExposedHeaders(new string[] { "Content-Disposition" })
-            );
+            app.UseCors("DevelomentPolicy");
 
             app.UseMvc();
 
