@@ -43,27 +43,26 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
                 c.DescribeAllEnumsAsStrings();
             });
 
-            services.Configure<EndpointConfig>(Configuration.GetSection("Endpoints"));
-            services.Configure<UploadFilesConfig>(Configuration.GetSection("UploadingFiles"));
-            services.Configure<CorsConfig>(Configuration);
+            services.Configure<EndpointConfig>(Configuration.GetSection("Endpoints"))
+                    .Configure<UploadFilesConfig>(Configuration.GetSection("UploadingFiles"))
+                    .Configure<CorsConfig>(Configuration);
 
             services.AddCors();
             services.AddMvc();
-            services.AddSingleton<EventStoreClient>();
-            services.AddSingleton<CacheDatabaseManager>();
-            services.AddSingleton<IDomainIndex, MediaIndex>();
-            services.AddSingleton<IDomainIndex, EntityIndex>();
-            services.AddSingleton<IDomainIndex, ReferencesIndex>();
-            services.AddSingleton<IDomainIndex, TagIndex>();
-            services.AddSingleton<IDomainIndex, ExhibitPageIndex>();
-
+            services.AddSingleton<EventStoreClient>()
+                    .AddSingleton<CacheDatabaseManager>()
+                    .AddSingleton<IDomainIndex, MediaIndex>()
+                    .AddSingleton<IDomainIndex, EntityIndex>()
+                    .AddSingleton<IDomainIndex, ReferencesIndex>()
+                    .AddSingleton<IDomainIndex, TagIndex>()
+                    .AddSingleton<IDomainIndex, ExhibitPageIndex>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, IOptions<CorsConfig> corsConfig)
         {
-            loggerFactory.AddConsole(Configuration.GetSection("Logging"));
-            loggerFactory.AddDebug();
+            loggerFactory.AddConsole(Configuration.GetSection("Logging"))
+                         .AddDebug();
 
             // CacheDatabaseManager should start up immediately (not only when injected into a controller or
             // something), so we manually request an instance here
@@ -71,7 +70,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
 
             // Use CORS (important: must be before app.UseMvc())
             app.UseCors(builder => {
-                var corsEnvConf = corsConfig.Value.CORS[env.EnvironmentName];
+                var corsEnvConf = corsConfig.Value.Cors[env.EnvironmentName];
                 builder
                     .WithOrigins(corsEnvConf.Origins)
                     .WithMethods(corsEnvConf.Methods)
@@ -82,7 +81,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             app.UseMvc();
 
             // Swagger / Swashbuckle configuration:
-
             // Enable middleware to serve generated Swagger as a JSON endpoint
             app.UseSwagger(c =>
             {

@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Utility
 {
     public class CorsConfig
     {
-        public Dictionary<string, CorsEnvironmentConfig> CORS { get; set; }
+        public Dictionary<string, CorsEnvironmentConfig> Cors { get; set; }
     }
     public class CorsEnvironmentConfig
     {
