@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using PaderbornUniversity.SILab.Hip.DataStore.Core;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
@@ -44,6 +45,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
 
             services.Configure<EndpointConfig>(Configuration.GetSection("Endpoints"));
             services.Configure<UploadFilesConfig>(Configuration.GetSection("UploadingFiles"));
+            services.Configure<CorsConfig>(Configuration);
 
             services.AddCors();
             services.AddMvc();
@@ -55,26 +57,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             services.AddSingleton<IDomainIndex, TagIndex>();
             services.AddSingleton<IDomainIndex, ExhibitPageIndex>();
 
-            services.AddCors(options =>
-           {
-               options.AddPolicy("DevelomentPolicy",
-               builder => builder.WithOrigins("https://docker-hip.cs.upd.de", "http://localhost:3000")
-                                  .AllowAnyHeader()
-                                  .AllowAnyMethod()
-                                  .WithExposedHeaders(new string[] { "Content-Disposition" })
-               );
-
-               options.AddPolicy("ProductionPolicy",
-               builder => builder.WithOrigins("https://docker-hip.cs.upd.de")
-                                  .AllowAnyHeader()
-                                  .AllowAnyMethod()
-                                  .WithExposedHeaders(new string[] { "Content-Disposition" })
-               );
-           });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, IOptions<CorsConfig> corsConfig)
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
@@ -84,7 +70,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             app.ApplicationServices.GetService<CacheDatabaseManager>();
 
             // Use CORS (important: must be before app.UseMvc())
-            app.UseCors("DevelomentPolicy");
+            app.UseCors(builder => {
+                var corsEnvConf = corsConfig.Value.CORS[env.EnvironmentName];
+                builder
+                    .WithOrigins(corsEnvConf.Origins)
+                    .WithMethods(corsEnvConf.Methods)
+                    .WithHeaders(corsEnvConf.Headers)
+                    .WithExposedHeaders(corsEnvConf.ExposedHeaders);
+            }); 
 
             app.UseMvc();
 
