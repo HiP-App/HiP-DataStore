@@ -53,29 +53,20 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
         {
             try
             {
-                var ev = resolvedEvent.Event.ToIEvent();
-                var migratedEvent = MigrateEvent(ev);
-                ApplyEvent(migratedEvent);
+                // Note regarding migration:
+                // Event types may change over time (properties get added/removed etc.)
+                // Whenever an event has multiple versions, an event of an obsolete type should be transformed to an event
+                // of the latest version, so that ApplyEvent(...) only has to deal with events of the current version.
+
+                var ev = resolvedEvent.Event.ToIEvent().MigrateToLatestVersion();
+                ApplyEvent(ev);
             }
             catch (Exception e)
             {
                 _logger.LogWarning($"{nameof(CacheDatabaseManager)} could not process an event: {e}");
             }
         }
-
-        private IEvent MigrateEvent(IEvent ev)
-        {
-            // Event types may change over time (properties get added/removed etc.)
-            // Whenever an event has multiple versions, this method should transform an event of an outdated version
-            // to an event of the latest version, so that ApplyEvent(...) only has to deal with events of the current version.
-            while (ev is IMigratable<IEvent> migratableEvent)
-            {
-                ev = migratableEvent.Migrate();
-            }
-
-            return ev;
-        }
-
+        
         private void ApplyEvent(IEvent ev)
         {
             switch (ev)

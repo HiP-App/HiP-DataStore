@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using System.Reflection;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core
 {
@@ -51,6 +52,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
             if (ev == null)
                 throw new ArgumentNullException(nameof(ev));
 
+            if (ev is IMigratable<IEvent>)
+                throw new ArgumentException(
+                    $"The event to be appended is an instance of the obsolete event type '{ev.GetType().Name}'. " +
+                    "Only events of up-to-date event types should be emitted.");
+
             // forward event to indices so they can update their state
             foreach (var index in _indices)
                 index.ApplyEvent(ev);
@@ -82,8 +88,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
                 {
                     try
                     {
-                        var ev = eventData.Event.ToIEvent();
-
+                        var ev = eventData.Event.ToIEvent().MigrateToLatestVersion();
+                        
                         foreach (var index in _indices)
                             index.ApplyEvent(ev);
                     }

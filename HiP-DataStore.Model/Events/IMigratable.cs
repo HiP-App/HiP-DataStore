@@ -12,4 +12,20 @@
         /// <returns></returns>
         T Migrate();
     }
+
+    public static class MigratableExtensions
+    {
+        /// <summary>
+        /// Applies all possible migrations in order to update an object to the latest version of its type.
+        /// If the specified object does not support migration, it is returned as is.
+        /// </summary>
+        /// <typeparam name="TBase">The base class or interface all versions of the type have in common</typeparam>
+        public static TBase MigrateToLatestVersion<TBase>(this TBase obj)
+        {
+            while (obj is IMigratable<TBase> o)
+                obj = o.Migrate();
+
+            return obj;
+        }
+    }
 }
