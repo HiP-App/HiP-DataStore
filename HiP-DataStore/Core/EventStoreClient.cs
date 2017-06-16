@@ -8,7 +8,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using System.Reflection;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core
 {
