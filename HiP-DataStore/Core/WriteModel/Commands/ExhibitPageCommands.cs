@@ -33,6 +33,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands
                 addValidationError(nameof(args.HideYearNumbers),
                     ErrorMessages.FieldNotAllowedForPageType(nameof(args.HideYearNumbers), args.Type));
 
+            // validate font family
+            if (args.FontFamily != null && !ExhibitPageFontFamily.IsValid(args.FontFamily))
+                addValidationError(nameof(args.FontFamily), $"Font family must be null (default) or one of the following: {string.Join(", ", ExhibitPageFontFamily.All)}");
+
             // ensure referenced image exists and is published
             if (args.Image != null && !mediaIndex.IsPublishedImage(args.Image.Value))
                 addValidationError(nameof(args.Image),
