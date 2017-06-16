@@ -28,7 +28,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 
         public int? Image { get; set; }
 
-        public IReadOnlyCollection<int> Images { get; set; }
+        public IReadOnlyCollection<SliderPageImageResult> Images { get; set; }
 
         public bool HideYearNumbers { get; set; }
 
@@ -54,7 +54,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
             FontFamily = page.FontFamily;
             Audio = (int?)page.Audio.Id;
             Image = (int?)page.Image.Id;
-            Images = page.Images.Select(id => (int)id).ToList();
+            Images = page.Images?.Select(img => new SliderPageImageResult(img)).ToArray() ?? Array.Empty<SliderPageImageResult>();
             HideYearNumbers = page.HideYearNumbers;
             AdditionalInformationPages = page.AdditionalInformationPages.Select(id => (int)id).ToList();
             Status = page.Status;

@@ -22,7 +22,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
         {
             switch (e)
             {
-                case ExhibitPageCreated ev:
+                case ExhibitPageCreated2 ev:
                     _pageType[ev.Id] = new PageInfo
                     {
                         Type = ev.Properties.Type,
