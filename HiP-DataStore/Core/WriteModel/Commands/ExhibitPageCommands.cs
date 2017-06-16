@@ -21,15 +21,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands
                 return;
 
             // constrain properties Image, Images and HideYearNumbers to their respective page types
-            if (args.Image != null && args.Type != PageType.AppetizerPage && args.Type != PageType.ImagePage)
+            if (args.Image != null && args.Type != PageType.Appetizer_Page && args.Type != PageType.Image_Page)
                 addValidationError(nameof(args.Image),
                     ErrorMessages.FieldNotAllowedForPageType(nameof(args.Image), args.Type));
 
-            if (args.Images != null && args.Type != PageType.SliderPage)
+            if (args.Images != null && args.Type != PageType.Slider_Page)
                 addValidationError(nameof(args.Images),
                     ErrorMessages.FieldNotAllowedForPageType(nameof(args.Images), args.Type));
 
-            if (args.HideYearNumbers != null && args.Type != PageType.SliderPage)
+            if (args.HideYearNumbers != null && args.Type != PageType.Slider_Page)
                 addValidationError(nameof(args.HideYearNumbers),
                     ErrorMessages.FieldNotAllowedForPageType(nameof(args.HideYearNumbers), args.Type));
 
