@@ -147,7 +147,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(typeof(int), 201)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> PostForExhibitAsync(int exhibitId, [FromBody]ExhibitPageArgs args)
+        public async Task<IActionResult> PostForExhibitAsync(int exhibitId, [FromBody]ExhibitPageArgs2 args)
         {
             ExhibitPageCommands.ValidateExhibitPageArgs(args, ModelState.AddModelError, _entityIndex, _mediaIndex);
 
@@ -170,7 +170,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(422)]
-        public async Task<IActionResult> PutAsync(int id, [FromBody]ExhibitPageArgs args)
+        public async Task<IActionResult> PutAsync(int id, [FromBody]ExhibitPageArgs2 args)
         {
             ExhibitPageCommands.ValidateExhibitPageArgs(args, ModelState.AddModelError, _entityIndex, _mediaIndex);
 
