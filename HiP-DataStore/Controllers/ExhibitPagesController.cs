@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using PaderbornUniversity.SILab.Hip.DataStore.Core;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
@@ -7,6 +8,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,6 +19,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
     [Route("api/Exhibits")]
     public class ExhibitPagesController : Controller
     {
+        private readonly IOptions<ExhibitPagesConfig> _exhibitPagesConfig;
         private readonly EventStoreClient _eventStore;
         private readonly CacheDatabaseManager _db;
         private readonly MediaIndex _mediaIndex;
@@ -24,8 +27,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly ReferencesIndex _referencesIndex;
         private readonly ExhibitPageIndex _exhibitPageIndex;
 
-        public ExhibitPagesController(EventStoreClient eventStore, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices)
+        public ExhibitPagesController(
+            IOptions<ExhibitPagesConfig> exhibitPagesConfig,
+            EventStoreClient eventStore,
+            CacheDatabaseManager db,
+            IEnumerable<IDomainIndex> indices)
         {
+            _exhibitPagesConfig = exhibitPagesConfig;
             _eventStore = eventStore;
             _db = db;
             _mediaIndex = indices.OfType<MediaIndex>().First();
@@ -149,7 +157,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(404)]
         public async Task<IActionResult> PostForExhibitAsync(int exhibitId, [FromBody]ExhibitPageArgs2 args)
         {
-            ExhibitPageCommands.ValidateExhibitPageArgs(args, ModelState.AddModelError, _entityIndex, _mediaIndex);
+            // if font family is not specified, fallback to the configured default font family
+            if (args != null && args.FontFamily == null)
+                args.FontFamily = _exhibitPagesConfig.Value.DefaultFontFamily;
+
+            ExhibitPageCommands.ValidateExhibitPageArgs(args, ModelState.AddModelError, _entityIndex, _mediaIndex, _exhibitPagesConfig.Value);
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -172,7 +184,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(422)]
         public async Task<IActionResult> PutAsync(int id, [FromBody]ExhibitPageArgs2 args)
         {
-            ExhibitPageCommands.ValidateExhibitPageArgs(args, ModelState.AddModelError, _entityIndex, _mediaIndex);
+            // if font family is not specified, fallback to the configured default font family
+            if (args != null && args.FontFamily == null)
+                args.FontFamily = _exhibitPagesConfig.Value.DefaultFontFamily;
+
+            ExhibitPageCommands.ValidateExhibitPageArgs(args, ModelState.AddModelError, _entityIndex, _mediaIndex, _exhibitPagesConfig.Value);
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -182,6 +198,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             // ReSharper disable once PossibleInvalidOperationException (.Value is safe here since we know the entity exists)
             var currentPageType = _exhibitPageIndex.PageType(id).Value;
+            // ReSharper disable once PossibleNullReferenceException (args == null is handled through ModelState.IsValid)
             if (currentPageType != args.Type)
                 return StatusCode(422, ErrorMessages.CannotChangeExhibitPageType(currentPageType, args.Type));
 

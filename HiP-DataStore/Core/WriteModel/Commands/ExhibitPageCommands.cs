@@ -5,6 +5,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Controllers;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands
 {
@@ -15,23 +16,28 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands
     {
         public static void ValidateExhibitPageArgs(
             ExhibitPageArgs2 args, AddValidationErrorDelegate addValidationError,
-            EntityIndex entityIndex, MediaIndex mediaIndex)
+            EntityIndex entityIndex, MediaIndex mediaIndex,
+            ExhibitPagesConfig exhibitPagesConfig)
         {
             if (args == null)
                 return;
 
             // constrain properties Image, Images and HideYearNumbers to their respective page types
-            if (args.Image != null && args.Type != PageType.AppetizerPage && args.Type != PageType.ImagePage)
+            if (args.Image != null && args.Type != PageType.Appetizer_Page && args.Type != PageType.Image_Page)
                 addValidationError(nameof(args.Image),
                     ErrorMessages.FieldNotAllowedForPageType(nameof(args.Image), args.Type));
 
-            if (args.Images != null && args.Type != PageType.SliderPage)
+            if (args.Images != null && args.Type != PageType.Slider_Page)
                 addValidationError(nameof(args.Images),
                     ErrorMessages.FieldNotAllowedForPageType(nameof(args.Images), args.Type));
 
-            if (args.HideYearNumbers != null && args.Type != PageType.SliderPage)
+            if (args.HideYearNumbers != null && args.Type != PageType.Slider_Page)
                 addValidationError(nameof(args.HideYearNumbers),
                     ErrorMessages.FieldNotAllowedForPageType(nameof(args.HideYearNumbers), args.Type));
+
+            // validate font family
+            if (!exhibitPagesConfig.IsFontFamilyValid(args.FontFamily))
+                addValidationError(nameof(args.FontFamily), $"Font family must be null/unspecified (which defaults to {exhibitPagesConfig.DefaultFontFamily}) or one of the following: {string.Join(", ", exhibitPagesConfig.FontFamilies)}");
 
             // ensure referenced image exists and is published
             if (args.Image != null && !mediaIndex.IsPublishedImage(args.Image.Value))
