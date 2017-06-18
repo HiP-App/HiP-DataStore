@@ -44,6 +44,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
 
             services.Configure<EndpointConfig>(Configuration.GetSection("Endpoints"));
             services.Configure<UploadFilesConfig>(Configuration.GetSection("UploadingFiles"));
+            services.Configure<ExhibitPagesConfig>(Configuration.GetSection("ExhibitPages"));
 
             services.AddCors();
             services.AddMvc();

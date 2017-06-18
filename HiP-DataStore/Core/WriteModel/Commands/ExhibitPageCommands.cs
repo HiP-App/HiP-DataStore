@@ -5,6 +5,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Controllers;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands
 {
@@ -15,7 +16,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands
     {
         public static void ValidateExhibitPageArgs(
             ExhibitPageArgs2 args, AddValidationErrorDelegate addValidationError,
-            EntityIndex entityIndex, MediaIndex mediaIndex)
+            EntityIndex entityIndex, MediaIndex mediaIndex,
+            ExhibitPagesConfig exhibitPagesConfig)
         {
             if (args == null)
                 return;
@@ -34,8 +36,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands
                     ErrorMessages.FieldNotAllowedForPageType(nameof(args.HideYearNumbers), args.Type));
 
             // validate font family
-            if (args.FontFamily != null && !ExhibitPageFontFamily.IsValid(args.FontFamily))
-                addValidationError(nameof(args.FontFamily), $"Font family must be null (default) or one of the following: {string.Join(", ", ExhibitPageFontFamily.All)}");
+            if (!exhibitPagesConfig.IsFontFamilyValid(args.FontFamily))
+                addValidationError(nameof(args.FontFamily), $"Font family must be null/unspecified (which defaults to {exhibitPagesConfig.DefaultFontFamily}) or one of the following: {string.Join(", ", exhibitPagesConfig.FontFamilies)}");
 
             // ensure referenced image exists and is published
             if (args.Image != null && !mediaIndex.IsPublishedImage(args.Image.Value))

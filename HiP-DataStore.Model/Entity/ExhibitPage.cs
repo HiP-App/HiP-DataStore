@@ -54,7 +54,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
             Title = args.Title;
             Text = args.Text;
             Description = args.Description;
-            FontFamily = args.FontFamily ?? ExhibitPageFontFamily.Default;
+            FontFamily = args.FontFamily;
             Audio.Id = args.Audio;
             Image.Id = args.Image;
             Images = args.Images?.Select(img => new SliderPageImage(img)).ToList();
