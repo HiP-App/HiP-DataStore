@@ -56,16 +56,23 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         /// An instance of <see cref="AllItemsResult{T}"/> containing total number of results and the results of the
         /// query that belong to the specified page.  
         /// </returns>
-        public static AllItemsResult<TResult> PaginateAndSelect<T, TResult>(this IQueryable<T> query, int page, int pageSize, Func<T, TResult> resultSelector)
+        public static AllItemsResult<TResult> PaginateAndSelect<T, TResult>(this IQueryable<T> query, int? page, int? pageSize, Func<T, TResult> resultSelector)
         {
             // Note: this method executes the incoming query twice (once to determine total count, a second time to
             // retrieve only the items of the current page). While this is not optimal, the alternative would be to
             // retrieve ALL items and then count them, which might have an even more negative performance impact.
+
+            var actualPage = page.GetValueOrDefault(1);
+
+            var actualPageSize = page.HasValue
+                ? pageSize.GetValueOrDefault(10) // if page is specified, pageSize defaults to 10
+                : pageSize.GetValueOrDefault(int.MaxValue); // otherwise, all items should be returned (max. page size)
+
             var totalCount = query.Count();
 
-            var itemsInPage = (page < 1 || pageSize <= 0)
+            var itemsInPage = (actualPage < 1 || actualPageSize <= 0)
                 ? Enumerable.Empty<T>().AsQueryable()
-                : query.Skip((page - 1) * pageSize).Take(pageSize);
+                : query.Skip((actualPage - 1) * actualPageSize).Take(actualPageSize);
 
             return new AllItemsResult<TResult>
             {
