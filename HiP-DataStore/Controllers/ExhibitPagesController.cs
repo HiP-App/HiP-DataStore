@@ -198,6 +198,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             // ReSharper disable once PossibleInvalidOperationException (.Value is safe here since we know the entity exists)
             var currentPageType = _exhibitPageIndex.PageType(id).Value;
+            // ReSharper disable once PossibleNullReferenceException (args == null is handled through ModelState.IsValid)
             if (currentPageType != args.Type)
                 return StatusCode(422, ErrorMessages.CannotChangeExhibitPageType(currentPageType, args.Type));
 
