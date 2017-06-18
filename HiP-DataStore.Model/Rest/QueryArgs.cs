@@ -23,16 +23,18 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         /// The page number. Defaults to one, which is the first page.
         /// </summary>
         [Range(1, int.MaxValue)]
-        [DefaultValue(1)]
-        public int Page { get; set; } = 1;
+        public int? Page { get; set; }
 
         /// <summary>
         /// Maximum number of entities in the response. The last page may have less entities,
         /// all other pages have exactly <see cref="PageSize"/> entities.
         /// </summary>
+        /// <remarks>
+        /// If <see cref="Page"/> is specified (!= null), the page size defaults to 10.
+        /// Otherwise, it defaults to <see cref="int.MaxValue"/>, so that all items are returned.
+        /// </remarks>
         [Range(1, int.MaxValue)]
-        [DefaultValue(10)]
-        public int PageSize { get; set; } = 10;
+        public int? PageSize { get; set; }
 
         /// <summary>
         /// The field to order the response data by.
