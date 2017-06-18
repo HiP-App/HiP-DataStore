@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using PaderbornUniversity.SILab.Hip.DataStore.Core;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
@@ -42,44 +43,45 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
                 c.DescribeAllEnumsAsStrings();
             });
 
-            services.Configure<EndpointConfig>(Configuration.GetSection("Endpoints"));
-            services.Configure<UploadFilesConfig>(Configuration.GetSection("UploadingFiles"));
-            services.Configure<ExhibitPagesConfig>(Configuration.GetSection("ExhibitPages"));
+            services.Configure<EndpointConfig>(Configuration.GetSection("Endpoints"))
+                    .Configure<UploadFilesConfig>(Configuration.GetSection("UploadingFiles"))
+                    .Configure<ExhibitPagesConfig>(Configuration.GetSection("ExhibitPages"))
+                    .Configure<CorsConfig>(Configuration);
 
             services.AddCors();
             services.AddMvc();
-            services.AddSingleton<EventStoreClient>();
-            services.AddSingleton<CacheDatabaseManager>();
-            services.AddSingleton<IDomainIndex, MediaIndex>();
-            services.AddSingleton<IDomainIndex, EntityIndex>();
-            services.AddSingleton<IDomainIndex, ReferencesIndex>();
-            services.AddSingleton<IDomainIndex, TagIndex>();
-            services.AddSingleton<IDomainIndex, ExhibitPageIndex>();
+            services.AddSingleton<EventStoreClient>()
+                    .AddSingleton<CacheDatabaseManager>()
+                    .AddSingleton<IDomainIndex, MediaIndex>()
+                    .AddSingleton<IDomainIndex, EntityIndex>()
+                    .AddSingleton<IDomainIndex, ReferencesIndex>()
+                    .AddSingleton<IDomainIndex, TagIndex>()
+                    .AddSingleton<IDomainIndex, ExhibitPageIndex>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, IOptions<CorsConfig> corsConfig)
         {
-            loggerFactory.AddConsole(Configuration.GetSection("Logging"));
-            loggerFactory.AddDebug();
+            loggerFactory.AddConsole(Configuration.GetSection("Logging"))
+                         .AddDebug();
 
             // CacheDatabaseManager should start up immediately (not only when injected into a controller or
             // something), so we manually request an instance here
             app.ApplicationServices.GetService<CacheDatabaseManager>();
 
             // Use CORS (important: must be before app.UseMvc())
-            app.UseCors(builder =>
-                // This will allow any request from any server. Tweak to fit your needs!
-                    builder.AllowAnyHeader()
-                        .AllowAnyMethod()
-                        .AllowAnyOrigin()
-                        .WithExposedHeaders(new string[] { "Content-Disposition" })
-            );
+            app.UseCors(builder => {
+                var corsEnvConf = corsConfig.Value.Cors[env.EnvironmentName];
+                builder
+                    .WithOrigins(corsEnvConf.Origins)
+                    .WithMethods(corsEnvConf.Methods)
+                    .WithHeaders(corsEnvConf.Headers)
+                    .WithExposedHeaders(corsEnvConf.ExposedHeaders);
+            }); 
 
             app.UseMvc();
 
             // Swagger / Swashbuckle configuration:
-
             // Enable middleware to serve generated Swagger as a JSON endpoint
             app.UseSwagger(c =>
             {
