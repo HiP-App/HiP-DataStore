@@ -58,7 +58,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             try
             {
                 var routeIds = args.OnlyRoutes?.Select(id => (BsonValue)id).ToList();
-                
+
                 var exhibits = query
                     .FilterByIds(args.Exclude, args.IncludeOnly)
                     .FilterByStatus(args.Status)
@@ -223,24 +223,21 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         private void ValidateExhibitArgs(ExhibitUpdateArgs args, int exhibitId)
         {
-            ValidateExhibitArgs((ExhibitArgs)args);
+            ValidateExhibitArgs(args);
 
-            if (args.Pages != null)
+            // check if pages contains exactly the same elements as expected
+            var actualPages = _referencesIndex
+                .ReferencesTo(ResourceType.Exhibit, exhibitId)
+                .Where(r => r.Type == ResourceType.ExhibitPage)
+                .Select(r => r.Id)
+                .OrderBy(id => id);
+
+            var givenPages = args.Pages?.OrderBy(id => id) ?? Enumerable.Empty<int>();
+
+            if (!givenPages.SequenceEqual(actualPages))
             {
-                // check if pages contains exactly the same elements as expected
-                var actualPages = _referencesIndex
-                    .ReferencesTo(ResourceType.Exhibit, exhibitId)
-                    .Where(r => r.Type == ResourceType.ExhibitPage)
-                    .Select(r => r.Id)
-                    .OrderBy(id => id);
-
-                var givenPages = args.Pages.OrderBy(id => id);
-
-                if (!givenPages.SequenceEqual(actualPages))
-                {
-                    ModelState.AddModelError(nameof(args.Pages),
-                        ErrorMessages.ExhibitPageOnlyReorderAllowed);
-                }
+                ModelState.AddModelError(nameof(args.Pages),
+                    ErrorMessages.ExhibitPageOnlyReorderAllowed);
             }
         }
 
