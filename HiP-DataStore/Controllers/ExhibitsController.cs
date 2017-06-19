@@ -168,17 +168,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.Exhibit, id))
                 return NotFound();
 
-            // Check if exhibit is in use and can't be deleted (it's in use if and only if it is contained in a route).
-            // We can't use _referencesIndex.IsUsed(...) here as it would return true as soon as the exhibit has pages
-            // (since pages have a reference to their containing exhibit)
-            if (_referencesIndex.ReferencesTo(ResourceType.Exhibit, id).Any(r => r.Type == ResourceType.Route))
+            // check if exhibit is in use and can't be deleted (it's in use if and only if it is contained in a route).
+            if (_referencesIndex.IsUsed(ResourceType.Exhibit, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
 
             // pages should be deleted along with the exhibit (cascading deletion) => first, remove the pages
-            var pageIds = _referencesIndex.ReferencesTo(ResourceType.Exhibit, id)
-                .Where(reference => reference.Type.Name == ResourceType.ExhibitPage.Name)
-                .Select(reference => reference.Id)
-                .ToList();
+            var pageIds = _exhibitPageIndex.PageIds(id);
 
             foreach (var pageId in pageIds)
             {
@@ -226,12 +221,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             ValidateExhibitArgs(args);
 
             // check if pages contains exactly the same elements as expected
-            var actualPages = _referencesIndex
-                .ReferencesTo(ResourceType.Exhibit, exhibitId)
-                .Where(r => r.Type == ResourceType.ExhibitPage)
-                .Select(r => r.Id)
-                .OrderBy(id => id);
-
+            var actualPages = _exhibitPageIndex.PageIds(exhibitId);
             var givenPages = args.Pages?.OrderBy(id => id) ?? Enumerable.Empty<int>();
 
             if (!givenPages.SequenceEqual(actualPages))
