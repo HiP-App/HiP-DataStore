@@ -72,9 +72,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands
 
         private static IEnumerable<IEvent> AddExhibitPageReferences(int pageId, int exhibitId, ExhibitPageArgs2 args)
         {
-            // pages have a reference to the exhibit they belong to, so an exhibit can determine its pages via Exhibit.Referencees
-            yield return new ReferenceAdded(ResourceType.ExhibitPage, pageId, ResourceType.Exhibit, exhibitId);
-
             if (args.Audio != null)
                 yield return new ReferenceAdded(ResourceType.ExhibitPage, pageId, ResourceType.Media, args.Audio.Value);
 
