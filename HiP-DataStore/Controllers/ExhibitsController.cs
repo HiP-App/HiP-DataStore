@@ -255,18 +255,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 await _eventStore.AppendEventAsync(tagRef);
             }
         }
-
-        private async Task AddExhibitReferencesAsync(ExhibitUpdateArgs args, int exhibitId)
-        {
-            await AddExhibitReferencesAsync((ExhibitArgs)args, exhibitId);
-
-            foreach (var pageId in args.Pages ?? Enumerable.Empty<int>())
-            {
-                var pageRef = new ReferenceAdded(ResourceType.Exhibit, exhibitId, ResourceType.ExhibitPage, pageId);
-                await _eventStore.AppendEventAsync(pageRef);
-            }
-        }
-
+        
         private async Task RemoveExhibitReferencesAsync(int exhibitId)
         {
             foreach (var reference in _referencesIndex.ReferencesOf(ResourceType.Exhibit, exhibitId))
