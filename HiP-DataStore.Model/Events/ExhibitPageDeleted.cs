@@ -2,6 +2,8 @@
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 {
+    // Version info: Added ExhibitId, so that the ID of the deleted page can be removed from the
+    // ordered list "Exhibit.Pages" of the corresponding exhibit
     public class ExhibitPageDeleted2 : IDeleteEvent
     {
         public int Id { get; set; }
