@@ -224,7 +224,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (_referencesIndex.IsUsed(ResourceType.ExhibitPage, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
 
-            var events = ExhibitPageCommands.Delete(id, _referencesIndex);
+            var events = ExhibitPageCommands.Delete(id, _referencesIndex, _exhibitPageIndex);
             await _eventStore.AppendEventsAsync(events);
 
             return NoContent();

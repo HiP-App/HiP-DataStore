@@ -24,6 +24,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly MediaIndex _mediaIndex;
         private readonly EntityIndex _entityIndex;
         private readonly ReferencesIndex _referencesIndex;
+        private readonly ExhibitPageIndex _exhibitPageIndex;
 
         public ExhibitsController(EventStoreClient eventStore, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices)
         {
@@ -32,6 +33,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             _mediaIndex = indices.OfType<MediaIndex>().First();
             _entityIndex = indices.OfType<EntityIndex>().First();
             _referencesIndex = indices.OfType<ReferencesIndex>().First();
+            _exhibitPageIndex = indices.OfType<ExhibitPageIndex>().First();
         }
 
         [HttpGet("ids")]
@@ -131,9 +133,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> PutAsync(int id, [FromBody]ExhibitArgs args)
+        public async Task<IActionResult> PutAsync(int id, [FromBody]ExhibitUpdateArgs args)
         {
-            ValidateExhibitArgs(args);
+            ValidateExhibitArgs(args, id);
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -183,7 +185,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 if (_referencesIndex.IsUsed(ResourceType.ExhibitPage, pageId))
                     return BadRequest("The exhibit cannot be deleted because it contains pages that are referenced by other resources");
 
-                var pageDeleteEvents = ExhibitPageCommands.Delete(pageId, _referencesIndex);
+                var pageDeleteEvents = ExhibitPageCommands.Delete(pageId, _referencesIndex, _exhibitPageIndex);
                 await _eventStore.AppendEventsAsync(pageDeleteEvents);
             }
 
@@ -219,6 +221,29 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             }
         }
 
+        private void ValidateExhibitArgs(ExhibitUpdateArgs args, int exhibitId)
+        {
+            ValidateExhibitArgs((ExhibitArgs)args);
+
+            if (args.Pages != null)
+            {
+                // check if pages contains exactly the same elements as expected
+                var actualPages = _referencesIndex
+                    .ReferencesTo(ResourceType.Exhibit, exhibitId)
+                    .Where(r => r.Type == ResourceType.ExhibitPage)
+                    .Select(r => r.Id)
+                    .OrderBy(id => id);
+
+                var givenPages = args.Pages.OrderBy(id => id);
+
+                if (!givenPages.SequenceEqual(actualPages))
+                {
+                    ModelState.AddModelError(nameof(args.Pages),
+                        ErrorMessages.ExhibitPageOnlyReorderAllowed);
+                }
+            }
+        }
+
         private async Task AddExhibitReferencesAsync(ExhibitArgs args, int exhibitId)
         {
             if (args.Image != null)
@@ -231,6 +256,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             {
                 var tagRef = new ReferenceAdded(ResourceType.Exhibit, exhibitId, ResourceType.Tag, tagId);
                 await _eventStore.AppendEventAsync(tagRef);
+            }
+        }
+
+        private async Task AddExhibitReferencesAsync(ExhibitUpdateArgs args, int exhibitId)
+        {
+            await AddExhibitReferencesAsync((ExhibitArgs)args, exhibitId);
+
+            foreach (var pageId in args.Pages ?? Enumerable.Empty<int>())
+            {
+                var pageRef = new ReferenceAdded(ResourceType.Exhibit, exhibitId, ResourceType.ExhibitPage, pageId);
+                await _eventStore.AppendEventAsync(pageRef);
             }
         }
 

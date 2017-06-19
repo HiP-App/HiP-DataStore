@@ -30,7 +30,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                     };
                     break;
 
-                case ExhibitPageDeleted ev:
+                case ExhibitPageDeleted2 ev:
                     _pageType.Remove(ev.Id);
                     break;
             }

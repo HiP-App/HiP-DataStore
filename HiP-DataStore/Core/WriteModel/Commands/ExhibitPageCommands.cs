@@ -111,9 +111,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands
             return addRefEvents.Prepend(ev);
         }
 
-        public static IEnumerable<IEvent> Delete(int pageId, ReferencesIndex referencesIndex)
+        public static IEnumerable<IEvent> Delete(int pageId, ReferencesIndex referencesIndex, ExhibitPageIndex pageIndex)
         {
-            var ev = new ExhibitPageDeleted { Id = pageId };
+            // ReSharper disable once PossibleInvalidOperationException
+            var exhibitId = pageIndex.ExhibitId(pageId).Value;
+
+            var ev = new ExhibitPageDeleted2 { Id = pageId, ExhibitId = exhibitId };
             var removeRefEvents = RemoveExhibitPageReferences(pageId, referencesIndex);
 
             // remove references, then delete the page
