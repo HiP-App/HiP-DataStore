@@ -64,7 +64,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
             // for migration of the 'Images' property, we have to choose an arbitrary default date
             Images = Images?.Select(imageId => new SliderPageImageArgs
             {
-                Date = 2017,
+                Date = "2017",
                 Image = imageId
             }).ToList(),
 
