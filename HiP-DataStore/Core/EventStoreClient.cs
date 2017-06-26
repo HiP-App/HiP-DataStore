@@ -42,6 +42,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
             Connection = EventStoreConnection.Create(settings, new Uri(config.Value.EventStoreHost));
             Connection.ConnectAsync().Wait();
 
+            logger.LogInformation($"Connected to Event Store, using stream '{_streamName}'");
+
             _indices = indices.ToList();
             PopulateIndices();
         }
@@ -77,11 +79,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
 
             // read all events (from the beginning to the end) and apply them to the indices
             var start = 0;
+            var totalCount = 0;
             StreamEventsSlice readResult;
 
             do
             {
                 readResult = Connection.ReadStreamEventsForwardAsync(_streamName, start, pageSize, false).Result;
+                totalCount += readResult.Events.Length;
 
                 foreach (var eventData in readResult.Events)
                 {
@@ -101,6 +105,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
                 start += pageSize;
             }
             while (!readResult.IsEndOfStream);
+
+            _logger.LogInformation($"Populated indices with {totalCount} events");
         }
     }
 }
