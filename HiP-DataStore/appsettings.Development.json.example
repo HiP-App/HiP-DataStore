@@ -1,0 +1,21 @@
+﻿{
+  "Logging": {
+    "IncludeScopes": false,
+    "LogLevel": {
+      "Default": "Debug",
+      "System": "Information",
+      "Microsoft": "None"
+    }
+  },
+  "Endpoints": {
+    "MongoDbHost": "mongodb://localhost:27017",
+    "MongoDbName": "main",
+
+    "EventStoreHost": "tcp://localhost:1113",
+
+    // To connect to an Event Store cluster use this instead:
+    // "EventStoreHost": "discover://username:password@myserver:1113",
+
+    "EventStoreStream": "main-stream"
+  }
+}

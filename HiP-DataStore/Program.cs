@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
+﻿using System.IO;
 using Microsoft.AspNetCore.Hosting;
 
-namespace HiP_DataStore
+namespace PaderbornUniversity.SILab.Hip.DataStore
 {
     public class Program
     {
@@ -14,6 +9,7 @@ namespace HiP_DataStore
         {
             var host = new WebHostBuilder()
                 .UseKestrel()
+                .UseUrls("http://*:5000")
                 .UseContentRoot(Directory.GetCurrentDirectory())
                 .UseIISIntegration()
                 .UseStartup<Startup>()
