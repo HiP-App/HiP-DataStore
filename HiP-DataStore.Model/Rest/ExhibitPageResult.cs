@@ -30,7 +30,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 
         public IReadOnlyCollection<SliderPageImageResult> Images { get; set; }
 
-        public bool HideYearNumbers { get; set; }
+        public bool? HideYearNumbers { get; set; }
 
         public IReadOnlyCollection<int> AdditionalInformationPages { get; set; }
 
@@ -53,12 +53,24 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
             Description = page.Description;
             FontFamily = page.FontFamily;
             Audio = (int?)page.Audio.Id;
-            Image = (int?)page.Image.Id;
-            Images = page.Images?.Select(img => new SliderPageImageResult(img)).ToArray() ?? Array.Empty<SliderPageImageResult>();
-            HideYearNumbers = page.HideYearNumbers;
             AdditionalInformationPages = page.AdditionalInformationPages.Select(id => (int)id).ToList();
             Status = page.Status;
             Timestamp = page.Timestamp;
+
+            // properties only valid for certain page types:
+
+            if (page.Type == PageType.Appetizer_Page || page.Type == PageType.Image_Page)
+            {
+                // 'image' only allowed for types APPETIZER_PAGE and IMAGE_PAGE
+                Image = (int?)page.Image.Id;
+            }
+
+            if (page.Type == PageType.Slider_Page)
+            {
+                // 'images' and 'hideYearNumbers' only allowed for type SLIDER_PAGE
+                Images = page.Images?.Select(img => new SliderPageImageResult(img)).ToArray() ?? Array.Empty<SliderPageImageResult>();
+                HideYearNumbers = page.HideYearNumbers;
+            }
         }
     }
 }
