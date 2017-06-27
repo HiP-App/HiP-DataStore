@@ -123,7 +123,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     _db.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name).ReplaceOne(x => x.Id == e.Id, updatedPage);
                     break;
 
-                case ExhibitPageDeleted2 e:
+                case ExhibitPageDeleted e:
                     // 1) delete the page
                     _db.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name).DeleteOne(x => x.Id == e.Id);
 

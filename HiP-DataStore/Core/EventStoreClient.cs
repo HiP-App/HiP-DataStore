@@ -1,5 +1,7 @@
 ﻿using EventStore.ClientAPI;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using PaderbornUniversity.SILab.Hip.DataStore.Core.Migrations;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
@@ -7,7 +9,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core
 {
@@ -32,20 +33,26 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
             ILogger<EventStoreClient> logger)
         {
             _logger = logger;
+            _streamName = config.Value.EventStoreStream;
 
             var settings = ConnectionSettings.Create()
                 .EnableVerboseLogging()
                 .Build();
 
-            _streamName = config.Value.EventStoreStream;
-
+            // Establish connection to Event Store
             Connection = EventStoreConnection.Create(settings, new Uri(config.Value.EventStoreHost));
             Connection.ConnectAsync().Wait();
 
             logger.LogInformation($"Connected to Event Store, using stream '{_streamName}'");
 
+            // Update stream to the latest version
+            var migrationResult = StreamMigrator.MigrateAsync(Connection, _streamName).Result;
+            if (migrationResult.fromVersion != migrationResult.toVersion)
+                logger.LogInformation($"Migrated stream '{_streamName}' from version '{migrationResult.fromVersion}' to version '{migrationResult.toVersion}'");
+
+            // Setup IDomainIndex-indices
             _indices = indices.ToList();
-            PopulateIndices();
+            PopulateIndicesAsync().Wait();
         }
 
         public async Task AppendEventAsync(IEvent ev)
@@ -73,38 +80,21 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
                 await AppendEventAsync(ev);
         }
 
-        private void PopulateIndices()
+        private async Task PopulateIndicesAsync()
         {
-            const int pageSize = 4096; // only 4096 events can be retrieved in one call
-
-            // read all events (from the beginning to the end) and apply them to the indices
-            var start = 0;
+            var events = new EventStoreStreamEnumerator(Connection, _streamName);
             var totalCount = 0;
-            StreamEventsSlice readResult;
 
-            do
+            events.EventParsingFailed += (_, exception) =>
+                _logger.LogWarning($"{nameof(EventStoreClient)} could not process an event: {exception}");
+
+            while (await events.MoveNextAsync())
             {
-                readResult = Connection.ReadStreamEventsForwardAsync(_streamName, start, pageSize, false).Result;
-                totalCount += readResult.Events.Length;
+                totalCount++;
 
-                foreach (var eventData in readResult.Events)
-                {
-                    try
-                    {
-                        var ev = eventData.Event.ToIEvent().MigrateToLatestVersion();
-                        
-                        foreach (var index in _indices)
-                            index.ApplyEvent(ev);
-                    }
-                    catch (ArgumentException e)
-                    {
-                        _logger.LogWarning($"{nameof(EventStoreClient)} could not process an event: {e}");
-                    }
-                }
-
-                start += pageSize;
+                foreach (var index in _indices)
+                    index.ApplyEvent(events.Current);
             }
-            while (!readResult.IsEndOfStream);
 
             _logger.LogInformation($"Populated indices with {totalCount} events");
         }

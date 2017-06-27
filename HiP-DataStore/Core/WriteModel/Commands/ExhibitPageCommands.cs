@@ -113,7 +113,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands
             // ReSharper disable once PossibleInvalidOperationException
             var exhibitId = pageIndex.ExhibitId(pageId).Value;
 
-            var ev = new ExhibitPageDeleted2 { Id = pageId, ExhibitId = exhibitId };
+            var ev = new ExhibitPageDeleted { Id = pageId, ExhibitId = exhibitId };
             var removeRefEvents = RemoveExhibitPageReferences(pageId, referencesIndex);
 
             // remove references, then delete the page

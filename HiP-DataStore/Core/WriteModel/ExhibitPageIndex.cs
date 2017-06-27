@@ -39,7 +39,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                     GetOrCreatePageListForExhibit(ev.ExhibitId).Add(ev.Id);
                     break;
 
-                case ExhibitPageDeleted2 ev:
+                case ExhibitPageDeleted ev:
                     _pageType.Remove(ev.Id);
                     GetPageListForExhibitOrNull(ev.ExhibitId)?.Remove(ev.Id);
                     break;
