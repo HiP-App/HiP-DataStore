@@ -4,7 +4,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 {
     public class SliderPageImage
     {
-        public int Date { get; set; }
+        public string Date { get; set; }
 
         public DocRef<MediaElement> Image { get; set; } =
             new DocRef<MediaElement>(ResourceType.Media.Name);
