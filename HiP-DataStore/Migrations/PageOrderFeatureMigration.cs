@@ -29,9 +29,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
                 switch (events.Current)
                 {
                     case ReferenceAdded ev when ev.SourceType == ResourceType.ExhibitPage && ev.TargetType == ResourceType.Exhibit:
+                    case ReferenceRemoved ev2 when ev2.SourceType == ResourceType.ExhibitPage && ev2.TargetType == ResourceType.Exhibit:
                         // pages no longer reference the containing exhibit => ignore such references
                         break;
-
+                        
                     case ExhibitUpdated ev:
                         // "PUT /Exhibit/{id}" now allows to reorder pages using the new 'pages'-field
                         // => emit new ExhibitUpdated-events with correctly populated 'pages' array
