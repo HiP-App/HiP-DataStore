@@ -70,7 +70,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands
             }
         }
 
-        private static IEnumerable<IEvent> AddExhibitPageReferences(int pageId, int exhibitId, ExhibitPageArgs2 args)
+        private static IEnumerable<IEvent> AddExhibitPageReferences(int pageId, ExhibitPageArgs2 args)
         {
             if (args.Audio != null)
                 yield return new ReferenceAdded(ResourceType.ExhibitPage, pageId, ResourceType.Media, args.Audio.Value);
@@ -102,7 +102,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands
                 Timestamp = DateTimeOffset.Now
             };
 
-            var addRefEvents = AddExhibitPageReferences(pageId, exhibitId, args);
+            var addRefEvents = AddExhibitPageReferences(pageId, args);
 
             // create the page, then add references
             return addRefEvents.Prepend(ev);
@@ -135,7 +135,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands
                 Timestamp = DateTimeOffset.Now
             };
 
-            var addRefEvents = AddExhibitPageReferences(pageId, exhibitId, args);
+            var addRefEvents = AddExhibitPageReferences(pageId, args);
 
             // remove old references, then update the page, then add new references
             return removeRefEvents.Append(ev).Concat(addRefEvents);

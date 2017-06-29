@@ -18,7 +18,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
         private readonly Queue<IEvent> _buffer = new Queue<IEvent>();
 
         private long _startPosition = StreamPosition.Start;
-        private bool _isEndOfStream = false;
+        private bool _isEndOfStream;
 
         public IEvent Current => _buffer.Peek();
 
