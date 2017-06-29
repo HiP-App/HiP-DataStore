@@ -8,6 +8,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using System;
+using System.Linq;
 using Tag = PaderbornUniversity.SILab.Hip.DataStore.Model.Entity.Tag;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
@@ -83,12 +84,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     break;
 
                 case ExhibitUpdated e:
+                    var originalExhibit = _db.GetCollection<Exhibit>(ResourceType.Exhibit.Name).AsQueryable().First(x => x.Id == e.Id);
+
                     var updatedExhibit = new Exhibit(e.Properties)
                     {
                         Id = e.Id,
                         Timestamp = e.Timestamp
                     };
 
+                    updatedExhibit.Referencees.AddRange(originalExhibit.Referencees);
                     _db.GetCollection<Exhibit>(ResourceType.Exhibit.Name).ReplaceOne(x => x.Id == e.Id, updatedExhibit);
                     break;
 
@@ -113,6 +117,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     break;
 
                 case ExhibitPageUpdated2 e:
+                    var originalPage = _db.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name).AsQueryable().First(x => x.Id == e.Id);
                     var updatedPage = new ExhibitPage(e.Properties)
                     {
                         Id = e.Id,
@@ -120,6 +125,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         Timestamp = e.Timestamp
                     };
 
+                    updatedPage.Referencees.AddRange(originalPage.Referencees);
                     _db.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name).ReplaceOne(x => x.Id == e.Id, updatedPage);
                     break;
 
@@ -143,12 +149,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     break;
 
                 case RouteUpdated e:
+                    var originalRoute = _db.GetCollection<Route>(ResourceType.Route.Name).AsQueryable().First(x => x.Id == e.Id);
                     var updatedRoute = new Route(e.Properties)
                     {
                         Id = e.Id,
                         Timestamp = e.Timestamp
                     };
 
+                    updatedRoute.Referencees.AddRange(originalRoute.Referencees);
                     _db.GetCollection<Route>(ResourceType.Route.Name).ReplaceOne(r => r.Id == e.Id, updatedRoute);
                     break;
 
@@ -167,12 +175,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     break;
 
                 case MediaUpdate e:
+                    var originalMedia = _db.GetCollection<MediaElement>(ResourceType.Media.Name).AsQueryable().First(x => x.Id == e.Id);
                     var updatedMedia = new MediaElement(e.Properties)
                     {
                         Id = e.Id,
                         Timestamp = e.Timestamp
                     };
 
+                    updatedMedia.Referencees.AddRange(originalMedia.Referencees);
                     _db.GetCollection<MediaElement>(ResourceType.Media.Name).ReplaceOne(m => m.Id == e.Id, updatedMedia);
                     break;
 
@@ -196,14 +206,16 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 
                     _db.GetCollection<Tag>(ResourceType.Tag.Name).InsertOne(newTag);
                     break;
-
+                    
                 case TagUpdated e:
+                    var originalTag = _db.GetCollection<Tag>(ResourceType.Tag.Name).AsQueryable().First(x => x.Id == e.Id);
                     var updatedTag = new Tag(e.Properties)
                     {
                         Id = e.Id,
                         Timestamp = e.Timestamp,
                     };
 
+                    updatedTag.Referencees.AddRange(originalTag.Referencees);
                     _db.GetCollection<Tag>(ResourceType.Tag.Name).ReplaceOne(x => x.Id == e.Id, updatedTag);
                     break;
 
