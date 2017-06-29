@@ -63,6 +63,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
                             list.Add(ev.Id);
                         else
                             pages[ev.ExhibitId] = new List<int> { ev.Id };
+
+                        e.AppendEvent(ev);
                         break;
 
                     case ExhibitPageDeleted ev:
