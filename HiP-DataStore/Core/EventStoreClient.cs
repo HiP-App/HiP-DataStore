@@ -93,7 +93,16 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
                 totalCount++;
 
                 foreach (var index in _indices)
-                    index.ApplyEvent(events.Current);
+                {
+                    try
+                    {
+                        index.ApplyEvent(events.Current);
+                    }
+                    catch (Exception e)
+                    {
+                        _logger.LogWarning($"Failed to populate index of type '{index.GetType().Name}' with event of type '{events.Current.GetType().Name}': {e}");
+                    }
+                }
             }
 
             _logger.LogInformation($"Populated indices with {totalCount} events");
