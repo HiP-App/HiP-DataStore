@@ -35,7 +35,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
             if (_buffer.Count > 0)
             {
                 _buffer.Dequeue();
-                return _buffer.Count > 0;
+
+                if (_buffer.Count > 0)
+                    return true;
             }
 
             if (_isEndOfStream)
