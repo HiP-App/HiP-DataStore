@@ -112,7 +112,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     _db.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name).InsertOne(newPage);
 
                     // 2) append page ID to pages array of corresponding exhibit
-                    var addPage = Builders<Exhibit>.Update.Push(x => x.Pages, e.Id);
+                    var addPage = Builders<Exhibit>.Update.Push(x => x.Pages.Ids, e.Id);
                     _db.GetCollection<Exhibit>(ResourceType.Exhibit.Name).UpdateOne(x => x.Id == e.ExhibitId, addPage);
                     break;
 
@@ -134,7 +134,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     _db.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name).DeleteOne(x => x.Id == e.Id);
 
                     // 2) remove page ID from pages array of corresponding exhibit
-                    var removePage = Builders<Exhibit>.Update.Pull(x => x.Pages, e.Id);
+                    var removePage = Builders<Exhibit>.Update.Pull(x => x.Pages.Ids, e.Id);
                     _db.GetCollection<Exhibit>(ResourceType.Exhibit.Name).UpdateOne(x => x.Id == e.ExhibitId, removePage);
                     break;
 

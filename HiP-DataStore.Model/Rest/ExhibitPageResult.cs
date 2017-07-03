@@ -53,7 +53,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
             Description = page.Description;
             FontFamily = page.FontFamily;
             Audio = (int?)page.Audio.Id;
-            AdditionalInformationPages = page.AdditionalInformationPages.Select(id => (int)id).ToList();
+            AdditionalInformationPages = page.AdditionalInformationPages.Ids.Select(id => (int)id).ToList();
             Status = page.Status;
             Timestamp = page.Timestamp;
 
