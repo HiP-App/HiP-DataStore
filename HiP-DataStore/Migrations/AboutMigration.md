@@ -12,7 +12,12 @@ How to implement an event migration:
 1. Where necessary, adapt `IDomainIndex`-classes to handle the new event type
 1. Mark the old event type (`FooCreated`) as `[Obsolete]` so that you are warned if your code still uses it
 
+The main type to support event migration is `PaderbornUniversity.SILab.Hip.DataStore.Model.Events.IMigratable<T>`.
+
 ## Stream Migration
 If the desired model change cannot be achieved with event migration, stream migration must be used. A stream migration basically recreates the whole event stream from scratch by reading through all the existing events and emitting new events based on the old ones. For example, if you have a type of event which you want to split into two events, a stream migration is a good way to do that. In contrast to event migrations, a stream migration is only applied once on application startup.
 
 A positive side-effect of stream migrations is that they persist all the event migrations. So after a stream migration has been applied, all obsolete event types up to this point in time can be removed, since the stream no longer contains events of obsolete types (but remember to keep the event types' names such as `FooCreated2` when deleting `FooCreated`).
+
+The types supporting stream migrations are located in `PaderbornUniversity.SILab.Hip.DataStore.Core.Migrations`.
+The actual migrations should be stored in `PaderbornUniversity.SILab.Hip.DataStore.Migrations`.
