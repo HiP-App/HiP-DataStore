@@ -43,8 +43,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
             Image = (int?)x.Image.Id;
             Latitude = x.Latitude;
             Longitude = x.Longitude;
-            Used = x.Referencees.Any(r => r.Collection == ResourceType.Route.Name); // an exhibit is in use if it is contained in a route
-            Pages = x.Referencees.Where(r => r.Collection == ResourceType.ExhibitPage.Name).Select(r => (int)r.Id).ToArray();
+            Used = x.Referencees.Count > 0; // an exhibit is in use if it is contained in (i.e. referenced by) a route
+            Pages = x.Pages.Select(id => (int)id).ToArray();
             Status = x.Status;
             Tags = x.Tags.Select(id => (int)id).ToArray();
             Timestamp = x.Timestamp;
