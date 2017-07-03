@@ -159,6 +159,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         [HttpDelete("{id}")]
         [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         public async Task<IActionResult> DeleteAsync(int id)
         {
