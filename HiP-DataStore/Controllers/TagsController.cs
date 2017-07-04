@@ -183,7 +183,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return NoContent();
         }
 
-        [HttpDelete("id")]
+        [HttpDelete("{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
