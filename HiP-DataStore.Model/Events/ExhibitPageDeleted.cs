@@ -4,6 +4,8 @@
     {
         public int Id { get; set; }
 
+        public int ExhibitId { get; set; }
+
         public ResourceType GetEntityType() => ResourceType.ExhibitPage;
     }
 }

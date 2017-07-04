@@ -70,11 +70,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands
             }
         }
 
-        private static IEnumerable<IEvent> AddExhibitPageReferences(int pageId, int exhibitId, ExhibitPageArgs2 args)
+        private static IEnumerable<IEvent> AddExhibitPageReferences(int pageId, ExhibitPageArgs2 args)
         {
-            // pages have a reference to the exhibit they belong to, so an exhibit can determine its pages via Exhibit.Referencees
-            yield return new ReferenceAdded(ResourceType.ExhibitPage, pageId, ResourceType.Exhibit, exhibitId);
-
             if (args.Audio != null)
                 yield return new ReferenceAdded(ResourceType.ExhibitPage, pageId, ResourceType.Media, args.Audio.Value);
 
@@ -105,15 +102,18 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands
                 Timestamp = DateTimeOffset.Now
             };
 
-            var addRefEvents = AddExhibitPageReferences(pageId, exhibitId, args);
+            var addRefEvents = AddExhibitPageReferences(pageId, args);
 
             // create the page, then add references
             return addRefEvents.Prepend(ev);
         }
 
-        public static IEnumerable<IEvent> Delete(int pageId, ReferencesIndex referencesIndex)
+        public static IEnumerable<IEvent> Delete(int pageId, ReferencesIndex referencesIndex, ExhibitPageIndex pageIndex)
         {
-            var ev = new ExhibitPageDeleted { Id = pageId };
+            // ReSharper disable once PossibleInvalidOperationException
+            var exhibitId = pageIndex.ExhibitId(pageId).Value;
+
+            var ev = new ExhibitPageDeleted { Id = pageId, ExhibitId = exhibitId };
             var removeRefEvents = RemoveExhibitPageReferences(pageId, referencesIndex);
 
             // remove references, then delete the page
@@ -135,7 +135,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands
                 Timestamp = DateTimeOffset.Now
             };
 
-            var addRefEvents = AddExhibitPageReferences(pageId, exhibitId, args);
+            var addRefEvents = AddExhibitPageReferences(pageId, args);
 
             // remove old references, then update the page, then add new references
             return removeRefEvents.Append(ev).Concat(addRefEvents);
