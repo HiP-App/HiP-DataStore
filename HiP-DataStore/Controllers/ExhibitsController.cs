@@ -222,7 +222,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             ValidateExhibitArgs(args);
 
             // check if pages contains exactly the same elements as expected
-            var actualPages = _exhibitPageIndex.PageIds(exhibitId);
+            var actualPages = _exhibitPageIndex.PageIds(exhibitId).OrderBy(id => id);
             var givenPages = args.Pages?.OrderBy(id => id) ?? Enumerable.Empty<int>();
 
             if (!givenPages.SequenceEqual(actualPages))
