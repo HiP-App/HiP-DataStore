@@ -183,6 +183,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     };
 
                     updatedMedia.Referencees.AddRange(originalMedia.Referencees);
+                    updatedMedia.File = originalMedia.File;
                     _db.GetCollection<MediaElement>(ResourceType.Media.Name).ReplaceOne(m => m.Id == e.Id, updatedMedia);
                     break;
 
