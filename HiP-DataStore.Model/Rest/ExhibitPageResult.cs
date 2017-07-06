@@ -11,8 +11,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
     {
         public int Id { get; set; }
 
-        public int? ExhibitId { get; set; }
-
         [JsonConverter(typeof(StringEnumConverter))]
         public PageType Type { get; set; }
 
@@ -46,7 +44,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         public ExhibitPageResult(ExhibitPage page)
         {
             Id = page.Id;
-            ExhibitId = (int)page.Exhibit.Id;
             Type = page.Type;
             Title = page.Title;
             Text = page.Text;

@@ -92,12 +92,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands
                 .Select(reference => new ReferenceRemoved(ResourceType.ExhibitPage, pageId, reference.Type, reference.Id));
         }
 
-        public static IEnumerable<IEvent> Create(int pageId, int exhibitId, ExhibitPageArgs2 args)
+        public static IEnumerable<IEvent> Create(int pageId, ExhibitPageArgs2 args)
         {
-            var ev = new ExhibitPageCreated2
+            var ev = new ExhibitPageCreated3
             {
                 Id = pageId,
-                ExhibitId = exhibitId,
                 Properties = args,
                 Timestamp = DateTimeOffset.Now
             };
@@ -108,29 +107,22 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands
             return addRefEvents.Prepend(ev);
         }
 
-        public static IEnumerable<IEvent> Delete(int pageId, ReferencesIndex referencesIndex, ExhibitPageIndex pageIndex)
+        public static IEnumerable<IEvent> Delete(int pageId, ReferencesIndex referencesIndex)
         {
-            // ReSharper disable once PossibleInvalidOperationException
-            var exhibitId = pageIndex.ExhibitId(pageId).Value;
-
-            var ev = new ExhibitPageDeleted { Id = pageId, ExhibitId = exhibitId };
+            var ev = new ExhibitPageDeleted2 { Id = pageId };
             var removeRefEvents = RemoveExhibitPageReferences(pageId, referencesIndex);
 
             // remove references, then delete the page
             return removeRefEvents.Append(ev);
         }
 
-        public static IEnumerable<IEvent> Update(int pageId, ExhibitPageArgs2 args, ReferencesIndex referencesIndex, ExhibitPageIndex pageIndex)
+        public static IEnumerable<IEvent> Update(int pageId, ExhibitPageArgs2 args, ReferencesIndex referencesIndex)
         {
-            // ReSharper disable once PossibleInvalidOperationException
-            var exhibitId = pageIndex.ExhibitId(pageId).Value;
-
             var removeRefEvents = RemoveExhibitPageReferences(pageId, referencesIndex);
 
-            var ev = new ExhibitPageUpdated2
+            var ev = new ExhibitPageUpdated3
             {
                 Id = pageId,
-                ExhibitId = exhibitId,
                 Properties = args,
                 Timestamp = DateTimeOffset.Now
             };

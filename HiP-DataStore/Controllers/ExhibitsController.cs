@@ -4,7 +4,6 @@ using MongoDB.Driver;
 using PaderbornUniversity.SILab.Hip.DataStore.Core;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
-using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
@@ -24,7 +23,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly MediaIndex _mediaIndex;
         private readonly EntityIndex _entityIndex;
         private readonly ReferencesIndex _referencesIndex;
-        private readonly ExhibitPageIndex _exhibitPageIndex;
 
         public ExhibitsController(EventStoreClient eventStore, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices)
         {
@@ -33,7 +31,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             _mediaIndex = indices.OfType<MediaIndex>().First();
             _entityIndex = indices.OfType<EntityIndex>().First();
             _referencesIndex = indices.OfType<ReferencesIndex>().First();
-            _exhibitPageIndex = indices.OfType<ExhibitPageIndex>().First();
         }
 
         [HttpGet("ids")]
@@ -133,9 +130,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> PutAsync(int id, [FromBody]ExhibitUpdateArgs args)
+        public async Task<IActionResult> PutAsync(int id, [FromBody]ExhibitArgs args)
         {
-            ValidateExhibitArgs(args, id);
+            ValidateExhibitArgs(args);
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -173,19 +170,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (_referencesIndex.IsUsed(ResourceType.Exhibit, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
 
-            // pages should be deleted along with the exhibit (cascading deletion) => first, remove the pages
-            var pageIds = _exhibitPageIndex.PageIds(id);
-
-            foreach (var pageId in pageIds)
-            {
-                if (_referencesIndex.IsUsed(ResourceType.ExhibitPage, pageId))
-                    return BadRequest("The exhibit cannot be deleted because it contains pages that are referenced by other resources");
-
-                var pageDeleteEvents = ExhibitPageCommands.Delete(pageId, _referencesIndex, _exhibitPageIndex);
-                await _eventStore.AppendEventsAsync(pageDeleteEvents);
-            }
-
-            // now remove the actual exhibit
+            // remove the exhibit
             var ev = new ExhibitDeleted { Id = id };
             await _eventStore.AppendEventAsync(ev);
             await RemoveExhibitReferencesAsync(id);
@@ -216,28 +201,19 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                         ErrorMessages.TagNotFoundOrNotPublished(id));
             }
         }
-
-        private void ValidateExhibitArgs(ExhibitUpdateArgs args, int exhibitId)
-        {
-            ValidateExhibitArgs(args);
-
-            // check if pages contains exactly the same elements as expected
-            var actualPages = _exhibitPageIndex.PageIds(exhibitId).OrderBy(id => id);
-            var givenPages = args.Pages?.OrderBy(id => id) ?? Enumerable.Empty<int>();
-
-            if (!givenPages.SequenceEqual(actualPages))
-            {
-                ModelState.AddModelError(nameof(args.Pages),
-                    ErrorMessages.ExhibitPageOnlyReorderAllowed);
-            }
-        }
-
+        
         private async Task AddExhibitReferencesAsync(ExhibitArgs args, int exhibitId)
         {
             if (args.Image != null)
             {
                 var imageRef = new ReferenceAdded(ResourceType.Exhibit, exhibitId, ResourceType.Media, args.Image.Value);
                 await _eventStore.AppendEventAsync(imageRef);
+            }
+
+            foreach (var pageId in args.Pages ?? Enumerable.Empty<int>())
+            {
+                var pageRef = new ReferenceAdded(ResourceType.Exhibit, exhibitId, ResourceType.ExhibitPage, pageId);
+                await _eventStore.AppendEventAsync(pageRef);
             }
 
             foreach (var tagId in args.Tags ?? Enumerable.Empty<int>())

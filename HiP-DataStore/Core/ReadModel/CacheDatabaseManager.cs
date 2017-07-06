@@ -100,28 +100,21 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     _db.GetCollection<Exhibit>(ResourceType.Exhibit.Name).DeleteOne(x => x.Id == e.Id);
                     break;
 
-                case ExhibitPageCreated2 e:
-                    // 1) create the page
+                case ExhibitPageCreated3 e:
                     var newPage = new ExhibitPage(e.Properties)
                     {
                         Id = e.Id,
-                        Exhibit = { Id = e.ExhibitId },
                         Timestamp = e.Timestamp
                     };
 
                     _db.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name).InsertOne(newPage);
-
-                    // 2) append page ID to pages array of corresponding exhibit
-                    var addPage = Builders<Exhibit>.Update.Push(x => x.Pages.Ids, e.Id);
-                    _db.GetCollection<Exhibit>(ResourceType.Exhibit.Name).UpdateOne(x => x.Id == e.ExhibitId, addPage);
                     break;
 
-                case ExhibitPageUpdated2 e:
+                case ExhibitPageUpdated3 e:
                     var originalPage = _db.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name).AsQueryable().First(x => x.Id == e.Id);
                     var updatedPage = new ExhibitPage(e.Properties)
                     {
                         Id = e.Id,
-                        Exhibit = { Id = e.ExhibitId },
                         Timestamp = e.Timestamp
                     };
 
@@ -129,13 +122,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     _db.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name).ReplaceOne(x => x.Id == e.Id, updatedPage);
                     break;
 
-                case ExhibitPageDeleted e:
-                    // 1) delete the page
+                case ExhibitPageDeleted2 e:
                     _db.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name).DeleteOne(x => x.Id == e.Id);
-
-                    // 2) remove page ID from pages array of corresponding exhibit
-                    var removePage = Builders<Exhibit>.Update.Pull(x => x.Pages.Ids, e.Id);
-                    _db.GetCollection<Exhibit>(ResourceType.Exhibit.Name).UpdateOne(x => x.Id == e.ExhibitId, removePage);
                     break;
 
                 case RouteCreated e:

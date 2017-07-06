@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
+#pragma warning disable CS0612 // We explicitly work with obsolete types here, so disable warnings for that
 namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
 {
     /// <summary>
@@ -32,7 +33,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
                     case ReferenceRemoved ev2 when ev2.SourceType == ResourceType.ExhibitPage && ev2.TargetType == ResourceType.Exhibit:
                         // pages no longer reference the containing exhibit => ignore such references
                         break;
-                        
+
                     case ExhibitUpdated ev:
                         // "PUT /Exhibit/{id}" now allows to reorder pages using the new 'pages'-field
                         // => emit new ExhibitUpdated-events with correctly populated 'pages' array
@@ -41,7 +42,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
                         {
                             Id = ev.Id,
                             Timestamp = DateTimeOffset.Now,
-                            Properties = new ExhibitUpdateArgs
+                            Properties = new ExhibitArgs
                             {
                                 Pages = pageIds,
                                 Description = ev.Properties.Description,
@@ -90,3 +91,4 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
         }
     }
 }
+#pragma warning restore CS0612 // Type or member is obsolete
