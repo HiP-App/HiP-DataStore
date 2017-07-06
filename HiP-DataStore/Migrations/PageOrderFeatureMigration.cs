@@ -41,7 +41,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
                         e.AppendEvent(new ExhibitUpdated
                         {
                             Id = ev.Id,
-                            Timestamp = DateTimeOffset.Now,
+                            Timestamp = ev.Timestamp,
                             Properties = new ExhibitArgs
                             {
                                 Pages = pageIds,
@@ -91,4 +91,4 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
         }
     }
 }
-#pragma warning restore CS0612 // Type or member is obsolete
+#pragma warning restore CS0612
