@@ -71,6 +71,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
                         break;
 
                     case ExhibitCreated ev:
+                        // In v1, 'ExhibitCreated' did not allow specifying pages, so 'Pages' is null => change that
+                        ev.Properties.Pages = new List<int>();
                         exhibits[ev.Id] = ev.Properties;
                         e.AppendEvent(ev);
                         break;

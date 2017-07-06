@@ -7,6 +7,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -38,6 +39,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
             var settings = ConnectionSettings.Create()
                 .EnableVerboseLogging()
                 .Build();
+
+            // Prevent accidentally working with a production database
+            if (Debugger.IsAttached)
+            {
+                Debug.Assert(config.Value.EventStoreHost.Contains("localhost"),
+                    "It looks like you are trying to connect to a production Event Store database. Are you sure you wish to continue?");
+            }
 
             // Establish connection to Event Store
             Connection = EventStoreConnection.Create(settings, new Uri(config.Value.EventStoreHost));
