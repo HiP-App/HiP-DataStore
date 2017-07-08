@@ -24,6 +24,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly MediaIndex _mediaIndex;
         private readonly EntityIndex _entityIndex;
         private readonly ReferencesIndex _referencesIndex;
+        private readonly ExhibitPageIndex _exhibitPageIndex;
 
         public ExhibitsController(EventStoreClient eventStore, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices)
         {
@@ -32,6 +33,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             _mediaIndex = indices.OfType<MediaIndex>().First();
             _entityIndex = indices.OfType<EntityIndex>().First();
             _referencesIndex = indices.OfType<ReferencesIndex>().First();
+            _exhibitPageIndex = indices.OfType<ExhibitPageIndex>().First();
         }
 
         [HttpGet("ids")]
@@ -56,7 +58,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             try
             {
                 var routeIds = args.OnlyRoutes?.Select(id => (BsonValue)id).ToList();
-                
+
                 var exhibits = query
                     .FilterByIds(args.Exclude, args.IncludeOnly)
                     .FilterByStatus(args.Status)
@@ -131,9 +133,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> PutAsync(int id, [FromBody]ExhibitArgs args)
+        public async Task<IActionResult> PutAsync(int id, [FromBody]ExhibitUpdateArgs args)
         {
-            ValidateExhibitArgs(args);
+            ValidateExhibitArgs(args, id);
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -157,6 +159,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         [HttpDelete("{id}")]
         [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         public async Task<IActionResult> DeleteAsync(int id)
         {
@@ -166,24 +169,19 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.Exhibit, id))
                 return NotFound();
 
-            // Check if exhibit is in use and can't be deleted (it's in use if and only if it is contained in a route).
-            // We can't use _referencesIndex.IsUsed(...) here as it would return true as soon as the exhibit has pages
-            // (since pages have a reference to their containing exhibit)
-            if (_referencesIndex.ReferencesTo(ResourceType.Exhibit, id).Any(r => r.Type == ResourceType.Route))
+            // check if exhibit is in use and can't be deleted (it's in use if and only if it is contained in a route).
+            if (_referencesIndex.IsUsed(ResourceType.Exhibit, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
 
             // pages should be deleted along with the exhibit (cascading deletion) => first, remove the pages
-            var pageIds = _referencesIndex.ReferencesTo(ResourceType.Exhibit, id)
-                .Where(reference => reference.Type.Name == ResourceType.ExhibitPage.Name)
-                .Select(reference => reference.Id)
-                .ToList();
+            var pageIds = _exhibitPageIndex.PageIds(id);
 
             foreach (var pageId in pageIds)
             {
                 if (_referencesIndex.IsUsed(ResourceType.ExhibitPage, pageId))
                     return BadRequest("The exhibit cannot be deleted because it contains pages that are referenced by other resources");
 
-                var pageDeleteEvents = ExhibitPageCommands.Delete(pageId, _referencesIndex);
+                var pageDeleteEvents = ExhibitPageCommands.Delete(pageId, _referencesIndex, _exhibitPageIndex);
                 await _eventStore.AppendEventsAsync(pageDeleteEvents);
             }
 
@@ -219,6 +217,21 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             }
         }
 
+        private void ValidateExhibitArgs(ExhibitUpdateArgs args, int exhibitId)
+        {
+            ValidateExhibitArgs(args);
+
+            // check if pages contains exactly the same elements as expected
+            var actualPages = _exhibitPageIndex.PageIds(exhibitId).OrderBy(id => id);
+            var givenPages = args.Pages?.OrderBy(id => id) ?? Enumerable.Empty<int>();
+
+            if (!givenPages.SequenceEqual(actualPages))
+            {
+                ModelState.AddModelError(nameof(args.Pages),
+                    ErrorMessages.ExhibitPageOnlyReorderAllowed);
+            }
+        }
+
         private async Task AddExhibitReferencesAsync(ExhibitArgs args, int exhibitId)
         {
             if (args.Image != null)
@@ -233,7 +246,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 await _eventStore.AppendEventAsync(tagRef);
             }
         }
-
+        
         private async Task RemoveExhibitReferencesAsync(int exhibitId)
         {
             foreach (var reference in _referencesIndex.ReferencesOf(ResourceType.Exhibit, exhibitId))

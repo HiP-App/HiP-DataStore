@@ -85,11 +85,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (exhibit == null)
                 return NotFound();
 
-            var allPageIds = exhibit.Referencees
-                .Where(r => r.Collection == ResourceType.ExhibitPage.Name)
-                .Select(r => r.Id);
-
-            var pageIds = new DocRefList<ExhibitPage>(allPageIds, ResourceType.ExhibitPage.Name)
+            var pageIds = exhibit.Pages
                 .LoadAll(_db.Database)
                 .Where(p => status == ContentStatus.All || p.Status == status)
                 .Select(p => p.Id)
@@ -116,13 +112,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (exhibit == null)
                 return NotFound();
-
-            var pageIds = exhibit.Referencees
-                .Where(r => r.Collection == ResourceType.ExhibitPage.Name)
-                .Select(r => r.Id);
-
-            var pageRefs = new DocRefList<ExhibitPage>(pageIds, ResourceType.ExhibitPage.Name);
-            var query = pageRefs.LoadAll(_db.Database).AsQueryable();
+            
+            var query = exhibit.Pages.LoadAll(_db.Database).AsQueryable();
 
             return QueryExhibitPages(query, args);
         }
@@ -224,7 +215,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (_referencesIndex.IsUsed(ResourceType.ExhibitPage, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
 
-            var events = ExhibitPageCommands.Delete(id, _referencesIndex);
+            var events = ExhibitPageCommands.Delete(id, _referencesIndex, _exhibitPageIndex);
             await _eventStore.AppendEventsAsync(events);
 
             return NoContent();

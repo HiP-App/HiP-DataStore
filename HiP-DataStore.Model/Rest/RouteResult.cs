@@ -34,9 +34,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
             Distance = route.Distance;
             Image = (int?)route.Image.Id;
             Audio = (int?)route.Audio.Id;
-            Exhibits = route.Exhibits.Select(id => (int)id).ToArray();
+            Exhibits = route.Exhibits.Ids.Select(id => (int)id).ToArray();
             Status = route.Status;
-            Tags = route.Tags.Select(id => (int)id).ToArray();
+            Tags = route.Tags.Ids.Select(id => (int)id).ToArray();
             Timestamp = route.Timestamp;
         }
     }

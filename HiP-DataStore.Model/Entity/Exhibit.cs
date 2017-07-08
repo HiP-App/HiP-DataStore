@@ -7,12 +7,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 {
     public class Exhibit : ContentBase
     {
-        [BsonElement(nameof(Image))]
-        private DocRef<MediaElement> _image = new DocRef<MediaElement>(ResourceType.Media.Name);
-
-        [BsonElement(nameof(Tags))]
-        private DocRefList<Tag> _tags = new DocRefList<Tag>(ResourceType.Tag.Name);
-
         public string Name { get; set; }
 
         public string Description { get; set; }
@@ -21,9 +15,21 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         public float Longitude { get; set; }
 
-        public DocRef<MediaElement> Image => _image;
+        [BsonElement]
+        public DocRef<MediaElement> Image { get; private set; } =
+            new DocRef<MediaElement>(ResourceType.Media.Name);
 
-        public DocRefList<Tag> Tags => _tags;
+        [BsonElement]
+        public DocRefList<Tag> Tags { get; private set; } =
+            new DocRefList<Tag>(ResourceType.Tag.Name);
+
+        /// <remarks>
+        /// This property and the references from pages to exhibit should always be in sync.
+        /// Thus, when pages are created/deleted for a specific exhibit, that exhibit's Pages property must be updated.
+        /// </remarks>
+        [BsonElement]
+        public DocRefList<ExhibitPage> Pages { get; private set; } =
+            new DocRefList<ExhibitPage>(ResourceType.ExhibitPage.Name);
 
         public Exhibit()
         {
@@ -38,6 +44,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
             Longitude = args.Longitude;
             Status = args.Status;
             Tags.Add(args.Tags?.Select(id => (BsonValue)id));
+        }
+
+        public Exhibit(ExhibitUpdateArgs args) : this((ExhibitArgs)args)
+        {
+            Pages.Add(args.Pages?.Select(id => (BsonValue)id));
         }
     }
 }

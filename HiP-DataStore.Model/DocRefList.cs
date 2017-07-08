@@ -2,7 +2,6 @@
 using MongoDB.Bson.Serialization.Attributes;
 using System;
 using System.Collections.Generic;
-using System.Collections;
 using System.Linq;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model
@@ -10,12 +9,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
     /// <summary>
     /// A strongly-typed reference to multiple other documents in a Mongo database.
     /// </summary>
-    public class DocRefList<T> : DocRefBase, ICollection<BsonValue>
+    /// <remarks>
+    /// Unfortunately this type cannot implement <see cref="IEnumerable{BsonValue}"/> or any derived type
+    /// because the BSON serializer then serializes objects of this type as array, forgetting about the fields
+    /// 'Collection' and 'Database'.
+    /// </remarks>
+    public class DocRefList<T> : DocRefBase//, ICollection<BsonValue>
     {
-        [BsonElement("ids")]
-        private HashSet<BsonValue> _ids = new HashSet<BsonValue>();
+        [BsonElement]
+        public HashSet<BsonValue> Ids { get; private set; } = new HashSet<BsonValue>();
 
-        public int Count => _ids.Count;
+        public int Count => Ids.Count;
 
         public DocRefList()
         {
@@ -30,32 +34,23 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
             if (ids == null)
                 throw new ArgumentNullException(nameof(ids));
 
-            _ids = new HashSet<BsonValue>(ids);
+            Ids = new HashSet<BsonValue>(ids);
         }
 
-        public bool Add(BsonValue id) => _ids.Add(id);
+        public bool Add(BsonValue id) => Ids.Add(id);
 
         public void Add(IEnumerable<BsonValue> ids)
         {
             foreach (var id in ids ?? Enumerable.Empty<BsonValue>())
-                _ids.Add(id);
+                Ids.Add(id);
         }
 
-        public bool Remove(BsonValue id) => _ids.Remove(id);
+        public bool Remove(BsonValue id) => Ids.Remove(id);
 
-        public void Clear() => _ids.Clear();
+        public void Clear() => Ids.Clear();
 
-        public bool Contains(BsonValue id) => _ids.Contains(id);
+        public bool Contains(BsonValue id) => Ids.Contains(id);
 
-        public IEnumerator<BsonValue> GetEnumerator() => _ids.GetEnumerator();
-
-        // explicit ICollection<BsonValue> implementations
-        bool ICollection<BsonValue>.IsReadOnly => false;
-
-        void ICollection<BsonValue>.Add(BsonValue id) => Add(id);
-
-        void ICollection<BsonValue>.CopyTo(BsonValue[] array, int arrayIndex) => _ids.CopyTo(array, arrayIndex);
-
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        public IEnumerator<BsonValue> GetEnumerator() => Ids.GetEnumerator();
     }
 }

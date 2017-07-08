@@ -71,7 +71,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
         public static IReadOnlyCollection<T> LoadAll<T>(this DocRefList<T> docRef, IMongoCollection<T> collection)
         {
             return collection
-                .Find(Builders<T>.Filter.In("_id", docRef))
+                .Find(Builders<T>.Filter.In("_id", docRef.Ids))
                 .ToList();
         }
     }
