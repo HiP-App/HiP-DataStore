@@ -13,8 +13,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 
         public ScoreResult(ScoreRecord score)
         {
-            this.Score = score.Score;
-            this.Timestamp = score.Timestamp;
+            Score = score.Score;
+            Timestamp = score.Timestamp;
         }
     }
 }

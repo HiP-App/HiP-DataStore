@@ -11,10 +11,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
         private readonly ScoreBoard _board = new ScoreBoard();
         private readonly Object _lockObject = new object();
 
-        private int MaximumId=0;
+        private int _maximumId;
         public int NewId()
         {
-            return ++MaximumId;
+            return ++_maximumId;
         }
 
         //All records of ScoreBoard (Sorted)
@@ -35,7 +35,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                 case ScoreAdded ev:
                     lock (_lockObject)
                     {
-                        MaximumId = Math.Max(MaximumId, ev.Id);
+                        _maximumId = Math.Max(_maximumId, ev.Id);
                         _board.RemoveWhere(x => x.UserId == ev.UserId);
                         _board.Add(new ScoreRecord() { Id=ev.Id, UserId= ev.UserId, Score = ev.Score , Timestamp = ev.Timestamp });
                     }

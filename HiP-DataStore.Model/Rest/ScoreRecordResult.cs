@@ -10,7 +10,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 
         public ScoreRecordResult(ScoreRecord score) : base(score)
         {
-            this.UserId = score.UserId;
+           UserId = score.UserId;
         }
     }
 }
