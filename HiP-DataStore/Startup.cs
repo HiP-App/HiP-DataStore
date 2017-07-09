@@ -56,7 +56,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
                     .AddSingleton<IDomainIndex, EntityIndex>()
                     .AddSingleton<IDomainIndex, ReferencesIndex>()
                     .AddSingleton<IDomainIndex, TagIndex>()
-                    .AddSingleton<IDomainIndex, ExhibitPageIndex>();
+                    .AddSingleton<IDomainIndex, ExhibitPageIndex>()
+                    .AddSingleton<IDomainIndex, ScoreBoardIndex>();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

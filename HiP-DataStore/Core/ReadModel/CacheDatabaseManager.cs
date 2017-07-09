@@ -247,6 +247,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     _db.GetCollection<dynamic>(e.TargetType.Name).UpdateOne(
                         Builders<dynamic>.Filter.Eq("_id", e.TargetId), update2);
                     break;
+
+                case ScoreAdded e:
+                    var newScoreRecord = new ScoreRecord()
+                    {
+                        Id = e.Id,
+                        UserId=e.UserId,
+                        Score = e.Score,
+                        Timestamp = e.Timestamp
+                    };
+                    _db.GetCollection<ScoreRecord>(ResourceType.ScoreRecord.Name).InsertOne(newScoreRecord);
+                    break;
             }
         }
     }

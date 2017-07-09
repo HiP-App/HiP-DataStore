@@ -1,27 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 {
-    class ScoreBoard
+    public class ScoreBoard : SortedSet<ScoreRecord>
     {
-        public SortedSet<User> ScoreList { get; } = new SortedSet<User>(new UserComparer());
-
-        public ScoreBoard() { }
+       public ScoreBoard() : base(new UsersScoreComparer()) { }
     }
 
-    //Making sorting first by scores. If Scores are Equal then by Names,
-    //if names are equal then by email ( they can`t be equal)
-    class UserComparer : IComparer<User>
+    //Making sorting first by scores. Then by Timestamp
+    class UsersScoreComparer : IComparer<ScoreRecord>
     {
-        public int Compare(User user1, User user2)
+        public int Compare(ScoreRecord pair1, ScoreRecord pair2)
         {
-            int compareResult = user1.Scores.CompareTo(user2.Scores);
+            int compareResult = pair1.Score.CompareTo(pair2.Score);
             if (compareResult == 0) {
-                compareResult = user1.Name.CompareTo(user2.Name);
-                    if (compareResult == 0)
-                    compareResult = user1.Email.CompareTo(user2.Email);
+                compareResult = pair1.Timestamp.CompareTo(pair2.Timestamp);
             }
             return compareResult;
         }
