@@ -210,13 +210,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 await _eventStore.AppendEventAsync(imageRef);
             }
 
-            foreach (var pageId in args.Pages ?? Enumerable.Empty<int>())
+            foreach (var pageId in args.Pages?.Distinct() ?? Enumerable.Empty<int>())
             {
                 var pageRef = new ReferenceAdded(ResourceType.Exhibit, exhibitId, ResourceType.ExhibitPage, pageId);
                 await _eventStore.AppendEventAsync(pageRef);
             }
 
-            foreach (var tagId in args.Tags ?? Enumerable.Empty<int>())
+            foreach (var tagId in args.Tags?.Distinct() ?? Enumerable.Empty<int>())
             {
                 var tagRef = new ReferenceAdded(ResourceType.Exhibit, exhibitId, ResourceType.Tag, tagId);
                 await _eventStore.AppendEventAsync(tagRef);

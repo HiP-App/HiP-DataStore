@@ -78,10 +78,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands
             if (args.Image != null)
                 yield return new ReferenceAdded(ResourceType.ExhibitPage, pageId, ResourceType.Media, args.Image.Value);
 
-            foreach (var img in args.Images ?? Enumerable.Empty<SliderPageImageArgs>())
+            foreach (var img in args.Images?.Distinct() ?? Enumerable.Empty<SliderPageImageArgs>())
                 yield return new ReferenceAdded(ResourceType.ExhibitPage, pageId, ResourceType.Media, img.Image);
 
-            foreach (var id in args.AdditionalInformationPages ?? Enumerable.Empty<int>())
+            foreach (var id in args.AdditionalInformationPages?.Distinct() ?? Enumerable.Empty<int>())
                 yield return new ReferenceAdded(ResourceType.ExhibitPage, pageId, ResourceType.ExhibitPage, id);
         }
 

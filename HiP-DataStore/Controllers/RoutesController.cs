@@ -227,13 +227,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 await _eventStore.AppendEventAsync(audioRef);
             }
 
-            foreach (var exhibitId in args.Exhibits ?? Enumerable.Empty<int>())
+            foreach (var exhibitId in args.Exhibits?.Distinct() ?? Enumerable.Empty<int>())
             {
                 var exhibitRef = new ReferenceAdded(ResourceType.Route, routeId, ResourceType.Exhibit, exhibitId);
                 await _eventStore.AppendEventAsync(exhibitRef);
             }
 
-            foreach (var tagId in args.Tags ?? Enumerable.Empty<int>())
+            foreach (var tagId in args.Tags?.Distinct() ?? Enumerable.Empty<int>())
             {
                 var tagRef = new ReferenceAdded(ResourceType.Route, routeId, ResourceType.Tag, tagId);
                 await _eventStore.AppendEventAsync(tagRef);
