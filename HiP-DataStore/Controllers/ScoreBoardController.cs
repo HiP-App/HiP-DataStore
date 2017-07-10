@@ -68,8 +68,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpPut("{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
-        public async Task<IActionResult> PutAsync(int id, int score)
+        public async Task<IActionResult> PutAsync(int id, int? score)
         {
+            if (score == null || score < 0)
+                ModelState.AddModelError("score", "Parameter is missing or value is negative");
+
            if (!ModelState.IsValid)
                 return BadRequest(ModelState);
           
@@ -77,7 +80,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             {
                 Id = _board.NewId(), 
                 UserId = id,
-                Score  = score,
+                Score  = score.GetValueOrDefault(),
                 Timestamp = DateTimeOffset.Now,
             };
 

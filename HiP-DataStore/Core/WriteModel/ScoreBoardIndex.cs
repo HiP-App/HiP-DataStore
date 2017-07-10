@@ -14,20 +14,22 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
         private int _maximumId;
         public int NewId()
         {
-            return ++_maximumId;
+            lock (_lockObject)
+                return ++_maximumId;
         }
 
         //All records of ScoreBoard (Sorted)
         public IReadOnlyCollection<ScoreRecord> AllRecords()
         {
-            return _board.ToList();
+            lock (_lockObject)
+                return _board.ToList();
         }
         public bool Exists(int userId)
         {
-            return _board.Any(x => x.UserId == userId);
+            lock (_lockObject)
+              return _board.Any(x => x.UserId == userId);
         }
-
-
+        
         public void ApplyEvent(IEvent e)
         {
             switch (e)
