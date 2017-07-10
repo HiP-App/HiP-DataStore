@@ -30,8 +30,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         [HttpGet]
         [ProducesResponseType(typeof(AllItemsResult<ScoreRecordResult>),200)]
-        [ProducesResponseType(400)]
-        [ProducesResponseType(404)]
         public IActionResult GetAll()
         {
             var allRecords = _board.AllRecords().Reverse().ToList();
