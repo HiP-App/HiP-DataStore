@@ -4,6 +4,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using System.Threading.Tasks;
 using System.Linq;
+using PaderbornUniversity.SILab.Hip.DataStore.Model;
 
 #pragma warning disable CS0612 // We explicitly work with obsolete types here, so disable warnings for that
 namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
@@ -20,7 +21,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
         public async Task MigrateAsync(IStreamMigrationArgs e)
         {
             var events = e.GetExistingEvents();
-
             var exhibits = new Dictionary<int, ExhibitArgs>();
 
             while (await events.MoveNextAsync())
@@ -29,7 +29,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
                 {
                     case ExhibitPageCreated2 pageCreated:
                         // In v1, 'ExhibitPageCreated'-events were for creating a page and adding it to an exhibit.
-                        // For v2, this needs to be split into two events.
+                        // For v2, this needs to be split into multiple events.
                         e.AppendEvent(new ExhibitPageCreated3
                         {
                             Id = pageCreated.Id,
@@ -38,6 +38,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
                         });
 
                         var exhibit = exhibits[pageCreated.ExhibitId];
+                        exhibit.Pages.Add(pageCreated.Id);
 
                         e.AppendEvent(new ExhibitUpdated
                         {
@@ -52,7 +53,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
                                 Longitude = exhibit.Longitude,
                                 Status = exhibit.Status,
                                 Tags = exhibit.Tags,
-                                Pages = exhibit.Pages.Append(pageCreated.Id).ToList()
+                                Pages = exhibit.Pages
                             }
                         });
                         break;
@@ -71,7 +72,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
                         break;
 
                     case ExhibitCreated ev:
-                        // In v1, 'ExhibitCreated' did not allow specifying pages, so 'Pages' is null => change that
+                        // In v1, 'ExhibitCreated' did not allow specifying pages, so 'Pages' is null
+                        // => change that to empty list!
                         ev.Properties.Pages = new List<int>();
                         exhibits[ev.Id] = ev.Properties;
                         e.AppendEvent(ev);
@@ -93,6 +95,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
                         break;
                 }
             }
+
+            // In v1, exhibits did not reference their pages.
+            // In v2 they do, so we have to add the missing references.
+            // (Regarding additional information pages, nothing needs to be changed.)
+            foreach (var exhibit in exhibits)
+                foreach (var page in exhibit.Value.Pages)
+                    e.AppendEvent(new ReferenceAdded(ResourceType.Exhibit, exhibit.Key, ResourceType.ExhibitPage, page));
+
         }
     }
 }
