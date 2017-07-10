@@ -121,8 +121,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 Timestamp = DateTimeOffset.Now
             };
 
-            await _eventStore.AppendEventAsync(ev);
-            await AddExhibitReferencesAsync(args, ev.Id);
+            using (var transaction = _eventStore.BeginTransaction())
+            {
+                transaction.Append(ev);
+                transaction.Append(AddExhibitReferences(args, ev.Id));
+                await transaction.CommitAsync();
+            }
+
             return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/{ev.Id}", ev.Id);
         }
 
@@ -148,9 +153,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 Timestamp = DateTimeOffset.Now
             };
 
-            await RemoveExhibitReferencesAsync(ev.Id);
-            await _eventStore.AppendEventAsync(ev);
-            await AddExhibitReferencesAsync(args, ev.Id);
+            using (var transaction = _eventStore.BeginTransaction())
+            {
+                transaction.Append(RemoveExhibitReferences(ev.Id));
+                transaction.Append(ev);
+                transaction.Append(AddExhibitReferences(args, ev.Id));
+                await transaction.CommitAsync();
+            }
+
             return StatusCode(204);
         }
 
@@ -172,8 +182,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             // remove the exhibit
             var ev = new ExhibitDeleted { Id = id };
-            await _eventStore.AppendEventAsync(ev);
-            await RemoveExhibitReferencesAsync(id);
+
+            using (var transaction = _eventStore.BeginTransaction())
+            {
+                transaction.Append(ev);
+                transaction.Append(RemoveExhibitReferences(id));
+                await transaction.CommitAsync();
+            }
 
             return NoContent();
         }
@@ -202,34 +217,22 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             }
         }
         
-        private async Task AddExhibitReferencesAsync(ExhibitArgs args, int exhibitId)
+        private IEnumerable<IEvent> AddExhibitReferences(ExhibitArgs args, int exhibitId)
         {
             if (args.Image != null)
-            {
-                var imageRef = new ReferenceAdded(ResourceType.Exhibit, exhibitId, ResourceType.Media, args.Image.Value);
-                await _eventStore.AppendEventAsync(imageRef);
-            }
+                yield return new ReferenceAdded(ResourceType.Exhibit, exhibitId, ResourceType.Media, args.Image.Value);
 
             foreach (var pageId in args.Pages?.Distinct() ?? Enumerable.Empty<int>())
-            {
-                var pageRef = new ReferenceAdded(ResourceType.Exhibit, exhibitId, ResourceType.ExhibitPage, pageId);
-                await _eventStore.AppendEventAsync(pageRef);
-            }
+                yield return new ReferenceAdded(ResourceType.Exhibit, exhibitId, ResourceType.ExhibitPage, pageId);
 
             foreach (var tagId in args.Tags?.Distinct() ?? Enumerable.Empty<int>())
-            {
-                var tagRef = new ReferenceAdded(ResourceType.Exhibit, exhibitId, ResourceType.Tag, tagId);
-                await _eventStore.AppendEventAsync(tagRef);
-            }
+                yield return new ReferenceAdded(ResourceType.Exhibit, exhibitId, ResourceType.Tag, tagId);
         }
         
-        private async Task RemoveExhibitReferencesAsync(int exhibitId)
+        private IEnumerable<IEvent> RemoveExhibitReferences(int exhibitId)
         {
             foreach (var reference in _referencesIndex.ReferencesOf(ResourceType.Exhibit, exhibitId))
-            {
-                var refRemoved = new ReferenceRemoved(ResourceType.Exhibit, exhibitId, reference.Type, reference.Id);
-                await _eventStore.AppendEventAsync(refRemoved);
-            }
+                yield return new ReferenceRemoved(ResourceType.Exhibit, exhibitId, reference.Type, reference.Id);
         }
     }
 }
