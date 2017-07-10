@@ -9,9 +9,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
     public class ScoreBoardIndex : IDomainIndex
     {
         private readonly ScoreBoard _board = new ScoreBoard();
-        private readonly Object _lockObject = new object();
+        private readonly object _lockObject = new object();
 
         private int _maximumId;
+
         public int NewId()
         {
             lock (_lockObject)
@@ -24,12 +25,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
             lock (_lockObject)
                 return _board.ToList();
         }
+
         public bool Exists(int userId)
         {
             lock (_lockObject)
-              return _board.Any(x => x.UserId == userId);
+                return _board.Any(x => x.UserId == userId);
         }
-        
+
         public void ApplyEvent(IEvent e)
         {
             switch (e)
@@ -39,7 +41,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                     {
                         _maximumId = Math.Max(_maximumId, ev.Id);
                         _board.RemoveWhere(x => x.UserId == ev.UserId);
-                        _board.Add(new ScoreRecord() { Id=ev.Id, UserId= ev.UserId, Score = ev.Score , Timestamp = ev.Timestamp });
+                        _board.Add(new ScoreRecord
+                        {
+                            Id = ev.Id,
+                            UserId = ev.UserId,
+                            Score = ev.Score,
+                            Timestamp = ev.Timestamp
+                        });
                     }
                     break;
             }
