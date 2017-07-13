@@ -104,7 +104,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         }
 
         [HttpPost]
-        [ProducesResponseType(typeof(int), 200)]
+        [ProducesResponseType(typeof(int), 201)]
         [ProducesResponseType(400)]
         [ProducesResponseType(409)]
         public async Task<IActionResult> PostAsync([FromBody]TagArgs args)
@@ -118,6 +118,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return StatusCode(409);
 
             int id = _entityIndex.NextId(ResourceType.Tag);
+
             var ev = new TagCreated
             {
                 Id = id,
@@ -125,15 +126,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 Timestamp = DateTimeOffset.Now
             };
 
-            await _ev.AppendEventAsync(ev);
-
-            if (args.Image != null)
+            using (var transaction = _ev.BeginTransaction())
             {
-                var newRef = new ReferenceAdded(ResourceType.Tag, id, ResourceType.Media, args.Image.Value);
-                await _ev.AppendEventAsync(newRef);
+                transaction.Append(ev);
+
+                if (args.Image != null)
+                    transaction.Append(new ReferenceAdded(ResourceType.Tag, id, ResourceType.Media, args.Image.Value));
+
+                await transaction.CommitAsync();
             }
 
-            return Ok(id);
+            return Created($"{Request.Scheme}://{Request.Host}/api/Tags/{id}", id);
 
         }
 
@@ -164,20 +167,29 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 Timestamp = DateTimeOffset.Now,
             };
 
-            await _ev.AppendEventAsync(ev);
-
-            var oldReferences = _referencesIndex.ReferencesOf(ResourceType.Tag, ev.Id).Where(x => x.Type == ResourceType.Media);
-            if (oldReferences.Count() > 0)
+            using (var transaction = _ev.BeginTransaction())
             {
-                var oldRef = oldReferences.FirstOrDefault();
-                var oldRefEvent = new ReferenceRemoved(ResourceType.Tag, ev.Id, oldRef.Type, oldRef.Id);
-                await _ev.AppendEventAsync(oldRefEvent);
-            }
+                transaction.Append(ev);
 
-            if (args.Image != null)
-            {
-                var newRefEvent = new ReferenceAdded(ResourceType.Tag, id, ResourceType.Media, args.Image.Value);
-                await _ev.AppendEventAsync(newRefEvent);
+                var oldReferences = _referencesIndex
+                    .ReferencesOf(ResourceType.Tag, ev.Id)
+                    .Where(x => x.Type == ResourceType.Media)
+                    .ToList();
+
+                if (oldReferences.Count > 0)
+                {
+                    var oldRef = oldReferences.FirstOrDefault();
+                    var oldRefEvent = new ReferenceRemoved(ResourceType.Tag, ev.Id, oldRef.Type, oldRef.Id);
+                    transaction.Append(oldRefEvent);
+                }
+
+                if (args.Image != null)
+                {
+                    var newRefEvent = new ReferenceAdded(ResourceType.Tag, id, ResourceType.Media, args.Image.Value);
+                    transaction.Append(newRefEvent);
+                }
+
+                await transaction.CommitAsync();
             }
 
             return NoContent();
@@ -198,15 +210,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (_referencesIndex.IsUsed(ResourceType.Tag, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
 
-
             var ev = new TagDeleted { Id = id };
-            await _ev.AppendEventAsync(ev);
 
-            //Remove references
-            foreach (var reference in _referencesIndex.ReferencesOf(ResourceType.Tag, id))
+            using (var transaction = _ev.BeginTransaction())
             {
-                var refRemoved = new ReferenceRemoved(ResourceType.Tag, id, reference.Type, reference.Id);
-                await _ev.AppendEventAsync(refRemoved);
+                transaction.Append(ev);
+
+                // Remove references
+                foreach (var reference in _referencesIndex.ReferencesOf(ResourceType.Tag, id))
+                    transaction.Append(new ReferenceRemoved(ResourceType.Tag, id, reference.Type, reference.Id));
+
+                await transaction.CommitAsync();
             }
 
             return NoContent();

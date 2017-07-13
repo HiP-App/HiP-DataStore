@@ -37,7 +37,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             _mediaIndex = indices.OfType<MediaIndex>().First();
             _referencesIndex = indices.OfType<ReferencesIndex>().First();
             _uploadConfig = uploadConfig.Value;
-
         }
 
         [HttpGet("ids")]
