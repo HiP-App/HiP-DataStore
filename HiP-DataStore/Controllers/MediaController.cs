@@ -161,6 +161,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (_referencesIndex.IsUsed(ResourceType.Media, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
 
+            // Remove file
+            string directoryPath = Path.GetDirectoryName(_mediaIndex.GetFilePath(id)); 
+            if (directoryPath != null && System.IO.Directory.Exists(directoryPath))
+                Directory.Delete(directoryPath, true);
+
+        
+
             var ev = new MediaDeleted { Id = id };
             await _eventStore.AppendEventAsync(ev);
             return StatusCode(204);

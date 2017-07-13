@@ -10,6 +10,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
         public static readonly ResourceType Route = new ResourceType("Route");
         public static readonly ResourceType Media = new ResourceType("Media");
         public static readonly ResourceType Tag = new ResourceType("Tag");
+        public static readonly ResourceType ScoreRecord = new ResourceType("ScoreRecord");
 
         /// <summary>
         /// This name is used in two ways:
