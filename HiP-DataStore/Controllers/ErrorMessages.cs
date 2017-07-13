@@ -30,8 +30,5 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         public static string CannotChangeExhibitPageType(PageType currentType, PageType newType) =>
             $"The type of an exhibit page cannot be changed (current type is '{currentType}', attempted to change to '{newType}')";
-
-        public static string ExhibitPageOnlyReorderAllowed =>
-            "The set of specified page IDs differs from the set of pages actually belonging to the exhibit. Addition and removal of pages is not supported by the PUT API, only reordering of pages is.";
     }
 }

@@ -84,7 +84,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.Migrations
                 var metadata = await connection.GetStreamMetadataAsync(streamName);
                 var updatedMetadata = metadata.StreamMetadata.Copy()
                     .SetCustomProperty(StreamVersionMetadataKey, migrationType.Properties.ToVersion);
-                await connection.SetStreamMetadataAsync(streamName, metadata.MetastreamVersion, updatedMetadata);
+                await connection.SetStreamMetadataAsync(streamName, ExpectedVersion.Any, updatedMetadata);
 
                 await transaction.CommitAsync();
             }

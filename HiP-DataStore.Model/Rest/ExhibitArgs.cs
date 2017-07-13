@@ -24,5 +24,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         public ContentStatus Status { get; set; }
 
         public List<int> Tags { get; set; }
+
+        public List<int> Pages { get; set; }
     }
 }

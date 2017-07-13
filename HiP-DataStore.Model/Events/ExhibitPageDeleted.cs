@@ -1,5 +1,16 @@
-﻿namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
+﻿using System;
+
+namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 {
+    // Version info: As a consequence of a flat page hierarchy, pages no longer belong to exactly one exhibit
+    public class ExhibitPageDeleted2 : IDeleteEvent
+    {
+        public int Id { get; set; }
+
+        public ResourceType GetEntityType() => ResourceType.ExhibitPage;
+    }
+
+    [Obsolete]
     public class ExhibitPageDeleted : IDeleteEvent
     {
         public int Id { get; set; }
