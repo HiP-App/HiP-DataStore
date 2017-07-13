@@ -104,7 +104,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         }
 
         [HttpPost]
-        [ProducesResponseType(typeof(int), 200)]
+        [ProducesResponseType(typeof(int), 201)]
         [ProducesResponseType(400)]
         [ProducesResponseType(409)]
         public async Task<IActionResult> PostAsync([FromBody]TagArgs args)
@@ -136,7 +136,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 await transaction.CommitAsync();
             }
 
-            return Ok(id);
+            return Created($"{Request.Scheme}://{Request.Host}/api/Tags/{id}", id);
 
         }
 

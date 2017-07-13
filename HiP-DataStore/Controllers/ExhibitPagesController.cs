@@ -52,6 +52,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return Ok(_entityIndex.AllIds(ResourceType.ExhibitPage, status ?? ContentStatus.Published));
         }
 
+        /// <summary>
+        /// Gets all pages in no particular order, unless otherwise specified in the query arguments.
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
         [HttpGet("Pages")]
         [ProducesResponseType(typeof(AllItemsResult<ExhibitPageResult>), 200)]
         [ProducesResponseType(400)]
@@ -94,6 +99,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return Ok(pageIds);
         }
 
+        /// <summary>
+        /// Gets the pages of an exhibit in the correct order (as specified in the exhibit),
+        /// unless otherwise specified in the query arguments.
+        /// </summary>
         [HttpGet("{exhibitId}/Pages")]
         [ProducesResponseType(typeof(AllItemsResult<ExhibitPageResult>), 200)]
         [ProducesResponseType(400)]
