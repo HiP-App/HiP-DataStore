@@ -15,14 +15,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
         /// </summary>
         public int Count(ResourceType res, int id)
         {
-            var ratingTypeInfo = GetOrCreateRatingTypeInfo(res);
-            return ratingTypeInfo.Ratings.ContainsKey(id) ? ratingTypeInfo.Ratings[id].NumberRates : 0;
+            return GetOrCreateRatingTypeInfo(res).Ratings.TryGetValue(id, out var t) ? t.NumberRates : 0;
         }
 
         public double Average(ResourceType res,int id)
         {
-            var ratingTypeInfo = GetOrCreateRatingTypeInfo(res);
-            return ratingTypeInfo.Ratings.ContainsKey(id) ? ratingTypeInfo.Ratings[id].AverageRate : 0;
+            return GetOrCreateRatingTypeInfo(res).Ratings.TryGetValue(id, out var t) ? t.AverageRate : 0;
         }
 
         public int NextId(ResourceType entityType)
