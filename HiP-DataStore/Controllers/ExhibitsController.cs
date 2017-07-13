@@ -25,6 +25,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly EntityIndex _entityIndex;
         private readonly ReferencesIndex _referencesIndex;
         private readonly ExhibitPageIndex _exhibitPageIndex;
+        private readonly RatingIndex _ratingIndex;
 
         public ExhibitsController(EventStoreClient eventStore, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices)
         {
@@ -34,6 +35,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             _entityIndex = indices.OfType<EntityIndex>().First();
             _referencesIndex = indices.OfType<ReferencesIndex>().First();
             _exhibitPageIndex = indices.OfType<ExhibitPageIndex>().First();
+            _ratingIndex = indices.OfType<RatingIndex>().First();
         }
 
         [HttpGet("ids")]
@@ -192,6 +194,73 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             return NoContent();
         }
+
+        [HttpGet("rating/{id}")]
+        [ProducesResponseType(typeof(RatingResult), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public IActionResult GetRating(int id)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var exhibit = _db.Database.GetCollection<Exhibit>(ResourceType.Exhibit.Name)
+                                      .AsQueryable()
+                                      .FirstOrDefault(x => x.Id == id);
+
+            if (exhibit == null || _entityIndex.Status(ResourceType.Exhibit, id) != ContentStatus.Published)
+                return NotFound(ErrorMessages.ExhibitNotFoundOrNotPublished(id));
+
+            var result = new RatingResult()
+            {
+                Id = id,
+                Average = _ratingIndex.Average(ResourceType.Exhibit, id),
+                Count = _ratingIndex.Count(ResourceType.Exhibit, id)
+            };
+
+            return Ok(result);
+        }
+
+        [HttpPost("rating/{id}")]
+        [ProducesResponseType(typeof(int),201)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> PostRating(int id,RatingArgs args)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var exhibit = _db.Database.GetCollection<Exhibit>(ResourceType.Exhibit.Name)
+                                      .AsQueryable()
+                                      .FirstOrDefault(x => x.Id == id);
+
+            if (exhibit == null || _entityIndex.Status(ResourceType.Exhibit,id) != ContentStatus.Published)
+                return NotFound(ErrorMessages.ExhibitNotFoundOrNotPublished(id));
+
+            var oldValue = _db.Database
+                              .GetCollection<Rating>(ResourceType.Rating.Name)
+                              .AsQueryable()
+                              .Where(x => x.UserId == args.UserId.GetValueOrDefault() && x.RatedType.Name == ResourceType.Exhibit.Name && x.EntityId == id)
+                              .FirstOrDefault()
+                             ?.Value;
+
+            /// TODO When AUTH service will work change the UserID
+            var ev = new RatingAdded()
+            {
+                Id = _ratingIndex.NextId(ResourceType.Exhibit),
+                EntityId = id,
+                UserId = args.UserId.GetValueOrDefault(),
+                Value = args.Rating.GetValueOrDefault(),
+                OldValue = oldValue,
+                RatedType = ResourceType.Exhibit,
+                Timestamp = DateTimeOffset.Now
+            };
+
+            await _eventStore.AppendEventAsync(ev);
+            return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/{ev.Id}", ev.Id);
+        }
+
+     
 
 
         private void ValidateExhibitArgs(ExhibitArgs args)

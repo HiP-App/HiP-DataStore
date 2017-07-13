@@ -258,6 +258,16 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     };
                     _db.GetCollection<ScoreRecord>(ResourceType.ScoreRecord.Name).InsertOne(newScoreRecord);
                     break;
+                case RatingAdded e:
+                    var rating = new Rating(e);
+                    var filter = Builders<Rating>
+                                 .Filter
+                                 .Where(x => x.UserId == e.UserId && x.RatedType == e.RatedType && x.EntityId == e.EntityId);
+
+                    var ratingCollection = _db.GetCollection<Rating>(ResourceType.Rating.Name);
+                    ratingCollection.DeleteOne(filter);
+                    ratingCollection.InsertOne(rating);
+    ;               break;
             }
         }
     }

@@ -57,7 +57,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
                     .AddSingleton<IDomainIndex, ReferencesIndex>()
                     .AddSingleton<IDomainIndex, TagIndex>()
                     .AddSingleton<IDomainIndex, ExhibitPageIndex>()
-                    .AddSingleton<IDomainIndex, ScoreBoardIndex>();
+                    .AddSingleton<IDomainIndex, ScoreBoardIndex>()
+                    .AddSingleton<IDomainIndex, RatingIndex>();
 
         }
 

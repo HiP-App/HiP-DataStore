@@ -3,7 +3,7 @@ using System;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model
 {
-    public struct ResourceType : IEquatable<ResourceType>
+    public class ResourceType : IEquatable<ResourceType>
     {
         public static readonly ResourceType Exhibit = new ResourceType("Exhibit");
         public static readonly ResourceType ExhibitPage = new ResourceType("ExhibitPage");
@@ -11,6 +11,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
         public static readonly ResourceType Media = new ResourceType("Media");
         public static readonly ResourceType Tag = new ResourceType("Tag");
         public static readonly ResourceType ScoreRecord = new ResourceType("ScoreRecord");
+        public static readonly ResourceType Rating = new ResourceType("Rating");
 
         /// <summary>
         /// This name is used in two ways:
@@ -19,6 +20,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
         /// </summary>
         [BsonElement]
         public string Name { get; }
+
 
         [BsonConstructor]
         public ResourceType(string name)
