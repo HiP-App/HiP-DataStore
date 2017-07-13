@@ -39,7 +39,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
             var mongo = new MongoClient(config.Value.MongoDbHost);
             mongo.DropDatabase(config.Value.MongoDbName);
             _db = mongo.GetDatabase(config.Value.MongoDbName);
-            logger.LogInformation($"Connected to MongoDB cache database, using database '{config.Value.MongoDbName}'");
+            var uri = new Uri(config.Value.MongoDbHost);
+            logger.LogInformation($"Connected to MongoDB cache database on '{uri.Host}', using database '{config.Value.MongoDbName}'");
 
             // 2) Subscribe to EventStore to receive all past and future events
             _eventStore = eventStore;

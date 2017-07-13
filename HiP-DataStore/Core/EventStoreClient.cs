@@ -48,10 +48,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
             }
 
             // Establish connection to Event Store
-            Connection = EventStoreConnection.Create(settings, new Uri(config.Value.EventStoreHost));
+            var uri = new Uri(config.Value.EventStoreHost);
+            Connection = EventStoreConnection.Create(settings, uri);
             Connection.ConnectAsync().Wait();
 
-            logger.LogInformation($"Connected to Event Store, using stream '{_streamName}'");
+            logger.LogInformation($"Connected to Event Store on '{uri.Host}', using stream '{_streamName}'");
 
             // Update stream to the latest version
             var migrationResult = StreamMigrator.MigrateAsync(Connection, _streamName).Result;
