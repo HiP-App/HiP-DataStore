@@ -38,7 +38,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
 
         public bool Equals(ResourceType other) => Name == other.Name;
 
-        public static bool operator ==(ResourceType a, ResourceType b) => a?.Equals(b) ?? (b == null) ? true : false;
+        public static bool operator ==(ResourceType a, ResourceType b) => a?.Equals(b) ?? b == null;
 
         public static bool operator !=(ResourceType a, ResourceType b) => !(a == b);
     }
