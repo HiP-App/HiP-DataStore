@@ -70,26 +70,24 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
         const int MinRateValue = 1;
         const int MaxRateValue = 5;
 
-        public double AverageRate { get { return (NumberRates != 0) ? ((double)SumRate / (double)NumberRates) : 0; }  }
+        public double AverageRate { get { return (NumberRates != 0) ? ((double)_sumRate / NumberRates) : 0; }  }
         public int NumberRates { get; private set; }
 
-        private int SumRate = 0;
+        private int _sumRate;
 
         public bool AddRating(int? oldRate, int newRate)
         {
-            ///Validtion check
             if (!(IsOldRatingValid(oldRate) && CheckRatingRange(newRate)))
                 return false;
 
             if (oldRate != null)
-                  SumRate += (newRate - oldRate.GetValueOrDefault());
+                  _sumRate += (newRate - oldRate.GetValueOrDefault());
             else
             {
-                SumRate += newRate;
+                _sumRate += newRate;
                 NumberRates++;
             }
-               
-
+            
             return true;
         }
         bool IsOldRatingValid(int? oldRate)

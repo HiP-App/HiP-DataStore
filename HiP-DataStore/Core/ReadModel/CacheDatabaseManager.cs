@@ -247,6 +247,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     };
                     _db.GetCollection<ScoreRecord>(ResourceType.ScoreRecord.Name).InsertOne(newScoreRecord);
                     break;
+
                 case RatingAdded e:
                     var rating = new Rating(e);
                     var filter = Builders<Rating>
@@ -256,7 +257,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     var ratingCollection = _db.GetCollection<Rating>(ResourceType.Rating.Name);
                     ratingCollection.DeleteOne(filter);
                     ratingCollection.InsertOne(rating);
-    ;               break;
+                   break;
             }
         }
     }

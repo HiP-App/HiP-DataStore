@@ -244,7 +244,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                               .FirstOrDefault()
                              ?.Value;
 
-            /// TODO When AUTH service will work change the UserID
+            // TODO When AUTH service will work change the UserID
             var ev = new RatingAdded()
             {
                 Id = _ratingIndex.NextId(ResourceType.Exhibit),
