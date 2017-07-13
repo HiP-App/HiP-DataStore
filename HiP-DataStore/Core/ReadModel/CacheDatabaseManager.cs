@@ -68,7 +68,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                 _logger.LogWarning($"{nameof(CacheDatabaseManager)} could not process an event: {e}");
             }
         }
-        
+
         private void ApplyEvent(IEvent ev)
         {
             switch (ev)
@@ -101,6 +101,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     break;
 
                 case ExhibitPageCreated2 e:
+                    // 1) create the page
                     var newPage = new ExhibitPage(e.Properties)
                     {
                         Id = e.Id,
@@ -109,6 +110,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     };
 
                     _db.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name).InsertOne(newPage);
+
+                    // 2) append page ID to pages array of corresponding exhibit
+                    var addPage = Builders<Exhibit>.Update.Push(x => x.Pages.Ids, e.Id);
+                    _db.GetCollection<Exhibit>(ResourceType.Exhibit.Name).UpdateOne(x => x.Id == e.ExhibitId, addPage);
                     break;
 
                 case ExhibitPageUpdated2 e:
@@ -125,7 +130,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     break;
 
                 case ExhibitPageDeleted e:
+                    // 1) delete the page
                     _db.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name).DeleteOne(x => x.Id == e.Id);
+
+                    // 2) remove page ID from pages array of corresponding exhibit
+                    var removePage = Builders<Exhibit>.Update.Pull(x => x.Pages.Ids, e.Id);
+                    _db.GetCollection<Exhibit>(ResourceType.Exhibit.Name).UpdateOne(x => x.Id == e.ExhibitId, removePage);
                     break;
 
                 case RouteCreated e:
@@ -173,6 +183,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     };
 
                     updatedMedia.Referencees.AddRange(originalMedia.Referencees);
+                    updatedMedia.File = originalMedia.File;
                     _db.GetCollection<MediaElement>(ResourceType.Media.Name).ReplaceOne(m => m.Id == e.Id, updatedMedia);
                     break;
 
@@ -196,7 +207,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 
                     _db.GetCollection<Tag>(ResourceType.Tag.Name).InsertOne(newTag);
                     break;
-                    
+
                 case TagUpdated e:
                     var originalTag = _db.GetCollection<Tag>(ResourceType.Tag.Name).AsQueryable().First(x => x.Id == e.Id);
                     var updatedTag = new Tag(e.Properties)
@@ -235,6 +246,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 
                     _db.GetCollection<dynamic>(e.TargetType.Name).UpdateOne(
                         Builders<dynamic>.Filter.Eq("_id", e.TargetId), update2);
+                    break;
+
+                case ScoreAdded e:
+                    var newScoreRecord = new ScoreRecord
+                    {
+                        Id = e.Id,
+                        UserId = e.UserId,
+                        Score = e.Score,
+                        Timestamp = e.Timestamp
+                    };
+                    _db.GetCollection<ScoreRecord>(ResourceType.ScoreRecord.Name).InsertOne(newScoreRecord);
                     break;
             }
         }

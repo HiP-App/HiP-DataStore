@@ -18,6 +18,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
         public ContentStatus GetStatus() => Properties.Status;
     }
 
+    [Obsolete]
     public class ExhibitPageCreated : ICreateEvent, IMigratable<ExhibitPageCreated2>
     {
         public int Id { get; set; }
