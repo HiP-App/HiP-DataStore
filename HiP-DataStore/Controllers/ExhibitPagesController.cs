@@ -52,6 +52,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return Ok(_entityIndex.AllIds(ResourceType.ExhibitPage, status ?? ContentStatus.Published));
         }
 
+        /// <summary>
+        /// Gets all pages in no particular order, unless otherwise specified in the query arguments.
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
         [HttpGet("Pages")]
         [ProducesResponseType(typeof(AllItemsResult<ExhibitPageResult>), 200)]
         [ProducesResponseType(400)]
@@ -94,6 +99,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return Ok(pageIds);
         }
 
+        /// <summary>
+        /// Gets the pages of an exhibit in the correct order (as specified in the exhibit),
+        /// unless otherwise specified in the query arguments.
+        /// </summary>
         [HttpGet("{exhibitId}/Pages")]
         [ProducesResponseType(typeof(AllItemsResult<ExhibitPageResult>), 200)]
         [ProducesResponseType(400)]
@@ -142,11 +151,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return Ok(result);
         }
 
-        [HttpPost("{exhibitId}/Pages")]
+        [HttpPost("Pages")]
         [ProducesResponseType(typeof(int), 201)]
         [ProducesResponseType(400)]
-        [ProducesResponseType(404)]
-        public async Task<IActionResult> PostForExhibitAsync(int exhibitId, [FromBody]ExhibitPageArgs2 args)
+        public async Task<IActionResult> PostAsync([FromBody]ExhibitPageArgs2 args)
         {
             // if font family is not specified, fallback to the configured default font family
             if (args != null && args.FontFamily == null)
@@ -156,13 +164,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-
-            if (!_entityIndex.Exists(ResourceType.Exhibit, exhibitId))
-                return NotFound();
-
+            
             // validation passed, emit events (create page, add references to image(s) and additional info pages)
             var newPageId = _entityIndex.NextId(ResourceType.ExhibitPage);
-            var events = ExhibitPageCommands.Create(newPageId, exhibitId, args);
+            var events = ExhibitPageCommands.Create(newPageId, args);
             await _eventStore.AppendEventsAsync(events);
 
             return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Pages/{newPageId}", newPageId);
@@ -194,7 +199,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return StatusCode(422, ErrorMessages.CannotChangeExhibitPageType(currentPageType, args.Type));
 
             // validation passed, emit events (remove old references, update exhibit, add new references)
-            var events = ExhibitPageCommands.Update(id, args, _referencesIndex, _exhibitPageIndex);
+            var events = ExhibitPageCommands.Update(id, args, _referencesIndex);
             await _eventStore.AppendEventsAsync(events);
 
             return StatusCode(204);
@@ -215,7 +220,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (_referencesIndex.IsUsed(ResourceType.ExhibitPage, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
 
-            var events = ExhibitPageCommands.Delete(id, _referencesIndex, _exhibitPageIndex);
+            var events = ExhibitPageCommands.Delete(id, _referencesIndex);
             await _eventStore.AppendEventsAsync(events);
 
             return NoContent();

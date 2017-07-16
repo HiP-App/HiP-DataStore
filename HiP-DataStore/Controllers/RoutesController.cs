@@ -117,8 +117,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 Timestamp = DateTimeOffset.Now
             };
 
-            await _eventStore.AppendEventAsync(ev);
-            await AddRouteReferencesAsync(args, ev.Id);
+            using (var transaction = _eventStore.BeginTransaction())
+            {
+                transaction.Append(ev);
+                transaction.Append(AddRouteReferences(args, ev.Id));
+                await transaction.CommitAsync();
+            }
+
             return Created($"{Request.Scheme}://{Request.Host}/api/Routes/{ev.Id}", ev.Id);
         }
 
@@ -144,9 +149,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 Timestamp = DateTimeOffset.Now,
             };
 
-            await RemoveRouteReferencesAsync(ev.Id);
-            await _eventStore.AppendEventAsync(ev);
-            await AddRouteReferencesAsync(args, ev.Id);
+            using (var transaction = _eventStore.BeginTransaction())
+            {
+                transaction.Append(RemoveRouteReferences(ev.Id));
+                transaction.Append(ev);
+                transaction.Append(AddRouteReferences(args, ev.Id));
+                await transaction.CommitAsync();
+            }
+
             return StatusCode(204);
         }
 
@@ -167,8 +177,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             // validation passed, emit events (delete route, remove references to image, audio, exhibits and tags)
             var ev = new RouteDeleted { Id = id };
-            await _eventStore.AppendEventAsync(ev);
-            await RemoveRouteReferencesAsync(id);
+
+            using (var transaction = _eventStore.BeginTransaction())
+            {
+                transaction.Append(ev);
+                transaction.Append(RemoveRouteReferences(id));
+                await transaction.CommitAsync();
+            }
+
             return NoContent();
         }
 
@@ -213,40 +229,25 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             }
         }
 
-        private async Task AddRouteReferencesAsync(RouteArgs args, int routeId)
+        private IEnumerable<IEvent> AddRouteReferences(RouteArgs args, int routeId)
         {
             if (args.Image != null)
-            {
-                var imageRef = new ReferenceAdded(ResourceType.Route, routeId, ResourceType.Media, args.Image.Value);
-                await _eventStore.AppendEventAsync(imageRef);
-            }
+                yield return new ReferenceAdded(ResourceType.Route, routeId, ResourceType.Media, args.Image.Value);
 
             if (args.Audio != null)
-            {
-                var audioRef = new ReferenceAdded(ResourceType.Route, routeId, ResourceType.Media, args.Audio.Value);
-                await _eventStore.AppendEventAsync(audioRef);
-            }
+                yield return new ReferenceAdded(ResourceType.Route, routeId, ResourceType.Media, args.Audio.Value);
 
-            foreach (var exhibitId in args.Exhibits ?? Enumerable.Empty<int>())
-            {
-                var exhibitRef = new ReferenceAdded(ResourceType.Route, routeId, ResourceType.Exhibit, exhibitId);
-                await _eventStore.AppendEventAsync(exhibitRef);
-            }
+            foreach (var exhibitId in args.Exhibits?.Distinct() ?? Enumerable.Empty<int>())
+                yield return new ReferenceAdded(ResourceType.Route, routeId, ResourceType.Exhibit, exhibitId);
 
-            foreach (var tagId in args.Tags ?? Enumerable.Empty<int>())
-            {
-                var tagRef = new ReferenceAdded(ResourceType.Route, routeId, ResourceType.Tag, tagId);
-                await _eventStore.AppendEventAsync(tagRef);
-            }
+            foreach (var tagId in args.Tags?.Distinct() ?? Enumerable.Empty<int>())
+                yield return new ReferenceAdded(ResourceType.Route, routeId, ResourceType.Tag, tagId);
         }
 
-        private async Task RemoveRouteReferencesAsync(int routeId)
+        private IEnumerable<IEvent> RemoveRouteReferences(int routeId)
         {
             foreach (var reference in _referencesIndex.ReferencesOf(ResourceType.Route, routeId))
-            {
-                var refRemoved = new ReferenceRemoved(ResourceType.Route, routeId, reference.Type, reference.Id);
-                await _eventStore.AppendEventAsync(refRemoved);
-            }
+                yield return new ReferenceRemoved(ResourceType.Route, routeId, reference.Type, reference.Id);
         }
     }
 }
