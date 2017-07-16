@@ -8,16 +8,11 @@ using Xunit;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace PaderbornUniversity.SILab.Hip.DataStore.Tests
+namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
 {
     public class TagsControllerTest
     {
-        private readonly TagIndex _tagIndex;
-
-        public TagsControllerTest(IEnumerable<IDomainIndex> indices)
-        {
-            _tagIndex = indices.OfType<TagIndex>().First();
-        }
+        private TagIndex _tagIndex => MvcTestContext.Services.GetService<IEnumerable<IDomainIndex>>().OfType<TagIndex>().First();
 
         /// <summary>
         /// Returns ok if all tag Ids are retrieved.
@@ -97,11 +92,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests
             //Hence deleting the tag with this title by getting it's Id
             //so that the next time the test will not fail.
 
-            var IdByTagTitle = (int) _tagIndex.GetIdByTagTitle(tagArgs.Title);
+            var tagId = _tagIndex.GetIdByTagTitle(tagArgs.Title).GetValueOrDefault(-1);
 
             MyMvc
                 .Controller<TagsController>()
-                .Calling(c => c.DeleteById(IdByTagTitle))
+                .Calling(c => c.DeleteById(tagId))
                 .ShouldReturn()
                 .NoContent();
         }
@@ -156,11 +151,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests
 
             MyMvc
                 .Controller<TagsController>()
-                .Calling(c => c.UpdateById(1,tagArgs))
+                .Calling(c => c.UpdateById(1, tagArgs))
                 .ShouldReturn()
                 .NoContent();
         }
-        
+
         /// <summary>
         /// Returns 404 if tag not found.
         /// </summary>
