@@ -25,7 +25,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
                 Title = tag.Title,
                 Description = tag.Description,
                 Image = tag.Image.Id.AsNullableInt32,
-                Used = tag.Referencees.Count > 0,
+                Used = tag.Referencers.Count > 0,
                 Status = tag.Status,
                 Timestamp = tag.Timestamp,
             };

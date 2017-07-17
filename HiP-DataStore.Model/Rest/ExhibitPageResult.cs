@@ -55,7 +55,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
             AdditionalInformationPages = page.AdditionalInformationPages.Ids.Select(id => (int)id).ToList();
             Status = page.Status;
             Timestamp = page.Timestamp;
-            Used = page.Referencees.Count > 0; // a page is in use if it is referenced by an exhibit or page
+            Used = page.Referencers.Count > 0; // a page is in use if it is referenced by an exhibit or page
 
             // properties only valid for certain page types:
 
