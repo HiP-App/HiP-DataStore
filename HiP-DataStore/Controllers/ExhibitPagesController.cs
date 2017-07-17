@@ -228,6 +228,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         [HttpGet("Pages/{id}/Refs")]
         [ProducesResponseType(typeof(ReferenceInfoResult), 200)]
+        [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         public IActionResult GetReferenceInfo(int id)
         {
