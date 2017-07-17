@@ -21,7 +21,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
         /// - A media file is in use if it is referenced by a route, an exhibit, an exhibit page or a tag.
         /// - A tag is is use if it is referenced by a route or an exhibit.
         /// </remarks>
-        public List<DocRef<ContentBase>> Referencees { get; private set; } = new List<DocRef<ContentBase>>();
+        public List<DocRef<ContentBase>> Referencers { get; private set; } = new List<DocRef<ContentBase>>();
 
         /// <summary>
         /// The date and time of the last modification.

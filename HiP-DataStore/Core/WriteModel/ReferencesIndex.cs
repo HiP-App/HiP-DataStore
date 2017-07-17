@@ -62,9 +62,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                         if (referencesOfSource.Count == 0)
                             _referencesOf.Remove(source);
 
-                        var referenceesOfTarget = GetOrCreateSet(_referencesTo, target);
-                        referenceesOfTarget.Remove(source);
-                        if (referenceesOfTarget.Count == 0)
+                        var referencersOfTarget = GetOrCreateSet(_referencesTo, target);
+                        referencersOfTarget.Remove(source);
+                        if (referencersOfTarget.Count == 0)
                             _referencesTo.Remove(target);
                         break;
                 }
