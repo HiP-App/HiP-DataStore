@@ -5,17 +5,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 {
     public class Rating
     {
-        public int Id;
+        public int Id { get; set; }
 
-        public int UserId;
+        public int UserId { get; set; }
 
-        public int EntityId;
+        public int EntityId { get; set; }
 
-        public ResourceType RatedType;
+        public ResourceType RatedType { get; set; }
 
-        public int Value;
+        public int Value { get; set; }
 
-        public DateTimeOffset Timestamp;
+        public DateTimeOffset Timestamp { get; set; }
 
         public Rating() { }
 

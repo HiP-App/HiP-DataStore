@@ -195,7 +195,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return NoContent();
         }
 
-        [HttpGet("rating/{id}")]
+        [HttpGet("Rating/{id}")]
         [ProducesResponseType(typeof(RatingResult), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
@@ -221,11 +221,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return Ok(result);
         }
 
-        [HttpPost("rating/{id}")]
+        [HttpPost("Rating/{id}")]
         [ProducesResponseType(typeof(int),201)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> PostRating(int id,RatingArgs args)
+        public async Task<IActionResult> PostRatingAsync(int id,RatingArgs args)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -240,10 +240,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             var oldValue = _db.Database
                               .GetCollection<Rating>(ResourceType.Rating.Name)
                               .AsQueryable()
-                              .Where(x => x.UserId == args.UserId.GetValueOrDefault() && x.RatedType.Name == ResourceType.Exhibit.Name && x.EntityId == id)
+                              .Where(x => x.UserId == args.UserId.GetValueOrDefault() && x.RatedType == ResourceType.Exhibit && x.EntityId == id)
                               .FirstOrDefault()
                              ?.Value;
-
+            
             // TODO When AUTH service will work change the UserID
             var ev = new RatingAdded()
             {
@@ -257,7 +257,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             };
 
             await _eventStore.AppendEventAsync(ev);
-            return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/{ev.Id}", ev.Id);
+            return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Rating/{ev.Id}", ev.Id);
         }
 
      
