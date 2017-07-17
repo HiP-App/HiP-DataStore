@@ -93,7 +93,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         Timestamp = e.Timestamp
                     };
 
-                    updatedExhibit.Referencees.AddRange(originalExhibit.Referencees);
+                    updatedExhibit.Referencers.AddRange(originalExhibit.Referencers);
                     _db.GetCollection<Exhibit>(ResourceType.Exhibit.Name).ReplaceOne(x => x.Id == e.Id, updatedExhibit);
                     break;
 
@@ -119,7 +119,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         Timestamp = e.Timestamp
                     };
 
-                    updatedPage.Referencees.AddRange(originalPage.Referencees);
+                    updatedPage.Referencers.AddRange(originalPage.Referencers);
                     _db.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name).ReplaceOne(x => x.Id == e.Id, updatedPage);
                     break;
 
@@ -145,7 +145,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         Timestamp = e.Timestamp
                     };
 
-                    updatedRoute.Referencees.AddRange(originalRoute.Referencees);
+                    updatedRoute.Referencers.AddRange(originalRoute.Referencers);
                     _db.GetCollection<Route>(ResourceType.Route.Name).ReplaceOne(r => r.Id == e.Id, updatedRoute);
                     break;
 
@@ -171,7 +171,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         Timestamp = e.Timestamp
                     };
 
-                    updatedMedia.Referencees.AddRange(originalMedia.Referencees);
+                    updatedMedia.Referencers.AddRange(originalMedia.Referencers);
                     updatedMedia.File = originalMedia.File;
                     _db.GetCollection<MediaElement>(ResourceType.Media.Name).ReplaceOne(m => m.Id == e.Id, updatedMedia);
                     break;
@@ -205,7 +205,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         Timestamp = e.Timestamp,
                     };
 
-                    updatedTag.Referencees.AddRange(originalTag.Referencees);
+                    updatedTag.Referencers.AddRange(originalTag.Referencers);
                     _db.GetCollection<Tag>(ResourceType.Tag.Name).ReplaceOne(x => x.Id == e.Id, updatedTag);
                     break;
 
@@ -215,20 +215,20 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 
                 case ReferenceAdded e:
                     // a reference (source -> target) was added, so we have to create a new DocRef pointing to the
-                    // source and add it to the target's referencees list
+                    // source and add it to the target's referencers list
                     var newReference = new DocRef<ContentBase>(e.SourceId, e.SourceType.Name);
-                    var update = Builders<ContentBase>.Update.Push(nameof(ContentBase.Referencees), newReference);
+                    var update = Builders<ContentBase>.Update.Push(nameof(ContentBase.Referencers), newReference);
                     _db.GetCollection<ContentBase>(e.TargetType.Name).UpdateOne(x => x.Id == e.TargetId, update);
                     break;
 
                 case ReferenceRemoved e:
                     // a reference (source -> target) was removed, so we have to delete the DocRef pointing to the
-                    // source from the target's referencees list
+                    // source from the target's referencers list
 
                     // ladies and gentlemen, fasten your seatbelts and prepare for the
                     // ugly truth of the MongoDB API:
                     var update2 = Builders<dynamic>.Update.PullFilter(
-                        nameof(ContentBase.Referencees),
+                        nameof(ContentBase.Referencers),
                         Builders<dynamic>.Filter.And(
                             Builders<dynamic>.Filter.Eq(nameof(DocRefBase.Collection), e.SourceType.Name),
                             Builders<dynamic>.Filter.Eq("_id", e.SourceId)));

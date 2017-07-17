@@ -63,7 +63,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                     .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
                         x.Name.ToLower().Contains(args.Query.ToLower()) ||
                         x.Description.ToLower().Contains(args.Query.ToLower()))
-                    .FilterIf(args.OnlyRoutes != null, x => x.Referencees
+                    .FilterIf(args.OnlyRoutes != null, x => x.Referencers
                         .Any(r => r.Collection == ResourceType.Route.Name && routeIds.Contains(r.Id)))
                     .Sort(args.OrderBy,
                         ("id", x => x.Id),
