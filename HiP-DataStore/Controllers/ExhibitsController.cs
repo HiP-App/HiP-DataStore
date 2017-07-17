@@ -193,6 +193,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return NoContent();
         }
 
+        [HttpGet("{id}/Refs")]
+        [ProducesResponseType(typeof(ReferenceInfoResult), 200)]
+        [ProducesResponseType(404)]
+        public IActionResult GetReferenceInfo(int id)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            return ReferenceInfoHelper.GetReferenceInfo(ResourceType.Exhibit, id, _entityIndex, _referencesIndex);
+        }
+
 
         private void ValidateExhibitArgs(ExhibitArgs args)
         {

@@ -162,11 +162,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return BadRequest(ErrorMessages.ResourceInUse);
 
             // Remove file
-            string directoryPath = Path.GetDirectoryName(_mediaIndex.GetFilePath(id)); 
+            string directoryPath = Path.GetDirectoryName(_mediaIndex.GetFilePath(id));
             if (directoryPath != null && System.IO.Directory.Exists(directoryPath))
                 Directory.Delete(directoryPath, true);
 
-        
+
 
             var ev = new MediaDeleted { Id = id };
             await _eventStore.AppendEventAsync(ev);
@@ -265,6 +265,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             await _eventStore.AppendEventAsync(ev);
             return StatusCode(204);
+        }
+
+        [HttpGet("{id}/Refs")]
+        [ProducesResponseType(typeof(ReferenceInfoResult), 200)]
+        [ProducesResponseType(404)]
+        public IActionResult GetReferenceInfo(int id)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            return ReferenceInfoHelper.GetReferenceInfo(ResourceType.Media, id, _entityIndex, _referencesIndex);
         }
     }
 }
