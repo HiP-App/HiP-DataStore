@@ -204,11 +204,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var exhibit = _db.Database.GetCollection<Exhibit>(ResourceType.Exhibit.Name)
-                                      .AsQueryable()
-                                      .FirstOrDefault(x => x.Id == id);
-
-            if (exhibit == null || _entityIndex.Status(ResourceType.Exhibit, id) != ContentStatus.Published)
+            if (_entityIndex.Status(ResourceType.Exhibit, id) != ContentStatus.Published)
                 return NotFound(ErrorMessages.ExhibitNotFoundOrNotPublished(id));
 
             var result = new RatingResult()
@@ -230,20 +226,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var exhibit = _db.Database.GetCollection<Exhibit>(ResourceType.Exhibit.Name)
-                                      .AsQueryable()
-                                      .FirstOrDefault(x => x.Id == id);
-
-            if (exhibit == null || _entityIndex.Status(ResourceType.Exhibit,id) != ContentStatus.Published)
+            if (_entityIndex.Status(ResourceType.Exhibit,id) != ContentStatus.Published)
                 return NotFound(ErrorMessages.ExhibitNotFoundOrNotPublished(id));
 
-            var oldValue = _db.Database
-                              .GetCollection<Rating>(ResourceType.Rating.Name)
-                              .AsQueryable()
-                              .Where(x => x.UserId == args.UserId.GetValueOrDefault() && x.RatedType == ResourceType.Exhibit && x.EntityId == id)
-                              .FirstOrDefault()
-                             ?.Value;
-            
             // TODO When AUTH service will work change the UserID
             var ev = new RatingAdded()
             {
@@ -251,7 +236,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 EntityId = id,
                 UserId = args.UserId.GetValueOrDefault(),
                 Value = args.Rating.GetValueOrDefault(),
-                OldValue = oldValue,
                 RatedType = ResourceType.Exhibit,
                 Timestamp = DateTimeOffset.Now
             };

@@ -42,8 +42,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                         ratedType.Ratings.Add(ev.EntityId, new RatingEntityInfo());
 
                     var ratedEntity = ratedType.Ratings[ev.EntityId];
-                    int? oldRating = ev.OldValue;
-                    ratedEntity.AddRating(oldRating, ev.Value);
+                    ratedEntity.AddRating(ev.UserId, ev.Value);
                     break;
             }
         }
@@ -67,15 +66,31 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
     }
     class RatingEntityInfo
     {
-        const int MinRateValue = 1;
-        const int MaxRateValue = 5;
-
+        const byte MinRateValue = 1;
+        const byte MaxRateValue = 5;
+        
         public double AverageRate { get { return (NumberRates != 0) ? ((double)_sumRate / NumberRates) : 0; }  }
         public int NumberRates { get; private set; }
 
+        // <UserId, Rating>
+        private Dictionary<int, byte> _allRates = new Dictionary<int, byte>();
         private int _sumRate;
 
-        public bool AddRating(int? oldRate, int newRate)
+        public void AddRating(int UserId, byte Rate)
+        {
+            if (_allRates.TryGetValue(UserId, out var oldRate))
+            {
+                if(CalculateAverageRating(oldRate, Rate))
+                    _allRates[UserId] = Rate;
+            }
+            else
+            {
+                if(CalculateAverageRating(null, Rate))
+                    _allRates.Add(UserId, Rate);
+            }
+        }
+
+        bool CalculateAverageRating(int? oldRate, int newRate)
         {
             if (!(IsOldRatingValid(oldRate) && CheckRatingRange(newRate)))
                 return false;

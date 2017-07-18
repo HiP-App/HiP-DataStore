@@ -13,7 +13,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         public ResourceType RatedType { get; set; }
 
-        public int Value { get; set; }
+        public byte Value { get; set; }
 
         public DateTimeOffset Timestamp { get; set; }
 
