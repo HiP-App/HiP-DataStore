@@ -166,8 +166,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (directoryPath != null && System.IO.Directory.Exists(directoryPath))
                 Directory.Delete(directoryPath, true);
 
-
-
             var ev = new MediaDeleted { Id = id };
             await _eventStore.AppendEventAsync(ev);
             return StatusCode(204);
@@ -225,7 +223,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-
 
             if (!_entityIndex.Exists(ResourceType.Media, id))
                 return NotFound();
