@@ -26,8 +26,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             return new OkObjectResult(new ReferenceInfoResult
             {
-                Referencees = TransformToResult(referencesIndex.ReferencesOf(type, id)),
-                Referencers = TransformToResult(referencesIndex.ReferencesTo(type, id))
+                OutgoingReferences = TransformToResult(referencesIndex.ReferencesOf(type, id)),
+                IncomingReferences = TransformToResult(referencesIndex.ReferencesTo(type, id))
             });
 
             IReadOnlyCollection<ReferenceInfoResult.ReferenceInfo> TransformToResult(IEnumerable<ReferencesIndex.Entry> refs)

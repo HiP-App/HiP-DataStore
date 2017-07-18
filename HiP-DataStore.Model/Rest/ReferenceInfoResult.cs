@@ -10,14 +10,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
     public class ReferenceInfoResult
     {
         /// <summary>
-        /// The resources referenced by the resource of interest.
+        /// The resources referenced by the current resource.
         /// </summary>
-        public IReadOnlyCollection<ReferenceInfo> Referencees { get; set; }
+        public IReadOnlyCollection<ReferenceInfo> OutgoingReferences { get; set; }
 
         /// <summary>
-        /// The resources referencing the resource of interest.
+        /// The resources referencing the current resource.
         /// </summary>
-        public IReadOnlyCollection<ReferenceInfo> Referencers { get; set; }
+        public IReadOnlyCollection<ReferenceInfo> IncomingReferences { get; set; }
 
         public class ReferenceInfo
         {
