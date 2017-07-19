@@ -76,17 +76,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
         private Dictionary<int, byte> _allRates = new Dictionary<int, byte>();
         private int _sumRate;
 
-        public void AddRating(int UserId, byte Rate)
+        public void AddRating(int userId, byte rate)
         {
-            if (_allRates.TryGetValue(UserId, out var oldRate))
+            if (_allRates.TryGetValue(userId, out var oldRate))
             {
-                if(CalculateAverageRating(oldRate, Rate))
-                    _allRates[UserId] = Rate;
+                if(CalculateAverageRating(oldRate, rate))
+                    _allRates[userId] = rate;
             }
             else
             {
-                if(CalculateAverageRating(null, Rate))
-                    _allRates.Add(UserId, Rate);
+                if(CalculateAverageRating(null, rate))
+                    _allRates.Add(userId, rate);
             }
         }
 
