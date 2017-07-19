@@ -63,7 +63,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, IOptions<CorsConfig> corsConfig)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory,
+            IOptions<CorsConfig> corsConfig, IOptions<EndpointConfig> endpointConfig)
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"))
                          .AddDebug();
@@ -73,14 +74,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             app.ApplicationServices.GetService<CacheDatabaseManager>();
 
             // Use CORS (important: must be before app.UseMvc())
-            app.UseCors(builder => {
+            app.UseCors(builder =>
+            {
                 var corsEnvConf = corsConfig.Value.Cors[env.EnvironmentName];
                 builder
                     .WithOrigins(corsEnvConf.Origins)
                     .WithMethods(corsEnvConf.Methods)
                     .WithHeaders(corsEnvConf.Headers)
                     .WithExposedHeaders(corsEnvConf.ExposedHeaders);
-            }); 
+            });
 
             app.UseMvc();
 
@@ -94,9 +96,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             // Configure SwaggerUI endpoint
             app.UseSwaggerUI(c =>
             {
-                // TODO: Only a hack, if HiP-Swagger is running, SwaggerUI can be disabled for Production
-                c.SwaggerEndpoint((env.IsDevelopment() ? "/swagger" : "..") +
-                                  "/" + Version + "/swagger.json", Name + Version);
+                var swaggerJsonUrl = string.IsNullOrEmpty(endpointConfig.Value.SwaggerEndpoint)
+                    ? $"/swagger/{Version}/swagger.json"
+                    : endpointConfig.Value.SwaggerEndpoint;
+
+                c.SwaggerEndpoint(swaggerJsonUrl, $"{Name} {Version}");
             });
         }
     }

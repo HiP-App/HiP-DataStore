@@ -65,7 +65,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                     .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
                         x.Name.ToLower().Contains(args.Query.ToLower()) ||
                         x.Description.ToLower().Contains(args.Query.ToLower()))
-                    .FilterIf(args.OnlyRoutes != null, x => x.Referencees
+                    .FilterIf(args.OnlyRoutes != null, x => x.Referencers
                         .Any(r => r.Collection == ResourceType.Route.Name && routeIds.Contains(r.Id)))
                     .Sort(args.OrderBy,
                         ("id", x => x.Id),
@@ -195,17 +195,29 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return NoContent();
         }
 
-        [HttpGet("Rating/{id}")]
-        [ProducesResponseType(typeof(RatingResult), 200)]
+        [HttpGet("{id}/Refs")]
+        [ProducesResponseType(typeof(ReferenceInfoResult), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public IActionResult GetRating(int id)
+        public IActionResult GetReferenceInfo(int id)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (_entityIndex.Status(ResourceType.Exhibit, id) != ContentStatus.Published)
-                return NotFound(ErrorMessages.ExhibitNotFoundOrNotPublished(id));
+            return ReferenceInfoHelper.GetReferenceInfo(ResourceType.Exhibit, id, _entityIndex, _referencesIndex);
+        }
+
+        [HttpGet("Rating/{id}")]
+        [ProducesResponseType(typeof(RatingResult), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public IActionResult GetRating(int id) {
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!_entityIndex.Exists(ResourceType.Exhibit, id))
+                return NotFound(ErrorMessages.ExhibitNotFound(id));
 
             var result = new RatingResult()
             {
@@ -226,8 +238,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (_entityIndex.Status(ResourceType.Exhibit,id) != ContentStatus.Published)
-                return NotFound(ErrorMessages.ExhibitNotFoundOrNotPublished(id));
+            if (!_entityIndex.Exists(ResourceType.Exhibit, id))
+                return NotFound(ErrorMessages.ExhibitNotFound(id));
 
             // TODO When AUTH service will work change the UserID
             var ev = new RatingAdded()
@@ -244,29 +256,26 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Rating/{ev.Id}", ev.Id);
         }
 
-     
-
-
         private void ValidateExhibitArgs(ExhibitArgs args)
         {
             if (args == null)
                 return;
 
-            // ensure referenced image exists and is published
-            if (args.Image != null && !_mediaIndex.IsPublishedImage(args.Image.Value))
+            // ensure referenced image exists
+            if (args.Image != null && !_mediaIndex.IsImage(args.Image.Value))
                 ModelState.AddModelError(nameof(args.Image),
-                    ErrorMessages.ImageNotFoundOrNotPublished(args.Image.Value));
+                    ErrorMessages.ImageNotFound(args.Image.Value));
 
-            // ensure referenced tags exist and are published
+            // ensure referenced tags exist
             if (args.Tags != null)
             {
                 var invalidIds = args.Tags
-                    .Where(id => _entityIndex.Status(ResourceType.Tag, id) != ContentStatus.Published)
+                    .Where(id => !_entityIndex.Exists(ResourceType.Tag, id))
                     .ToList();
 
                 foreach (var id in invalidIds)
                     ModelState.AddModelError(nameof(args.Tags),
-                        ErrorMessages.TagNotFoundOrNotPublished(id));
+                        ErrorMessages.TagNotFound(id));
             }
         }
         

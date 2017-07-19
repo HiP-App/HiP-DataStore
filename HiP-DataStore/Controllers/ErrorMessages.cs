@@ -4,20 +4,20 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
     public static class ErrorMessages
     {
-        public static string ImageNotFoundOrNotPublished(int id) =>
-            $"ID '{id}' does not refer to a published image";
+        public static string ImageNotFound(int id) =>
+            $"No image with ID '{id}' exists";
 
-        public static string AudioNotFoundOrNotPublished(int id) =>
-            $"ID '{id}' does not refer to published audio";
+        public static string AudioNotFound(int id) =>
+            $"No audio with ID '{id}' exists";
 
-        public static string ExhibitNotFoundOrNotPublished(int id) =>
-            $"ID '{id}' does not refer to a published exhibit";
+        public static string ExhibitNotFound(int id) =>
+            $"No exhibit with ID '{id}' exists";
 
-        public static string ExhibitPageNotFoundOrNotPublished(int id) =>
-            $"ID '{id}' does not refer to a published exhibit page";
+        public static string ExhibitPageNotFound(int id) =>
+            $"No page with ID '{id}' exists";
 
-        public static string TagNotFoundOrNotPublished(int id) =>
-            $"ID '{id}' does not refer to a published tag";
+        public static string TagNotFound(int id) =>
+            $"No tag with ID '{id}' exists";
 
         public static string FieldNotAllowedForPageType(string fieldName, PageType pageType) =>
             $"Field '{fieldName}' not allowed for page type '{pageType}'";

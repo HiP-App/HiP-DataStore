@@ -31,5 +31,12 @@
         /// For example, you can use different streams for develop and production environments.
         /// </summary>
         public string EventStoreStream { get; set; }
+
+        /// <summary>
+        /// URL that points to the "swagger.json" file. If set, this URL is entered by default
+        /// when accessing the Swagger UI page. If not set, we will try to construct the URL
+        /// automatically which might result in an invalid URL.
+        /// </summary>
+        public string SwaggerEndpoint { get; set; }
     }
 }

@@ -39,34 +39,34 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands
             if (!exhibitPagesConfig.IsFontFamilyValid(args.FontFamily))
                 addValidationError(nameof(args.FontFamily), $"Font family must be null/unspecified (which defaults to {exhibitPagesConfig.DefaultFontFamily}) or one of the following: {string.Join(", ", exhibitPagesConfig.FontFamilies)}");
 
-            // ensure referenced image exists and is published
-            if (args.Image != null && !mediaIndex.IsPublishedImage(args.Image.Value))
+            // ensure referenced image exists
+            if (args.Image != null && !mediaIndex.IsImage(args.Image.Value))
                 addValidationError(nameof(args.Image),
-                    ErrorMessages.ImageNotFoundOrNotPublished(args.Image.Value));
+                    ErrorMessages.ImageNotFound(args.Image.Value));
 
-            // ensure referenced images exist and are published
+            // ensure referenced slider page images exist
             if (args.Images != null)
             {
                 var invalidIds = args.Images
                     .Select(img => img.Image)
-                    .Where(id => !mediaIndex.IsPublishedImage(id))
+                    .Where(id => !mediaIndex.IsImage(id))
                     .ToList();
 
                 foreach (var id in invalidIds)
                     addValidationError(nameof(args.Images),
-                        ErrorMessages.ImageNotFoundOrNotPublished(id));
+                        ErrorMessages.ImageNotFound(id));
             }
 
-            // ensure referenced additional info pages exist and are published
+            // ensure referenced additional info pages exist
             if (args.AdditionalInformationPages != null)
             {
                 var invalidIds = args.AdditionalInformationPages
-                    .Where(id => entityIndex.Status(ResourceType.ExhibitPage, id) != ContentStatus.Published)
+                    .Where(id => !entityIndex.Exists(ResourceType.ExhibitPage, id))
                     .ToList();
 
                 foreach (var id in invalidIds)
                     addValidationError(nameof(args.AdditionalInformationPages),
-                        ErrorMessages.ExhibitPageNotFoundOrNotPublished(id));
+                        ErrorMessages.ExhibitPageNotFound(id));
             }
         }
 
