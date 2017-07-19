@@ -1,5 +1,6 @@
 ﻿using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 
 using System.Collections.Generic;
 using System;
@@ -66,9 +67,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
     }
     class RatingEntityInfo
     {
-        const byte MinRateValue = 1;
-        const byte MaxRateValue = 5;
-        
+
         public double AverageRate { get { return (NumberRates != 0) ? ((double)_sumRate / NumberRates) : 0; }  }
         public int NumberRates { get; private set; }
 
@@ -111,7 +110,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
         }
         bool CheckRatingRange(int rating)
         {
-            return (rating >= MinRateValue && rating <= MaxRateValue);
+            return (rating >= RatingArgs.MinRateValue && rating <= RatingArgs.MaxRateValue);
         }
 
     }
