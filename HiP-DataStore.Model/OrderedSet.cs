@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model
 {
@@ -10,15 +11,27 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
     public class OrderedSet<T> : ICollection<T>
     {
         private readonly IDictionary<T, LinkedListNode<T>> _dictionary;
-        private readonly LinkedList<T> _linkedList = new LinkedList<T>();
+        private readonly LinkedList<T> _linkedList;
 
         public OrderedSet() : this(EqualityComparer<T>.Default)
         {
         }
 
-        public OrderedSet(IEqualityComparer<T> comparer)
+        public OrderedSet(IEnumerable<T> items) : this(items, EqualityComparer<T>.Default)
+        {
+        }
+
+        public OrderedSet(IEqualityComparer<T> comparer) : this(Enumerable.Empty<T>(), comparer)
+        {
+        }
+
+        public OrderedSet(IEnumerable<T> items, IEqualityComparer<T> comparer)
         {
             _dictionary = new Dictionary<T, LinkedListNode<T>>(comparer);
+            _linkedList = new LinkedList<T>();
+
+            foreach (var item in items)
+                Add(item);
         }
 
         public int Count => _dictionary.Count;

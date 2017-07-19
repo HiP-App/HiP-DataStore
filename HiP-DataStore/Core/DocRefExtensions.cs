@@ -2,6 +2,7 @@
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core
 {
@@ -70,9 +71,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
         /// </summary>
         public static IReadOnlyCollection<T> LoadAll<T>(this DocRefList<T> docRef, IMongoCollection<T> collection)
         {
-            return collection
-                .Find(Builders<T>.Filter.In("_id", docRef.Ids))
+            // Less efficient approach, preserves ordering
+            return docRef.Ids
+                .Select(id => collection.Find(Builders<T>.Filter.Eq("_id", id)).First())
                 .ToList();
+
+            // Simple, efficient approach (unfortunately doesn't preserve ordering):
+            // return collection.Find(Builders<T>.Filter.In("_id", docRef.Ids)).ToList();
         }
     }
 }
