@@ -46,6 +46,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             services.Configure<EndpointConfig>(Configuration.GetSection("Endpoints"))
                     .Configure<UploadFilesConfig>(Configuration.GetSection("UploadingFiles"))
                     .Configure<ExhibitPagesConfig>(Configuration.GetSection("ExhibitPages"))
+                    .Configure<AuthConfig>(Configuration.GetSection("Auth"))
                     .Configure<CorsConfig>(Configuration);
 
             services.AddCors();
@@ -62,7 +63,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, IOptions<CorsConfig> corsConfig)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, IOptions<AuthConfig> authConfig, IOptions<CorsConfig> corsConfig)
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"))
                          .AddDebug();
@@ -79,7 +80,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
                     .WithMethods(corsEnvConf.Methods)
                     .WithHeaders(corsEnvConf.Headers)
                     .WithExposedHeaders(corsEnvConf.ExposedHeaders);
-            }); 
+            });
+
+            var options = new JwtBearerOptions
+            {
+                Audience = authConfig.Value.Audience,
+                Authority = authConfig.Value.Authority
+            };
+            app.UseJwtBearerAuthentication(options);
 
             app.UseMvc();
 
