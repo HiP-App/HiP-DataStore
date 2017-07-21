@@ -44,4 +44,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
     public interface IUpdateFileEvent : ICrudEvent
     {
     }
+
+    public interface IUserActivityEvent : ICrudEvent
+    {
+        int UserId { get; }
+        DateTimeOffset Timestamp { get; }
+    }
 }

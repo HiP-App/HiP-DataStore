@@ -23,6 +23,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly MediaIndex _mediaIndex;
         private readonly EntityIndex _entityIndex;
         private readonly ReferencesIndex _referencesIndex;
+        private readonly RatingIndex _ratingIndex;
 
         public ExhibitsController(EventStoreClient eventStore, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices)
         {
@@ -31,6 +32,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             _mediaIndex = indices.OfType<MediaIndex>().First();
             _entityIndex = indices.OfType<EntityIndex>().First();
             _referencesIndex = indices.OfType<ReferencesIndex>().First();
+            _ratingIndex = indices.OfType<RatingIndex>().First();
         }
 
         [HttpGet("ids")]
@@ -205,6 +207,54 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return ReferenceInfoHelper.GetReferenceInfo(ResourceType.Exhibit, id, _entityIndex, _referencesIndex);
         }
 
+        [HttpGet("Rating/{id}")]
+        [ProducesResponseType(typeof(RatingResult), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public IActionResult GetRating(int id) {
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!_entityIndex.Exists(ResourceType.Exhibit, id))
+                return NotFound(ErrorMessages.ExhibitNotFound(id));
+
+            var result = new RatingResult()
+            {
+                Id = id,
+                Average = _ratingIndex.Average(ResourceType.Exhibit, id),
+                Count = _ratingIndex.Count(ResourceType.Exhibit, id)
+            };
+
+            return Ok(result);
+        }
+
+        [HttpPost("Rating/{id}")]
+        [ProducesResponseType(typeof(int),201)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> PostRatingAsync(int id,RatingArgs args)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!_entityIndex.Exists(ResourceType.Exhibit, id))
+                return NotFound(ErrorMessages.ExhibitNotFound(id));
+
+            // TODO When AUTH service will work change the UserID
+            var ev = new RatingAdded()
+            {
+                Id = _ratingIndex.NextId(ResourceType.Exhibit),
+                EntityId = id,
+                UserId = args.UserId.GetValueOrDefault(),
+                Value = args.Rating.GetValueOrDefault(),
+                RatedType = ResourceType.Exhibit,
+                Timestamp = DateTimeOffset.Now
+            };
+
+            await _eventStore.AppendEventAsync(ev);
+            return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Rating/{ev.Id}", ev.Id);
+        }
 
         private void ValidateExhibitArgs(ExhibitArgs args)
         {
