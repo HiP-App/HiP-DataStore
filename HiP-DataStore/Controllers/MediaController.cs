@@ -96,7 +96,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                         Id = x.Id,
                         Title = x.Title,
                         Description = x.Description,
-                        Used = x.Referencees.Count > 0,
+                        Used = x.Referencers.Count > 0,
                         Type = x.Type,
                         Status = x.Status,
                         Timestamp = x.Timestamp
@@ -137,7 +137,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 Id = media.Id,
                 Title = media.Title,
                 Description = media.Description,
-                Used = media.Referencees.Count > 0,
+                Used = media.Referencers.Count > 0,
                 Type = media.Type,
                 Timestamp = media.Timestamp,
                 Status = media.Status

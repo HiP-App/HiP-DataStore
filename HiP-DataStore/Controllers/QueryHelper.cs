@@ -34,8 +34,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         {
             switch (used)
             {
-                case true: return query.Where(x => x.Referencees.Count > 0);
-                case false: return query.Where(x => x.Referencees.Count == 0);
+                case true: return query.Where(x => x.Referencers.Count > 0);
+                case false: return query.Where(x => x.Referencers.Count == 0);
                 default: return query;
             }
         }
