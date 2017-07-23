@@ -1,16 +1,16 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using MongoDB.Driver;
 using PaderbornUniversity.SILab.Hip.DataStore.Core;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using MongoDB.Driver;
 using Tag = PaderbornUniversity.SILab.Hip.DataStore.Model.Entity.Tag;
-using PaderbornUniversity.SILab.Hip.DataStore.Model;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
@@ -226,15 +226,28 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return NoContent();
         }
 
+        [HttpGet("{id}/Refs")]
+        [ProducesResponseType(typeof(ReferenceInfoResult), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public IActionResult GetReferenceInfo(int id)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            return ReferenceInfoHelper.GetReferenceInfo(ResourceType.Tag, id, _entityIndex, _referencesIndex);
+        }
+
 
         private void ValidateTagArgs(TagArgs args)
         {
             if (args == null)
                 return;
 
-            if (args.Image != null && !_mediaIndex.IsPublishedImage(args.Image.Value))
+            // ensure referenced image exists
+            if (args.Image != null && !_mediaIndex.IsImage(args.Image.Value))
                 ModelState.AddModelError(nameof(args.Image),
-                    ErrorMessages.ImageNotFoundOrNotPublished(args.Image.Value));
+                    ErrorMessages.ImageNotFound(args.Image.Value));
         }
     }
 

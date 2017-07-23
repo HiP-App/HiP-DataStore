@@ -17,7 +17,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
     public class DocRefList<T> : DocRefBase//, ICollection<BsonValue>
     {
         [BsonElement]
-        public HashSet<BsonValue> Ids { get; private set; } = new HashSet<BsonValue>();
+        public OrderedSet<BsonValue> Ids { get; private set; } = new OrderedSet<BsonValue>();
 
         public int Count => Ids.Count;
 
@@ -34,7 +34,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
             if (ids == null)
                 throw new ArgumentNullException(nameof(ids));
 
-            Ids = new HashSet<BsonValue>(ids);
+            Ids = new OrderedSet<BsonValue>(ids);
         }
 
         public bool Add(BsonValue id) => Ids.Add(id);

@@ -188,44 +188,56 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return NoContent();
         }
 
+        [HttpGet("{id}/Refs")]
+        [ProducesResponseType(typeof(ReferenceInfoResult), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public IActionResult GetReferenceInfo(int id)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            return ReferenceInfoHelper.GetReferenceInfo(ResourceType.Route, id, _entityIndex, _referencesIndex);
+        }
+
 
         private void ValidateRouteArgs(RouteArgs args)
         {
             if (args == null)
                 return;
 
-            // ensure referenced image exists and is published
-            if (args.Image != null && !_mediaIndex.IsPublishedImage(args.Image.Value))
+            // ensure referenced image exists
+            if (args.Image != null && !_mediaIndex.IsImage(args.Image.Value))
                 ModelState.AddModelError(nameof(args.Image),
-                    ErrorMessages.ImageNotFoundOrNotPublished(args.Image.Value));
+                    ErrorMessages.ImageNotFound(args.Image.Value));
 
-            // ensure referenced audio exists and is published
-            if (args.Audio != null && !_mediaIndex.IsPublishedAudio(args.Audio.Value))
+            // ensure referenced audio exists
+            if (args.Audio != null && !_mediaIndex.IsAudio(args.Audio.Value))
                 ModelState.AddModelError(nameof(args.Audio),
-                    ErrorMessages.AudioNotFoundOrNotPublished(args.Audio.Value));
+                    ErrorMessages.AudioNotFound(args.Audio.Value));
 
-            // ensure referenced exhibits exist and are published
+            // ensure referenced exhibits exist
             if (args.Exhibits != null)
             {
                 var invalidIds = args.Exhibits
-                    .Where(id => _entityIndex.Status(ResourceType.Exhibit, id) != ContentStatus.Published)
+                    .Where(id => !_entityIndex.Exists(ResourceType.Exhibit, id))
                     .ToList();
 
                 foreach (var id in invalidIds)
                     ModelState.AddModelError(nameof(args.Exhibits),
-                        ErrorMessages.ExhibitNotFoundOrNotPublished(id));
+                        ErrorMessages.ExhibitNotFound(id));
             }
 
-            // ensure referenced tags exist and are published
+            // ensure referenced tags exist
             if (args.Tags != null)
             {
                 var invalidIds = args.Tags
-                    .Where(id => _entityIndex.Status(ResourceType.Tag, id) != ContentStatus.Published)
+                    .Where(id => !_entityIndex.Exists(ResourceType.Tag, id))
                     .ToList();
 
                 foreach (var id in invalidIds)
                     ModelState.AddModelError(nameof(args.Tags),
-                        ErrorMessages.TagNotFoundOrNotPublished(id));
+                        ErrorMessages.TagNotFound(id));
             }
         }
 
