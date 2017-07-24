@@ -17,7 +17,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
     [Route("api/[controller]")]
     public class TagsController : Controller
     {
-        private readonly EventStoreClient _ev;
+        private readonly EventStoreClient _eventStore;
         private readonly CacheDatabaseManager _db;
         private readonly EntityIndex _entityIndex;
         private readonly MediaIndex _mediaIndex;
@@ -26,7 +26,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         public TagsController(EventStoreClient eventStore, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices)
         {
-            _ev = eventStore;
+            _eventStore = eventStore;
             _db = db;
             _entityIndex = indices.OfType<EntityIndex>().First();
             _mediaIndex = indices.OfType<MediaIndex>().First();
@@ -92,7 +92,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             var tag = _db.Database.GetCollection<Tag>(ResourceType.Tag.Name)
                 .AsQueryable()
-                .FirstOrDefault(x => x.Id == id); ;
+                .FirstOrDefault(x => x.Id == id);
 
             if (tag == null)
                 return NotFound();
@@ -132,16 +132,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 Timestamp = DateTimeOffset.Now
             };
 
-            using (var transaction = _ev.BeginTransaction())
-            {
-                transaction.Append(ev);
-
-                if (args.Image != null)
-                    transaction.Append(new ReferenceAdded(ResourceType.Tag, id, ResourceType.Media, args.Image.Value));
-
-                await transaction.CommitAsync();
-            }
-
+            await _eventStore.AppendEventAsync(ev);
             return Created($"{Request.Scheme}://{Request.Host}/api/Tags/{id}", id);
 
         }
@@ -173,31 +164,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 Timestamp = DateTimeOffset.Now,
             };
 
-            using (var transaction = _ev.BeginTransaction())
-            {
-                transaction.Append(ev);
-
-                var oldReferences = _referencesIndex
-                    .ReferencesOf(ResourceType.Tag, ev.Id)
-                    .Where(x => x.Type == ResourceType.Media)
-                    .ToList();
-
-                if (oldReferences.Count > 0)
-                {
-                    var oldRef = oldReferences.FirstOrDefault();
-                    var oldRefEvent = new ReferenceRemoved(ResourceType.Tag, ev.Id, oldRef.Type, oldRef.Id);
-                    transaction.Append(oldRefEvent);
-                }
-
-                if (args.Image != null)
-                {
-                    var newRefEvent = new ReferenceAdded(ResourceType.Tag, id, ResourceType.Media, args.Image.Value);
-                    transaction.Append(newRefEvent);
-                }
-
-                await transaction.CommitAsync();
-            }
-
+            await _eventStore.AppendEventAsync(ev);
             return NoContent();
         }
 
@@ -217,18 +184,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return BadRequest(ErrorMessages.ResourceInUse);
 
             var ev = new TagDeleted { Id = id };
-
-            using (var transaction = _ev.BeginTransaction())
-            {
-                transaction.Append(ev);
-
-                // Remove references
-                foreach (var reference in _referencesIndex.ReferencesOf(ResourceType.Tag, id))
-                    transaction.Append(new ReferenceRemoved(ResourceType.Tag, id, reference.Type, reference.Id));
-
-                await transaction.CommitAsync();
-            }
-
+            await _eventStore.AppendEventAsync(ev);
             return NoContent();
         }
 

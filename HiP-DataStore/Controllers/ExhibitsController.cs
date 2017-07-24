@@ -130,13 +130,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 Timestamp = DateTimeOffset.Now
             };
 
-            using (var transaction = _eventStore.BeginTransaction())
-            {
-                transaction.Append(ev);
-                transaction.Append(AddExhibitReferences(args, ev.Id));
-                await transaction.CommitAsync();
-            }
-
+            await _eventStore.AppendEventAsync(ev);
             return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/{ev.Id}", ev.Id);
         }
 
@@ -161,15 +155,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 Properties = args,
                 Timestamp = DateTimeOffset.Now
             };
-
-            using (var transaction = _eventStore.BeginTransaction())
-            {
-                transaction.Append(RemoveExhibitReferences(ev.Id));
-                transaction.Append(ev);
-                transaction.Append(AddExhibitReferences(args, ev.Id));
-                await transaction.CommitAsync();
-            }
-
+            
+            await _eventStore.AppendEventAsync(ev);
             return StatusCode(204);
         }
 
@@ -191,14 +178,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             // remove the exhibit
             var ev = new ExhibitDeleted { Id = id };
-
-            using (var transaction = _eventStore.BeginTransaction())
-            {
-                transaction.Append(ev);
-                transaction.Append(RemoveExhibitReferences(id));
-                await transaction.CommitAsync();
-            }
-
+            await _eventStore.AppendEventAsync(ev);
             return NoContent();
         }
 
@@ -284,24 +264,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                     ModelState.AddModelError(nameof(args.Tags),
                         ErrorMessages.TagNotFound(id));
             }
-        }
-        
-        private IEnumerable<IEvent> AddExhibitReferences(ExhibitArgs args, int exhibitId)
-        {
-            if (args.Image != null)
-                yield return new ReferenceAdded(ResourceType.Exhibit, exhibitId, ResourceType.Media, args.Image.Value);
-
-            foreach (var pageId in args.Pages?.Distinct() ?? Enumerable.Empty<int>())
-                yield return new ReferenceAdded(ResourceType.Exhibit, exhibitId, ResourceType.ExhibitPage, pageId);
-
-            foreach (var tagId in args.Tags?.Distinct() ?? Enumerable.Empty<int>())
-                yield return new ReferenceAdded(ResourceType.Exhibit, exhibitId, ResourceType.Tag, tagId);
-        }
-        
-        private IEnumerable<IEvent> RemoveExhibitReferences(int exhibitId)
-        {
-            foreach (var reference in _referencesIndex.ReferencesOf(ResourceType.Exhibit, exhibitId))
-                yield return new ReferenceRemoved(ResourceType.Exhibit, exhibitId, reference.Type, reference.Id);
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 {
@@ -15,7 +16,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
     public interface ICrudEvent : IEvent
     {
         /// <summary>
-        /// The type of the created, updated or deleted entity.
+        /// Gets the type of the created, updated or deleted entity.
         /// </summary>
         ResourceType GetEntityType();
 
@@ -33,11 +34,21 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
     public interface ICreateEvent : ICrudEvent
     {
         ContentStatus GetStatus();
+
+        /// <summary>
+        /// Gets a list of entities that are referenced by the created entity.
+        /// </summary>
+        IEnumerable<EntityId> GetReferences();
     }
 
     public interface IUpdateEvent : ICrudEvent
     {
         ContentStatus GetStatus();
+
+        /// <summary>
+        /// Gets a list of entities that are referenced by the updated entity.
+        /// </summary>
+        IEnumerable<EntityId> GetReferences();
     }
 
     public interface IDeleteEvent : ICrudEvent

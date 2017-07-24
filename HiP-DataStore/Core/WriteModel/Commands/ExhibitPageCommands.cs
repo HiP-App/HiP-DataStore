@@ -70,67 +70,29 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands
             }
         }
 
-        private static IEnumerable<IEvent> AddExhibitPageReferences(int pageId, ExhibitPageArgs2 args)
-        {
-            if (args.Audio != null)
-                yield return new ReferenceAdded(ResourceType.ExhibitPage, pageId, ResourceType.Media, args.Audio.Value);
-
-            if (args.Image != null)
-                yield return new ReferenceAdded(ResourceType.ExhibitPage, pageId, ResourceType.Media, args.Image.Value);
-
-            foreach (var img in args.Images?.Distinct() ?? Enumerable.Empty<SliderPageImageArgs>())
-                yield return new ReferenceAdded(ResourceType.ExhibitPage, pageId, ResourceType.Media, img.Image);
-
-            foreach (var id in args.AdditionalInformationPages?.Distinct() ?? Enumerable.Empty<int>())
-                yield return new ReferenceAdded(ResourceType.ExhibitPage, pageId, ResourceType.ExhibitPage, id);
-        }
-
-        private static IEnumerable<IEvent> RemoveExhibitPageReferences(int pageId, ReferencesIndex referencesIndex)
-        {
-            return referencesIndex
-                .ReferencesOf(ResourceType.ExhibitPage, pageId)
-                .Select(reference => new ReferenceRemoved(ResourceType.ExhibitPage, pageId, reference.Type, reference.Id));
-        }
-
         public static IEnumerable<IEvent> Create(int pageId, ExhibitPageArgs2 args)
         {
-            var ev = new ExhibitPageCreated3
+            yield return new ExhibitPageCreated3
             {
                 Id = pageId,
                 Properties = args,
                 Timestamp = DateTimeOffset.Now
             };
-
-            var addRefEvents = AddExhibitPageReferences(pageId, args);
-
-            // create the page, then add references
-            return addRefEvents.Prepend(ev);
         }
 
         public static IEnumerable<IEvent> Delete(int pageId, ReferencesIndex referencesIndex)
         {
-            var ev = new ExhibitPageDeleted2 { Id = pageId };
-            var removeRefEvents = RemoveExhibitPageReferences(pageId, referencesIndex);
-
-            // remove references, then delete the page
-            return removeRefEvents.Append(ev);
+            yield return new ExhibitPageDeleted2 { Id = pageId };
         }
 
         public static IEnumerable<IEvent> Update(int pageId, ExhibitPageArgs2 args, ReferencesIndex referencesIndex)
         {
-            var removeRefEvents = RemoveExhibitPageReferences(pageId, referencesIndex);
-
-            var ev = new ExhibitPageUpdated3
+            yield return new ExhibitPageUpdated3
             {
                 Id = pageId,
                 Properties = args,
                 Timestamp = DateTimeOffset.Now
             };
-
-            var addRefEvents = AddExhibitPageReferences(pageId, args);
-
-            // remove old references, then update the page, then add new references
-            return removeRefEvents.Append(ev).Concat(addRefEvents);
         }
     }
 }

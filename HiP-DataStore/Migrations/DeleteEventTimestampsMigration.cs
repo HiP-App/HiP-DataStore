@@ -3,12 +3,13 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using System;
 using System.Threading.Tasks;
 
+#pragma warning disable CS0612 // We explicitly work with obsolete types here, so disable warnings for that
 namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
 {
     /// <summary>
-    /// Updates a stream to version 3. Version 3 introduces timestamps in <see cref="IDeleteEvent"/>.
-    /// In previous versions, timestamps were only stored for <see cref="ICreateEvent"/> and
-    /// <see cref="IUpdateEvent"/>.
+    /// Updates a stream to version 3. Version 3 completely removes ReferenceAdded and ReferenceRemoved events
+    /// and introduces timestamps in <see cref="IDeleteEvent"/>. In previous versions, timestamps were only
+    /// stored for <see cref="ICreateEvent"/> and <see cref="IUpdateEvent"/>.
     /// </summary>
     [StreamMigration(from: 2, to: 3)]
     public class DeleteEventTimestampsMigration : IStreamMigration
@@ -27,13 +28,29 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
                         // For v3, we have to choose a "realistic" timestamp
                         // => just use the timestamp of the last CRUD event
                         ev.Timestamp = lastTimestamp;
+                        e.AppendEvent(ev);
                         break;
 
-                    case ICrudEvent ev: lastTimestamp = ev.Timestamp; break;
-                }
+                    case ICrudEvent ev:
+                        lastTimestamp = ev.Timestamp;
+                        e.AppendEvent(ev);
+                        break;
 
-                e.AppendEvent(events.Current);
+                    case ReferenceAdded ev:
+                        // Ignore, do not add ReferenceAdded/Removed events to the v3 stream
+                        break;
+
+                    case ReferenceRemoved ev:
+                        // Ignore, do not add ReferenceAdded/Removed events to the v3 stream
+                        break;
+
+                    default:
+                        // All other events are copied without modifications
+                        e.AppendEvent(events.Current);
+                        break;
+                }
             }
         }
     }
 }
+#pragma warning restore CS0612

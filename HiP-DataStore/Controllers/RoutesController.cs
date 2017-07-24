@@ -123,14 +123,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 Properties = args,
                 Timestamp = DateTimeOffset.Now
             };
-
-            using (var transaction = _eventStore.BeginTransaction())
-            {
-                transaction.Append(ev);
-                transaction.Append(AddRouteReferences(args, ev.Id));
-                await transaction.CommitAsync();
-            }
-
+            
+            await _eventStore.AppendEventAsync(ev);
             return Created($"{Request.Scheme}://{Request.Host}/api/Routes/{ev.Id}", ev.Id);
         }
 
@@ -156,14 +150,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 Timestamp = DateTimeOffset.Now,
             };
 
-            using (var transaction = _eventStore.BeginTransaction())
-            {
-                transaction.Append(RemoveRouteReferences(ev.Id));
-                transaction.Append(ev);
-                transaction.Append(AddRouteReferences(args, ev.Id));
-                await transaction.CommitAsync();
-            }
-
+            await _eventStore.AppendEventAsync(ev);
             return StatusCode(204);
         }
 
@@ -184,14 +171,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             // validation passed, emit events (delete route, remove references to image, audio, exhibits and tags)
             var ev = new RouteDeleted { Id = id };
-
-            using (var transaction = _eventStore.BeginTransaction())
-            {
-                transaction.Append(ev);
-                transaction.Append(RemoveRouteReferences(id));
-                await transaction.CommitAsync();
-            }
-
+            await _eventStore.AppendEventAsync(ev);
             return NoContent();
         }
 
@@ -246,27 +226,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                     ModelState.AddModelError(nameof(args.Tags),
                         ErrorMessages.TagNotFound(id));
             }
-        }
-
-        private IEnumerable<IEvent> AddRouteReferences(RouteArgs args, int routeId)
-        {
-            if (args.Image != null)
-                yield return new ReferenceAdded(ResourceType.Route, routeId, ResourceType.Media, args.Image.Value);
-
-            if (args.Audio != null)
-                yield return new ReferenceAdded(ResourceType.Route, routeId, ResourceType.Media, args.Audio.Value);
-
-            foreach (var exhibitId in args.Exhibits?.Distinct() ?? Enumerable.Empty<int>())
-                yield return new ReferenceAdded(ResourceType.Route, routeId, ResourceType.Exhibit, exhibitId);
-
-            foreach (var tagId in args.Tags?.Distinct() ?? Enumerable.Empty<int>())
-                yield return new ReferenceAdded(ResourceType.Route, routeId, ResourceType.Tag, tagId);
-        }
-
-        private IEnumerable<IEvent> RemoveRouteReferences(int routeId)
-        {
-            foreach (var reference in _referencesIndex.ReferencesOf(ResourceType.Route, routeId))
-                yield return new ReferenceRemoved(ResourceType.Route, routeId, reference.Type, reference.Id);
         }
     }
 }
