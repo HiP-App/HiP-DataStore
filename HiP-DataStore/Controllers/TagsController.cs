@@ -11,9 +11,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Tag = PaderbornUniversity.SILab.Hip.DataStore.Model.Entity.Tag;
+using PaderbornUniversity.SILab.Hip.DataStore.Model;
+using Microsoft.AspNetCore.Authorization;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     public class TagsController : Controller
     {
