@@ -122,7 +122,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                     .Where(e => !visitedEntities.Contains(e));
 
                 foreach (var parent in parents)
-                    queue.Enqueue(currentEntity);
+                    queue.Enqueue(parent);
             }
         }
         
