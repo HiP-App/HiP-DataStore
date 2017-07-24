@@ -19,7 +19,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                 return ++_maximumId;
         }
 
-        //All records of ScoreBoard (Sorted)
+        //All records of ScoreBoard (Sorted from min to max)
         public IReadOnlyCollection<ScoreRecord> AllRecords()
         {
             lock (_lockObject)
