@@ -23,22 +23,26 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
         /// The ID of the created, updated or deleted entity.
         /// </summary>
         int Id { get; }
+
+        /// <summary>
+        /// The date and time when the entity was created, updated or deleted.
+        /// </summary>
+        DateTimeOffset Timestamp { get; }
     }
 
     public interface ICreateEvent : ICrudEvent
     {
         ContentStatus GetStatus();
-        DateTimeOffset Timestamp { get; }
     }
 
     public interface IUpdateEvent : ICrudEvent
     {
         ContentStatus GetStatus();
-        DateTimeOffset Timestamp { get; }
     }
 
     public interface IDeleteEvent : ICrudEvent
     {
+        new DateTimeOffset Timestamp { get; set; } // setter required for a migration
     }
 
     public interface IUpdateFileEvent : ICrudEvent
@@ -48,6 +52,5 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
     public interface IUserActivityEvent : ICrudEvent
     {
         int UserId { get; }
-        DateTimeOffset Timestamp { get; }
     }
 }
