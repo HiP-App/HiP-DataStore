@@ -64,7 +64,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                         ("id", x => x.Id),
                         ("title", x => x.Title),
                         ("timestamp", x => x.Timestamp))
-                    .PaginateAndSelect(args.Page, args.PageSize, x => new RouteResult(x));
+                    .PaginateAndSelect(args.Page, args.PageSize, x => new RouteResult(x)
+                    {
+                        Timestamp = _referencesIndex.LastModificationCascading(ResourceType.Route, x.Id)
+                    });
 
                 return Ok(routes);
             }
@@ -95,7 +98,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (timestamp != null && route.Timestamp <= timestamp.Value)
                 return StatusCode(304);
 
-            var result = new RouteResult(route);
+            var result = new RouteResult(route)
+            {
+                Timestamp = _referencesIndex.LastModificationCascading(ResourceType.Route, id)
+            };
+
             return Ok(result);
         }
 

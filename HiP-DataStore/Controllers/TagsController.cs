@@ -65,7 +65,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                         ("id", x => x.Id),
                         ("title", x => x.Title),
                         ("timestamp", x => x.Timestamp))
-                    .PaginateAndSelect(args.Page, args.PageSize, x => TagResult.ConvertFromTag(x));
+                    .PaginateAndSelect(args.Page, args.PageSize, x => new TagResult(x)
+                    {
+                        Timestamp = _referencesIndex.LastModificationCascading(ResourceType.Tag, x.Id)
+                    });
 
 
                 return Ok(tags);
@@ -87,9 +90,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var query = _db.Database.GetCollection<Tag>(ResourceType.Tag.Name).AsQueryable();
-
-            var tag = query.FirstOrDefault(x => x.Id == id);
+            var tag = _db.Database.GetCollection<Tag>(ResourceType.Tag.Name)
+                .AsQueryable()
+                .FirstOrDefault(x => x.Id == id); ;
 
             if (tag == null)
                 return NotFound();
@@ -97,7 +100,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (timestamp != null && tag.Timestamp <= timestamp.Value)
                 return StatusCode(304);
 
-            var tagResult = TagResult.ConvertFromTag(tag);
+            var tagResult = new TagResult(tag)
+            {
+                Timestamp = _referencesIndex.LastModificationCascading(ResourceType.Tag, id)
+            };
 
             return Ok(tagResult);
 
