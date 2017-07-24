@@ -13,6 +13,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
     public class TagsControllerTest
     {
         private TagIndex _tagIndex => MvcTestContext.Services.GetService<IEnumerable<IDomainIndex>>().OfType<TagIndex>().First();
+        private TagArgs TagArgs { get; set; }
+
+        public TagsControllerTest()
+        {
+            TagArgs = new TagArgs
+            {
+                Description = "Hello",
+                Image = null,
+                Status = ContentStatus.Draft
+            };
+        }
 
         /// <summary>
         /// Returns ok if all tag Ids are retrieved.
@@ -48,9 +59,19 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
         [Fact]
         public void GetByIdTest()
         {
+            TagArgs.Title = "Germany";
+
             MyMvc
                 .Controller<TagsController>()
-                .Calling(c => c.GetById(0, new DateTime(2017, 07, 02)))
+                .Calling(c => c.PostAsync(TagArgs)) //Creating a tag.
+                .ShouldReturn()
+                .Created();
+
+            var tagId = _tagIndex.GetIdByTagTitle(TagArgs.Title).GetValueOrDefault(-1);
+
+            MyMvc
+                .Controller<TagsController>()
+                .Calling(c => c.GetById(tagId,DateTime.Today))
                 .ShouldReturn()
                 .Ok();
         }
@@ -74,25 +95,19 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
         [Fact]
         public void PostAsyncTest()
         {
-            var tagArgs = new TagArgs
-            {
-                Title = "Uni Paderborn",
-                Description = "Paderborner Dom",
-                Image = null,
-                Status = ContentStatus.Draft
-            };
+            TagArgs.Title = "Uni Paderborn";
 
             MyMvc
                 .Controller<TagsController>()
-                .Calling(c => c.PostAsync(tagArgs)) //Creating a tag.
+                .Calling(c => c.PostAsync(TagArgs)) //Creating a tag.
                 .ShouldReturn()
-                .Ok();
+                .Created();
             //This test will fail the next time when executed 
             //because it tries to create a tag with same title.
             //Hence deleting the tag with this title by getting it's Id
             //so that the next time the test will not fail.
 
-            var tagId = _tagIndex.GetIdByTagTitle(tagArgs.Title).GetValueOrDefault(-1);
+            var tagId = _tagIndex.GetIdByTagTitle(TagArgs.Title).GetValueOrDefault(-1);
 
             MyMvc
                 .Controller<TagsController>()
@@ -122,17 +137,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
         [Fact]
         public void PostAsyncTest409()
         {
-            var tagArgs = new TagArgs
-            {
-                Title = "Dom",
-                Description = "Paderborner Dom",
-                Image = null,
-                Status = ContentStatus.Draft
-            };
+            TagArgs.Title = "Paderborn";
 
             MyMvc
                 .Controller<TagsController>()
-                .Calling(c => c.PostAsync(tagArgs))
+                .Calling(c => c.PostAsync(TagArgs)) //Creating a tag.
+                .ShouldReturn()
+                .Created();
+
+            MyMvc
+                .Controller<TagsController>()
+                .Calling(c => c.PostAsync(TagArgs))
                 .ShouldReturn()
                 .StatusCode(409);
         }
@@ -143,15 +158,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
         //[Fact]
         public void UpdateByIdTest204()
         {
-            var tagArgs = new TagArgs
-            {
-                Title = "Update",
-                Description = "Updated"
-            };
+            TagArgs.Title = "Updated";
 
             MyMvc
                 .Controller<TagsController>()
-                .Calling(c => c.UpdateById(1, tagArgs))
+                .Calling(c => c.UpdateById(1, TagArgs))
                 .ShouldReturn()
                 .NoContent();
         }
@@ -162,15 +173,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
         [Fact]
         public void UpdateByIdTest404()
         {
-            var tagArgs = new TagArgs
-            {
-                Title = "Update",
-                Description = "Updated"
-            };
+            TagArgs.Title = "Hi";
 
             MyMvc
                 .Controller<TagsController>()
-                .Calling(c => c.UpdateById(1, tagArgs))
+                .Calling(c => c.UpdateById(0, TagArgs))
                 .ShouldReturn()
                 .NotFound();
         }
@@ -188,22 +195,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
                 .Calling(c => c.UpdateById(1, tagArgs))
                 .ShouldReturn()
                 .BadRequest();
-        }
-
-        /// <summary>
-        /// Returns 204 when tried to delete tag without content.
-        /// </summary>
-        [Fact]
-        public void DeleteByIdTest204()
-        {
-            MyMvc
-                .Controller<TagsController>()
-                .Calling(c => c.DeleteById(12))
-                .ShouldReturn()
-                .NoContent();
-            //Commenting this test as it will fail the next time when executed 
-            //because it tries to delete the same tag.
-            //To check if this works, execute in your local.
         }
 
         /// <summary>
