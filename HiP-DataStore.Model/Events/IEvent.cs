@@ -49,7 +49,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
     {
     }
 
-    [DoNotPropagateTimestampToReferencers]
     public interface IUserActivityEvent : ICrudEvent
     {
         int UserId { get; }

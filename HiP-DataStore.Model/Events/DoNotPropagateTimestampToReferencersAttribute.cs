@@ -4,6 +4,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 {
     /// <summary>
     /// Excludes an event type derived from <see cref="ICrudEvent"/> from the timestamp cascade mechanism.
+    /// This attribute cannot be inherited.
     /// </summary>
     /// <remarks>
     /// By default, events derived from <see cref="ICrudEvent"/> propagate their timestamp to referencing entities.
@@ -11,7 +12,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
     /// exhibits and pages referencing that updated page. Annotating the page update event with this attribute would
     /// prevent that propagation.
     /// </remarks>
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface, AllowMultiple = false, Inherited = true)]
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
     public class DoNotPropagateTimestampToReferencersAttribute : Attribute
     {
     }
