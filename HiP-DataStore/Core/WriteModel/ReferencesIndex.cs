@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
+using System.Reflection;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 {
@@ -79,22 +80,25 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                         break;
                 }
             }
-            else
+            else if (ev is ICrudEvent crudEvent)
             {
-                switch (ev)
+                var hasDoNotPropagateAttribute = crudEvent.GetType().GetTypeInfo().CustomAttributes
+                    .Any(attr => attr.AttributeType == typeof(DoNotPropagateTimestampToReferencersAttribute));
+
+                if (hasDoNotPropagateAttribute)
                 {
-                    case ICreateEvent e:
-                        SetTimestampRecursively(e.Timestamp, e.GetEntityType(), e.Id);
-                        break;
+                    // only set timestamp on the created/updated/deleted entity
+                    _lastModificationCascading[(crudEvent.GetEntityType(), crudEvent.Id)] = crudEvent.Timestamp;
+                }
+                else
+                {
+                    // set timestamp & propagate to entities referencing the created/updated/deleted entity
+                    SetTimestampRecursively(crudEvent.Timestamp, crudEvent.GetEntityType(), crudEvent.Id);
+                }
 
-                    case IUpdateEvent e:
-                        SetTimestampRecursively(e.Timestamp, e.GetEntityType(), e.Id);
-                        break;
-
-                    case IDeleteEvent e:
-                        SetTimestampRecursively(e.Timestamp, e.GetEntityType(), e.Id);
-                        _lastModificationCascading.Remove((e.GetEntityType(), e.Id));
-                        break;
+                if (ev is IDeleteEvent)
+                {
+                    _lastModificationCascading.Remove((crudEvent.GetEntityType(), crudEvent.Id));
                 }
             }
         }
