@@ -49,6 +49,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
                     .Configure<AuthConfig>(Configuration.GetSection("Auth"))
                     .Configure<CorsConfig>(Configuration);
 
+            string domain = Configuration.GetSection("Auth").GetValue<string>("Authority");
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("read:basic",
+                    policy => policy.Requirements.Add(new HasScopeRequirement("read:basic", domain)));
+                options.AddPolicy("read:authenticated",
+                    policy => policy.Requirements.Add(new HasScopeRequirement("read:authenticated", domain)));
+                options.AddPolicy("write:cms",
+                    policy => policy.Requirements.Add(new HasScopeRequirement("write:cms", domain)));
+            });
+
             services.AddCors();
             services.AddMvc();
             services.AddSingleton<EventStoreClient>()
