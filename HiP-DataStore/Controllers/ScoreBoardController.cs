@@ -30,15 +30,16 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         [HttpGet]
         [ProducesResponseType(typeof(AllItemsResult<ScoreRecordResult>), 200)]
-        public IActionResult GetAll()
+        [ProducesResponseType(400)]
+        public IActionResult GetAll(ScoreBoardArgs args)
         {
-            var allRecords = _board.AllRecords().Reverse().ToList();
-            var result = new AllItemsResult<ScoreRecordResult>
-            {
-                Total = allRecords.Count,
-                Items = allRecords.Select(x => new ScoreRecordResult(x))
-                                  .ToList()
-            };
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var query = _board.AllRecords().AsQueryable();
+            var result = query.Reverse()
+                              .PaginateAndSelect(null, args.Length, x => new ScoreRecordResult(x));
+
             return Ok(result);
         }
 
