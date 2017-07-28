@@ -59,7 +59,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                                                    .OrderByDescending(x => x.Timestamp)
                                                    .PaginateAndSelect(null, null, x => new ScoreResult(x))); 
 
-            allRecords.Rank = (_board.AllRecords() as List<ScoreRecord>).FindIndex(x => x.UserId == id) + 1;
+            allRecords.Rank = _board.AllRecords().ToList().FindIndex(x => x.UserId == id) + 1;
         
             return Ok(allRecords);
         }
