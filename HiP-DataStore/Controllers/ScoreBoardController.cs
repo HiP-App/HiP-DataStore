@@ -37,14 +37,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return BadRequest(ModelState);
 
             var query = _board.AllRecords().AsQueryable();
-            var result = query.Reverse()
-                              .PaginateAndSelect(null, args.Length, x => new ScoreRecordResult(x));
+            var result = query.PaginateAndSelect(null, args.Length, x => new ScoreRecordResult(x));
 
             return Ok(result);
         }
 
         [HttpGet("{id}")]
-        [ProducesResponseType(typeof(AllItemsResult<ScoreResult>), 200)]
+        [ProducesResponseType(typeof(ScoreResults), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         public IActionResult GetByUserId(int id)
@@ -52,15 +51,16 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest();
 
-            if (!_board.Exists(id))
+            if (!_board.AllRecords().Any(x => x.UserId == id))
                 return NotFound();
 
             var query = _db.Database.GetCollection<ScoreRecord>(ResourceType.ScoreRecord.Name).AsQueryable();
-            var allRecords = query.Where(x => x.UserId == id)
-                                  .OrderBy(x => x.Timestamp)
-                                  .PaginateAndSelect(null, null, x => new ScoreResult(x));
-            allRecords.Items = allRecords.Items.Reverse().ToList();
+            var allRecords = new ScoreResults(query.Where(x => x.UserId == id)
+                                                   .OrderByDescending(x => x.Timestamp)
+                                                   .PaginateAndSelect(null, null, x => new ScoreResult(x))); 
 
+            allRecords.Rank = (_board.AllRecords() as List<ScoreRecord>).FindIndex(x => x.UserId == id) + 1;
+        
             return Ok(allRecords);
         }
 

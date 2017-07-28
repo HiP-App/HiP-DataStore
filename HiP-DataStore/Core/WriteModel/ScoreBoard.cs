@@ -8,7 +8,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
        public ScoreBoard() : base(new UsersScoreComparer()) { }
     }
 
-    //Making sorting first by scores. Then by Timestamp
+    //Making sorting by Descending first by scores. Then by Timestamp
     class UsersScoreComparer : IComparer<ScoreRecord>
     {
         //From IComparer.Compare:
@@ -17,14 +17,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
         public int Compare(ScoreRecord pair1, ScoreRecord pair2)
         {
             if (pair1 == null)
-                return -1;
+                return 1;
 
             if (pair2 == null)
-                return 1;
+                return -1;
             
-            int compareResult = pair1.Score.CompareTo(pair2.Score);
+            int compareResult = pair2.Score.CompareTo(pair1.Score);
             if (compareResult == 0) {
-                compareResult = pair1.Timestamp.CompareTo(pair2.Timestamp);
+                compareResult = pair2.Timestamp.CompareTo(pair1.Timestamp);
             }
             return compareResult;
         }
