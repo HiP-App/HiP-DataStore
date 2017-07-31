@@ -1,6 +1,5 @@
 ﻿using PaderbornUniversity.SILab.Hip.DataStore.Core.Migrations;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -18,8 +17,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
         public async Task MigrateAsync(IStreamMigrationArgs e)
         {
             var events = e.GetExistingEvents();
-            var lastTimestamp = DateTimeOffset.MinValue;
-
             var pages = new HashSet<int>(); // IDs of all currently existing pages
 
             while (await events.MoveNextAsync())

@@ -36,11 +36,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
                         e.AppendEvent(ev);
                         break;
 
-                    case ReferenceAdded ev:
+                    case ReferenceAdded _:
                         // Ignore, do not add ReferenceAdded/Removed events to the v4 stream
                         break;
 
-                    case ReferenceRemoved ev:
+                    case ReferenceRemoved _:
                         // Ignore, do not add ReferenceAdded/Removed events to the v4 stream
                         break;
 

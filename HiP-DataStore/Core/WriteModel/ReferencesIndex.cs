@@ -72,7 +72,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                         AddReferences(source, e.GetReferences());
                         break;
 
-                    case IDeleteEvent e:
+                    case IDeleteEvent _:
                         ClearReferences(source);
                         break;
                 }
