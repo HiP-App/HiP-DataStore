@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace PaderbornUniversity.SILab.Hip.DataStore.Utility
+﻿namespace PaderbornUniversity.SILab.Hip.DataStore.Utility
 {
     public class AuthConfig
     {
