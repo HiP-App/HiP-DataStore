@@ -7,6 +7,9 @@
   <PropertyGroup>
     <RestoreConfigFile>Nuget.Config</RestoreConfigFile>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="Core\EventDataExtensions.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Media\Image\" />
@@ -22,12 +25,13 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="1.1.1" />
     <PackageReference Include="MongoDB.Driver" Version="2.4.3" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="1.0.0" />
-    <PackageReference Include="System.ValueTuple" Version="4.3.0" />
+    <PackageReference Include="System.ValueTuple" Version="4.3.1" />
   </ItemGroup>
   <ItemGroup>
     <DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="1.0.0" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\HiP-EventStoreLib\HiP-EventStoreLib\HiP-EventStoreLib.csproj" />
     <ProjectReference Include="..\HiP-DataStore.Model\HiP-DataStore.Model.csproj" />
   </ItemGroup>
 

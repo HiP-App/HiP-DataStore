@@ -1,10 +1,11 @@
 ﻿using EventStore.ClientAPI;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using PaderbornUniversity.SILab.Hip.DataStore.Core.Migrations;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
+using PaderbornUniversity.SILab.Hip.EventSourcing;
+using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
+using PaderbornUniversity.SILab.Hip.EventSourcing.Migrations;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -26,7 +27,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
         private readonly ILogger<EventStoreClient> _logger;
         private readonly string _streamName;
 
-        public IEventStoreConnection Connection { get; }
+        public IEventStore Connection { get; }
 
         public EventStoreClient(
             IEnumerable<IDomainIndex> indices,

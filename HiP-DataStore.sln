@@ -1,13 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26403.7
+VisualStudioVersion = 15.0.26430.16
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HiP-DataStore", "HiP-DataStore\HiP-DataStore.csproj", "{AA345286-8B3C-48B3-8E3A-F0D0571A9091}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HiP-DataStore.Model", "HiP-DataStore.Model\HiP-DataStore.Model.csproj", "{974D45A5-D139-4838-B766-9349E7C20CE4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HiP-DataStore.Tests", "HiP-DataStore.Tests\HiP-DataStore.Tests.csproj", "{2168A290-1074-4577-8F33-3872B39B02ED}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HiP-DataStore.Tests", "HiP-DataStore.Tests\HiP-DataStore.Tests.csproj", "{2168A290-1074-4577-8F33-3872B39B02ED}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HiP-EventStoreLib", "..\HiP-EventStoreLib\HiP-EventStoreLib\HiP-EventStoreLib.csproj", "{2F9CE674-6A76-42C5-99F4-0F367DB67A7F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,6 +29,10 @@ Global
 		{2168A290-1074-4577-8F33-3872B39B02ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2168A290-1074-4577-8F33-3872B39B02ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2168A290-1074-4577-8F33-3872B39B02ED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2F9CE674-6A76-42C5-99F4-0F367DB67A7F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2F9CE674-6A76-42C5-99F4-0F367DB67A7F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2F9CE674-6A76-42C5-99F4-0F367DB67A7F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2F9CE674-6A76-42C5-99F4-0F367DB67A7F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
