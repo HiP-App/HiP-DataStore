@@ -265,3 +265,6 @@ __pycache__/
 HiP-DataStore/Webservice/
 HiP-DataStore/Media/Audio/
 HiP-DataStore/Media/Image/
+
+.vscode
+
