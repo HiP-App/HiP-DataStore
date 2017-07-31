@@ -99,7 +99,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         Timestamp = e.Timestamp
                     };
 
-                    updatedExhibit.Referencers.AddRange(originalExhibit.Referencers);
                     _db.GetCollection<Exhibit>(ResourceType.Exhibit.Name).ReplaceOne(x => x.Id == e.Id, updatedExhibit);
                     break;
 
@@ -125,7 +124,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         Timestamp = e.Timestamp
                     };
 
-                    updatedPage.Referencers.AddRange(originalPage.Referencers);
                     _db.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name).ReplaceOne(x => x.Id == e.Id, updatedPage);
                     break;
 
@@ -151,7 +149,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         Timestamp = e.Timestamp
                     };
 
-                    updatedRoute.Referencers.AddRange(originalRoute.Referencers);
                     _db.GetCollection<Route>(ResourceType.Route.Name).ReplaceOne(r => r.Id == e.Id, updatedRoute);
                     break;
 
@@ -177,7 +174,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         Timestamp = e.Timestamp
                     };
 
-                    updatedMedia.Referencers.AddRange(originalMedia.Referencers);
                     updatedMedia.File = originalMedia.File;
                     _db.GetCollection<MediaElement>(ResourceType.Media.Name).ReplaceOne(m => m.Id == e.Id, updatedMedia);
                     break;
@@ -211,7 +207,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         Timestamp = e.Timestamp,
                     };
 
-                    updatedTag.Referencers.AddRange(originalTag.Referencers);
                     _db.GetCollection<Tag>(ResourceType.Tag.Name).ReplaceOne(x => x.Id == e.Id, updatedTag);
                     break;
 
@@ -273,10 +268,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 
             // 2) create a new DocRef pointing to the source and add it to the target's referencers list
             var sourceRef = new DocRef<ContentBase>(source.Id, source.Type.Name);
-            update = Builders<ContentBase>.Update.Push(nameof(ContentBase.Referencers), sourceRef);
+            var update2 = Builders<ContentBase>.Update.Push(nameof(ContentBase.Referencers), sourceRef);
             foreach (var target in targets)
             {
-                result = _db.GetCollection<ContentBase>(target.Type.Name).UpdateOne(x => x.Id == target.Id, update);
+                result = _db.GetCollection<ContentBase>(target.Type.Name).UpdateOne(x => x.Id == target.Id, update2);
                 Debug.Assert(result.ModifiedCount == 1);
             }
         }
