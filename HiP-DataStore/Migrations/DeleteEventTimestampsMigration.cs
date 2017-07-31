@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
 {
     /// <summary>
-    /// Updates a stream to version 3. Version 3 completely removes ReferenceAdded and ReferenceRemoved events
+    /// Updates a stream to version 4. Version 4 completely removes ReferenceAdded and ReferenceRemoved events
     /// and introduces timestamps in <see cref="IDeleteEvent"/>. In previous versions, timestamps were only
     /// stored for <see cref="ICreateEvent"/> and <see cref="IUpdateEvent"/>.
     /// </summary>
-    [StreamMigration(from: 2, to: 3)]
+    [StreamMigration(from: 3, to: 4)]
     public class DeleteEventTimestampsMigration : IStreamMigration
     {
         public async Task MigrateAsync(IStreamMigrationArgs e)
@@ -24,8 +24,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
                 switch (events.Current)
                 {
                     case IDeleteEvent ev:
-                        // In v2, IDeleteEvents did not store a timestamp.
-                        // For v3, we have to choose a "realistic" timestamp
+                        // In v3, IDeleteEvents did not store a timestamp.
+                        // For v4, we have to choose a "realistic" timestamp
                         // => just use the timestamp of the last CRUD event
                         ev.Timestamp = lastTimestamp;
                         e.AppendEvent(ev);
@@ -37,11 +37,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
                         break;
 
                     case ReferenceAdded ev:
-                        // Ignore, do not add ReferenceAdded/Removed events to the v3 stream
+                        // Ignore, do not add ReferenceAdded/Removed events to the v4 stream
                         break;
 
                     case ReferenceRemoved ev:
-                        // Ignore, do not add ReferenceAdded/Removed events to the v3 stream
+                        // Ignore, do not add ReferenceAdded/Removed events to the v4 stream
                         break;
 
                     default:

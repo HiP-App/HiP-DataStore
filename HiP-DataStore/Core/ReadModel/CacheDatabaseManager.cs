@@ -62,7 +62,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                 // Event types may change over time (properties get added/removed etc.)
                 // Whenever an event has multiple versions, an event of an obsolete type should be transformed to an event
                 // of the latest version, so that ApplyEvent(...) only has to deal with events of the current version.
-
                 var ev = resolvedEvent.Event.ToIEvent().MigrateToLatestVersion();
                 ApplyEvent(ev);
             }
