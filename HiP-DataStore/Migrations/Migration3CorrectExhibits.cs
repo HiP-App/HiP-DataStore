@@ -12,7 +12,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
     /// The issue originates from a (now fixed) bug at the time of migration to stream version 2.
     /// </summary>
     [StreamMigration(from: 2, to: 3)]
-    public class CorrectExhibitsMigration : IStreamMigration
+    public class Migration3CorrectExhibits : IStreamMigration
     {
         public async Task MigrateAsync(IStreamMigrationArgs e)
         {

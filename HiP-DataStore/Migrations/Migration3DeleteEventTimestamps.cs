@@ -12,7 +12,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
     /// stored for <see cref="ICreateEvent"/> and <see cref="IUpdateEvent"/>.
     /// </summary>
     [StreamMigration(from: 3, to: 4)]
-    public class DeleteEventTimestampsMigration : IStreamMigration
+    public class Migration3DeleteEventTimestamps : IStreamMigration
     {
         public async Task MigrateAsync(IStreamMigrationArgs e)
         {
