@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
 {
     /// <summary>
-    /// On ExhibitCreated, 'Pages' may contain IDs of pages that are not yet created.
+    /// On ExhibitCreated/ExhibitUpdated, 'Pages' may contain IDs of pages that are not yet created.
     /// This migration corrects that by removing the invalid page IDs.
     /// The issue originates from a (now fixed) bug at the time of migration to stream version 2.
     /// </summary>
@@ -27,6 +27,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
                 switch (events.Current)
                 {
                     case ExhibitCreated ev:
+                        ev.Properties.Pages = ev.Properties.Pages?.Where(pages.Contains).ToList();
+                        break;
+
+                    case ExhibitUpdated ev:
                         ev.Properties.Pages = ev.Properties.Pages?.Where(pages.Contains).ToList();
                         break;
 
