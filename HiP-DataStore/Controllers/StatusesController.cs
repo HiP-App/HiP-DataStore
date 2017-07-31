@@ -1,10 +1,8 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
-    [Authorize]
     public class StatusesController : Controller
     {
         [HttpGet]

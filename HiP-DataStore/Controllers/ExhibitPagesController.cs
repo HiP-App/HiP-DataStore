@@ -13,11 +13,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
-    [Authorize]
     [Route("api/Exhibits")]
     public class ExhibitPagesController : Controller
     {
