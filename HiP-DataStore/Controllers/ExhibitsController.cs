@@ -122,7 +122,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            // validation passed, emit events (create exhibit, add references to image and tags)
+            // validation passed, emit event
             var ev = new ExhibitCreated
             {
                 Id = _entityIndex.NextId(ResourceType.Exhibit),
@@ -148,7 +148,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.Exhibit, id))
                 return NotFound();
 
-            // validation passed, emit events (remove old references, update exhibit, add new references)
+            // validation passed, emit event
             var ev = new ExhibitUpdated
             {
                 Id = id,

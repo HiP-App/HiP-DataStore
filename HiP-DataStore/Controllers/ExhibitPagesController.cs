@@ -169,7 +169,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
             
-            // validation passed, emit events (create page, add references to image(s) and additional info pages)
+            // validation passed, emit event
             var newPageId = _entityIndex.NextId(ResourceType.ExhibitPage);
             var events = ExhibitPageCommands.Create(newPageId, args);
             await _eventStore.AppendEventsAsync(events);
@@ -202,7 +202,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (currentPageType != args.Type)
                 return StatusCode(422, ErrorMessages.CannotChangeExhibitPageType(currentPageType, args.Type));
 
-            // validation passed, emit events (remove old references, update exhibit, add new references)
+            // validation passed, emit event
             var events = ExhibitPageCommands.Update(id, args, _referencesIndex);
             await _eventStore.AppendEventsAsync(events);
 

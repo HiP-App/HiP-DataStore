@@ -116,7 +116,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            // validation passed, emit events (create route, add references to image, audio, exhibits and tags)
+            // validation passed, emit event
             var ev = new RouteCreated
             {
                 Id = _entityIndex.NextId(ResourceType.Route),
@@ -142,7 +142,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.Route, id))
                 return NotFound();
 
-            // validation passed, emit events (remove old references, update route, add new references)
+            // validation passed, emit event
             var ev = new RouteUpdated
             {
                 Id = id,
@@ -169,7 +169,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (_referencesIndex.IsUsed(ResourceType.Route, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
 
-            // validation passed, emit events (delete route, remove references to image, audio, exhibits and tags)
+            // validation passed, emit event
             var ev = new RouteDeleted { Id = id };
             await _eventStore.AppendEventAsync(ev);
             return NoContent();
