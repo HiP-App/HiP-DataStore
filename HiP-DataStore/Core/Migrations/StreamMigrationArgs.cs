@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using EventStore.ClientAPI;
+using System;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core.Migrations
 {
@@ -8,9 +9,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.Migrations
     {
         private readonly IEventStoreConnection _connection;
         private readonly string _streamName;
-        private readonly List<IEvent> _eventsToAppend = new List<IEvent>();
+        private readonly List<EventData> _eventsToAppend = new List<EventData>();
 
-        public IReadOnlyList<IEvent> EventsToAppend => _eventsToAppend;
+        public IReadOnlyList<EventData> EventsToAppend => _eventsToAppend;
 
         public StreamMigrationArgs(IEventStoreConnection connection, string streamName)
         {
@@ -18,7 +19,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.Migrations
             _streamName = streamName;
         }
 
-        public void AppendEvent(IEvent ev) => _eventsToAppend.Add(ev);
+        public void AppendEvent(IEvent ev) => _eventsToAppend.Add(ev.ToEventData(Guid.NewGuid()));
 
         public IAsyncEnumerator<IEvent> GetExistingEvents() =>
             new EventStoreStreamEnumerator(_connection, _streamName);
