@@ -1,0 +1,5 @@
+﻿{
+  "General": {
+    "StartupType": "PaderbornUniversity.SILab.Hip.DataStore.Tests.TestStartup"
+  }
+}
