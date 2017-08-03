@@ -52,10 +52,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             string domain = Configuration.GetSection("Auth").GetValue<string>("Authority");
             services.AddAuthorization(options =>
             {
-                options.AddPolicy("read:basic",
-                    policy => policy.Requirements.Add(new HasScopeRequirement("read:basic", domain)));
-                options.AddPolicy("read:authenticated",
-                    policy => policy.Requirements.Add(new HasScopeRequirement("read:authenticated", domain)));
+                options.AddPolicy("read:datastore",
+                    policy => policy.Requirements.Add(new HasScopeRequirement("read:datastore", domain)));
+                options.AddPolicy("write:datastore",
+                    policy => policy.Requirements.Add(new HasScopeRequirement("write:datastore", domain)));
                 options.AddPolicy("write:cms",
                     policy => policy.Requirements.Add(new HasScopeRequirement("write:cms", domain)));
             });
