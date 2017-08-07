@@ -303,7 +303,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             // validate font family
             if (!_exhibitPagesConfig.Value.IsFontFamilyValid(args.FontFamily))
-                ModelState.AddModelError(nameof(args.FontFamily), $"Font family must be null/unspecified (which defaults to {exhibitPagesConfig.DefaultFontFamily}) or one of the following: {string.Join(", ", _exhibitPagesConfig.Value.FontFamilies)}");
+                ModelState.AddModelError(nameof(args.FontFamily), $"Font family must be null/unspecified (which defaults to {_exhibitPagesConfig.Value.DefaultFontFamily}) or one of the following: {string.Join(", ", _exhibitPagesConfig.Value.FontFamilies)}");
 
             // ensure referenced image exists
             if (args.Image != null && !_mediaIndex.IsImage(args.Image.Value))
