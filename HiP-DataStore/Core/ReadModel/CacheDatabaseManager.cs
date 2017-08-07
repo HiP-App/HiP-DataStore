@@ -73,8 +73,19 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 
         private void ApplyEvent(IEvent ev)
         {
-            if (ev is IDeleteEvent deleteEvent)
-                ClearReferences((deleteEvent.GetEntityType(), deleteEvent.Id));
+            if (ev is ICrudEvent crudEvent)
+            {
+                var entity = (crudEvent.GetEntityType(), crudEvent.Id);
+                if (crudEvent is IDeleteEvent deleteEvent)
+                {
+                    ClearIncomingReferences(entity);
+                    ClearOutgoingReferences(entity);
+                }
+                else if (crudEvent is IUpdateEvent updateEvent)
+                {
+                    ClearOutgoingReferences(entity);
+                }
+            }
 
             switch (ev)
             {
@@ -232,31 +243,37 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
             if (ev is ICreateEvent createEvent)
                 AddReferences((createEvent.GetEntityType(), createEvent.Id), createEvent.GetReferences());
             else if (ev is IUpdateEvent updateEvent)
-                UpdateReferences((updateEvent.GetEntityType(), updateEvent.Id), updateEvent.GetReferences());
+                AddReferences((updateEvent.GetEntityType(), updateEvent.Id), updateEvent.GetReferences());
         }
 
-        private void UpdateReferences(EntityId source, IEnumerable<EntityId> targets)
+        private void ClearIncomingReferences(EntityId entity)
         {
-            ClearReferences(source);
-            AddReferences(source, targets);
+            var currentReferencers = _db.GetCollection<dynamic>(entity.Type.Name)
+                .Find(Builders<dynamic>.Filter.Eq("_id", entity.Id))
+                .First()
+                .Referencers;
+
+            foreach (var r in currentReferencers)
+            {
+                // Note: We must use the internal key "_id" here since we use dynamic objects
+                var source = (new ResourceType(r.Collection), (int)r._id);
+                RemoveReference(source, entity);
+            }
         }
 
-        private void ClearReferences(EntityId source)
+        private void ClearOutgoingReferences(EntityId entity)
         {
-            var currentReferences = _db.GetCollection<dynamic>(source.Type.Name)
-                .Find(Builders<dynamic>.Filter.Eq("_id", source.Id))
+            var currentReferences = _db.GetCollection<dynamic>(entity.Type.Name)
+                .Find(Builders<dynamic>.Filter.Eq("_id", entity.Id))
                 .First()
                 .References;
-
-            var targets = new List<EntityId>();
 
             foreach (var r in currentReferences)
             {
                 // Note: We must use the internal key "_id" here since we use dynamic objects
-                targets.Add((new ResourceType(r.Collection), (int)r._id));
+                var target = (new ResourceType(r.Collection), (int)r._id);
+                RemoveReference(entity, target);
             }
-
-            RemoveReferences(source, targets);
         }
 
         private void AddReferences(EntityId source, IEnumerable<EntityId> targets)
@@ -279,24 +296,19 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
             }
         }
 
-        private void RemoveReferences(EntityId source, IEnumerable<EntityId> targets)
+        private void RemoveReference(EntityId source, EntityId target)
         {
-            // for each reference (source -> target)...
+            // 1) delete the DocRef pointing to the target from the source's references list
+            var update = Builders<dynamic>.Update.PullFilter(
+                nameof(ContentBase.References),
+                Builders<dynamic>.Filter.And(
+                    Builders<dynamic>.Filter.Eq(nameof(DocRefBase.Collection), target.Type.Name),
+                    Builders<dynamic>.Filter.Eq("_id", target.Id)));
 
-            // 1) delete the DocRef pointing to the target from the the source's references list
-            foreach (var target in targets)
-            {
-                var update = Builders<dynamic>.Update.PullFilter(
-                    nameof(ContentBase.References),
-                    Builders<dynamic>.Filter.And(
-                        Builders<dynamic>.Filter.Eq(nameof(DocRefBase.Collection), target.Type.Name),
-                        Builders<dynamic>.Filter.Eq("_id", target.Id)));
+            var result = _db.GetCollection<dynamic>(source.Type.Name).UpdateOne(
+                Builders<dynamic>.Filter.Eq("_id", source.Id), update);
 
-                var result = _db.GetCollection<dynamic>(source.Type.Name).UpdateOne(
-                    Builders<dynamic>.Filter.Eq("_id", source.Id), update);
-
-                Debug.Assert(result.ModifiedCount == 1);
-            }
+            Debug.Assert(result.ModifiedCount == 1);
 
             // 2) delete the DocRef pointing to the source from the target's referencers list
             var update2 = Builders<dynamic>.Update.PullFilter(
@@ -305,13 +317,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     Builders<dynamic>.Filter.Eq(nameof(DocRefBase.Collection), source.Type.Name),
                     Builders<dynamic>.Filter.Eq("_id", source.Id)));
 
-            foreach (var target in targets)
-            {
-                var result = _db.GetCollection<dynamic>(target.Type.Name).UpdateOne(
-                    Builders<dynamic>.Filter.Eq("_id", target.Id), update2);
+            var result2 = _db.GetCollection<dynamic>(target.Type.Name).UpdateOne(
+                Builders<dynamic>.Filter.Eq("_id", target.Id), update2);
 
-                Debug.Assert(result.ModifiedCount == 1);
-            }
+            Debug.Assert(result2.ModifiedCount == 1);
         }
     }
 }

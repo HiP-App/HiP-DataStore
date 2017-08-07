@@ -42,5 +42,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
         /// Enables <see cref="EntityId"/>-construction from a tuple, e.g. "EntityId x = (ResourceType.Tag, 17);".
         /// </summary>
         public static implicit operator EntityId((ResourceType type, int id) tuple) => new EntityId(tuple.type, tuple.id);
+
+        public override string ToString() => $"{Type?.Name} {Id}";
     }
 }

@@ -40,8 +40,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
             if (Image != null)
                 yield return (ResourceType.Media, Image.Value);
 
-            foreach (var img in Images?.Distinct() ?? Enumerable.Empty<SliderPageImageArgs>())
-                yield return (ResourceType.Media, img.Image);
+            foreach (var img in Images?.Select(i => i.Image).Distinct() ?? Enumerable.Empty<int>())
+                yield return (ResourceType.Media, img);
 
             foreach (var id in AdditionalInformationPages?.Distinct() ?? Enumerable.Empty<int>())
                 yield return (ResourceType.ExhibitPage, id);
