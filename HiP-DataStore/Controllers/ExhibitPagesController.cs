@@ -283,7 +283,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             }
         }
 
-        public void ValidateExhibitPageArgs(ExhibitPageArgs2 args)
+        private void ValidateExhibitPageArgs(ExhibitPageArgs2 args)
         {
             if (args == null)
                 return;
