@@ -1,4 +1,5 @@
 ﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using PaderbornUniversity.SILab.Hip.EventSourcing.Migrations;
 using System;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events

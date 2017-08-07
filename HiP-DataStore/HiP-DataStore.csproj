@@ -7,10 +7,7 @@
   <PropertyGroup>
     <RestoreConfigFile>Nuget.Config</RestoreConfigFile>
   </PropertyGroup>
-  <ItemGroup>
-    <Compile Remove="Core\EventDataExtensions.cs" />
-  </ItemGroup>
-
+  
   <ItemGroup>
     <Folder Include="Media\Image\" />
     <Folder Include="wwwroot\" />
