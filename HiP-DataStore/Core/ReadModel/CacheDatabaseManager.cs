@@ -76,12 +76,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
             if (ev is ICrudEvent crudEvent)
             {
                 var entity = (crudEvent.GetEntityType(), crudEvent.Id);
-                if (crudEvent is IDeleteEvent deleteEvent)
+                if (crudEvent is IDeleteEvent)
                 {
                     ClearIncomingReferences(entity);
                     ClearOutgoingReferences(entity);
                 }
-                else if (crudEvent is IUpdateEvent updateEvent)
+                else if (crudEvent is IUpdateEvent)
                 {
                     ClearOutgoingReferences(entity);
                 }
