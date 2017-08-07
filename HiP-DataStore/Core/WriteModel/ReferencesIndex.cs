@@ -63,7 +63,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                 switch (ev)
                 {
                     case ICreateEvent e:
-                        ClearReferences(source);
                         AddReferences(source, e.GetReferences());
                         break;
 

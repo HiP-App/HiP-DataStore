@@ -7,6 +7,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using System;
@@ -164,16 +165,22 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (args != null && args.FontFamily == null)
                 args.FontFamily = _exhibitPagesConfig.Value.DefaultFontFamily;
 
-            ExhibitPageCommands.ValidateExhibitPageArgs(args, ModelState.AddModelError, _entityIndex, _mediaIndex, _exhibitPagesConfig.Value);
+            ValidateExhibitPageArgs(args);
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
             
             // validation passed, emit event
             var newPageId = _entityIndex.NextId(ResourceType.ExhibitPage);
-            var events = ExhibitPageCommands.Create(newPageId, args);
-            await _eventStore.AppendEventsAsync(events);
+            
+            var ev = new ExhibitPageCreated3
+            {
+                Id = newPageId,
+                Properties = args,
+                Timestamp = DateTimeOffset.Now
+            };
 
+            await _eventStore.AppendEventAsync(ev);
             return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Pages/{newPageId}", newPageId);
         }
 
@@ -188,7 +195,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (args != null && args.FontFamily == null)
                 args.FontFamily = _exhibitPagesConfig.Value.DefaultFontFamily;
 
-            ExhibitPageCommands.ValidateExhibitPageArgs(args, ModelState.AddModelError, _entityIndex, _mediaIndex, _exhibitPagesConfig.Value);
+            ValidateExhibitPageArgs(args);
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -203,9 +210,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return StatusCode(422, ErrorMessages.CannotChangeExhibitPageType(currentPageType, args.Type));
 
             // validation passed, emit event
-            var events = ExhibitPageCommands.Update(id, args, _referencesIndex);
-            await _eventStore.AppendEventsAsync(events);
+            var ev = new ExhibitPageUpdated3
+            {
+                Id = id,
+                Properties = args,
+                Timestamp = DateTimeOffset.Now
+            };
 
+            await _eventStore.AppendEventAsync(ev);
             return StatusCode(204);
         }
 
@@ -224,8 +236,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (_referencesIndex.IsUsed(ResourceType.ExhibitPage, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
 
-            var events = ExhibitPageCommands.Delete(id, _referencesIndex);
-            await _eventStore.AppendEventsAsync(events);
+            var ev = new ExhibitPageDeleted2 { Id = id };
+            await _eventStore.AppendEventAsync(ev);
 
             return NoContent();
         }
@@ -270,6 +282,59 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             {
                 return StatusCode(422, e.Message);
             }
-        }   
+        }
+
+        public void ValidateExhibitPageArgs(ExhibitPageArgs2 args)
+        {
+            if (args == null)
+                return;
+
+            // constrain properties Image, Images and HideYearNumbers to their respective page types
+            if (args.Image != null && args.Type != PageType.Appetizer_Page && args.Type != PageType.Image_Page)
+                ModelState.AddModelError(nameof(args.Image),
+                    ErrorMessages.FieldNotAllowedForPageType(nameof(args.Image), args.Type));
+
+            if (args.Images != null && args.Type != PageType.Slider_Page)
+                ModelState.AddModelError(nameof(args.Images),
+                    ErrorMessages.FieldNotAllowedForPageType(nameof(args.Images), args.Type));
+
+            if (args.HideYearNumbers != null && args.Type != PageType.Slider_Page)
+                ModelState.AddModelError(nameof(args.HideYearNumbers),
+                    ErrorMessages.FieldNotAllowedForPageType(nameof(args.HideYearNumbers), args.Type));
+
+            // validate font family
+            if (!_exhibitPagesConfig.Value.IsFontFamilyValid(args.FontFamily))
+                ModelState.AddModelError(nameof(args.FontFamily), $"Font family must be null/unspecified (which defaults to {exhibitPagesConfig.DefaultFontFamily}) or one of the following: {string.Join(", ", _exhibitPagesConfig.Value.FontFamilies)}");
+
+            // ensure referenced image exists
+            if (args.Image != null && !_mediaIndex.IsImage(args.Image.Value))
+                ModelState.AddModelError(nameof(args.Image),
+                    ErrorMessages.ImageNotFound(args.Image.Value));
+
+            // ensure referenced slider page images exist
+            if (args.Images != null)
+            {
+                var invalidIds = args.Images
+                    .Select(img => img.Image)
+                    .Where(id => !_mediaIndex.IsImage(id))
+                    .ToList();
+
+                foreach (var id in invalidIds)
+                    ModelState.AddModelError(nameof(args.Images),
+                        ErrorMessages.ImageNotFound(id));
+            }
+
+            // ensure referenced additional info pages exist
+            if (args.AdditionalInformationPages != null)
+            {
+                var invalidIds = args.AdditionalInformationPages
+                    .Where(id => !_entityIndex.Exists(ResourceType.ExhibitPage, id))
+                    .ToList();
+
+                foreach (var id in invalidIds)
+                    ModelState.AddModelError(nameof(args.AdditionalInformationPages),
+                        ErrorMessages.ExhibitPageNotFound(id));
+            }
+        }
     }
 }

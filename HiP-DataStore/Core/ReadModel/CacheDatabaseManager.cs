@@ -86,7 +86,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     };
 
                     _db.GetCollection<Exhibit>(ResourceType.Exhibit.Name).InsertOne(newExhibit);
-                    AddReferences((e.GetEntityType(), e.Id), e.GetReferences());
                     break;
 
                 case ExhibitUpdated e:
@@ -231,7 +230,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
             }
 
             if (ev is ICreateEvent createEvent)
-                UpdateReferences((createEvent.GetEntityType(), createEvent.Id), createEvent.GetReferences());
+                AddReferences((createEvent.GetEntityType(), createEvent.Id), createEvent.GetReferences());
             else if (ev is IUpdateEvent updateEvent)
                 UpdateReferences((updateEvent.GetEntityType(), updateEvent.Id), updateEvent.GetReferences());
         }
