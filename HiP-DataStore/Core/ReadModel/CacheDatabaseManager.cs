@@ -1,5 +1,4 @@
-﻿using EventStore.ClientAPI;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -7,6 +6,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
+using PaderbornUniversity.SILab.Hip.EventSourcing;
 using System;
 using System.Linq;
 using Tag = PaderbornUniversity.SILab.Hip.DataStore.Model.Entity.Tag;
@@ -45,31 +45,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
             // 2) Subscribe to EventStore to receive all past and future events
             _eventStore = eventStore;
 
-            _eventStore.Connection.SubscribeToStreamFrom(
-                config.Value.EventStoreStream,
-                null, // don't use StreamPosition.Start (see https://groups.google.com/forum/#!topic/event-store/8tpXJMNEMqI),
-                CatchUpSubscriptionSettings.Default,
-                OnEventAppeared);
+            var subscription = _eventStore.EventStream.SubscribeCatchUp();
+            subscription.EventAppeared.Subscribe(ApplyEvent);
         }
-
-        private void OnEventAppeared(EventStoreCatchUpSubscription subscription, ResolvedEvent resolvedEvent)
-        {
-            try
-            {
-                // Note regarding migration:
-                // Event types may change over time (properties get added/removed etc.)
-                // Whenever an event has multiple versions, an event of an obsolete type should be transformed to an event
-                // of the latest version, so that ApplyEvent(...) only has to deal with events of the current version.
-
-                var ev = resolvedEvent.Event.ToIEvent().MigrateToLatestVersion();
-                ApplyEvent(ev);
-            }
-            catch (Exception e)
-            {
-                _logger.LogWarning($"{nameof(CacheDatabaseManager)} could not process an event: {e}");
-            }
-        }
-
+        
         private void ApplyEvent(IEvent ev)
         {
             switch (ev)

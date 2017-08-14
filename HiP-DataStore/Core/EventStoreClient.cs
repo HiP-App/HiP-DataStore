@@ -4,13 +4,13 @@ using Microsoft.Extensions.Options;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
-using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Migrations;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using ESL = PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core
 {
@@ -26,8 +26,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
         private readonly IReadOnlyCollection<IDomainIndex> _indices;
         private readonly ILogger<EventStoreClient> _logger;
         private readonly string _streamName;
+        private readonly IEventStore _store;
 
-        public IEventStore Connection { get; }
+        public IEventStream EventStream => _store.Streams[_streamName];
 
         public EventStoreClient(
             IEnumerable<IDomainIndex> indices,
@@ -50,13 +51,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
 
             // Establish connection to Event Store
             var uri = new Uri(config.Value.EventStoreHost);
-            Connection = EventStoreConnection.Create(settings, uri);
-            Connection.ConnectAsync().Wait();
+            var connection = EventStoreConnection.Create(settings, uri);
+            connection.ConnectAsync().Wait();
+            
+            _store = new ESL.EventStore(connection);
 
             logger.LogInformation($"Connected to Event Store on '{uri.Host}', using stream '{_streamName}'");
 
             // Update stream to the latest version
-            var migrationResult = StreamMigrator.MigrateAsync(Connection, _streamName).Result;
+            var migrationResult = StreamMigrator.MigrateAsync(_store, _streamName).Result;
             if (migrationResult.fromVersion != migrationResult.toVersion)
                 logger.LogInformation($"Migrated stream '{_streamName}' from version '{migrationResult.fromVersion}' to version '{migrationResult.toVersion}'");
 
@@ -69,9 +72,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
         /// Starts a new transaction. Append events to the transaction and eventually commit
         /// the transaction to persist the events to the event stream.
         /// </summary>
-        public EventStoreClientTransaction BeginTransaction()
+        public EventStreamTransaction BeginTransaction()
         {
-            return new EventStoreClientTransaction(this);
+            return _store.Streams[_streamName].BeginTransaction();
         }
 
         /// <summary>
@@ -84,29 +87,26 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
             await AppendEventsAsync(new[] { ev });
         }
 
-        public Task<WriteResult> AppendEventsAsync(IEnumerable<IEvent> events) =>
+        public Task AppendEventsAsync(IEnumerable<IEvent> events) =>
             AppendEventsAsync(events?.ToList());
 
-        public async Task<WriteResult> AppendEventsAsync(IReadOnlyCollection<IEvent> events)
+        public async Task AppendEventsAsync(IReadOnlyCollection<IEvent> events)
         {
             if (events == null)
                 throw new ArgumentNullException(nameof(events));
 
             // persist events in Event Store
-            var eventData = events.Select(ev => ev.ToEventData(Guid.NewGuid()));
-            var result = await Connection.AppendToStreamAsync(_streamName, ExpectedVersion.Any, eventData);
+            await _store.Streams[_streamName].AppendManyAsync(events);
 
             // forward events to indices so they can update their state
             foreach (var ev in events)
                 foreach (var index in _indices)
                     index.ApplyEvent(ev);
-
-            return result;
         }
 
         private async Task PopulateIndicesAsync()
         {
-            var events = new EventStoreStreamEnumerator(Connection, _streamName);
+            var events = _store.Streams[_streamName].GetEnumerator();
             var totalCount = 0;
 
             events.EventParsingFailed += (_, exception) =>
