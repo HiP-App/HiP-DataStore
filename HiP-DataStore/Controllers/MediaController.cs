@@ -16,9 +16,11 @@ using System.IO;
 using Microsoft.AspNetCore.StaticFiles;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Authorization;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     public class MediaController : Controller
     {
