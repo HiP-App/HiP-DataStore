@@ -1,7 +1,6 @@
 ﻿using EventStore.ClientAPI;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Migrations;
@@ -23,15 +22,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
     /// </remarks>
     public class EventStoreClient
     {
-        private readonly IReadOnlyCollection<IDomainIndex> _indices;
         private readonly ILogger<EventStoreClient> _logger;
         private readonly string _streamName;
         private readonly IEventStore _store;
+        private readonly InMemoryCache _cache;
 
         public IEventStream EventStream => _store.Streams[_streamName];
 
         public EventStoreClient(
-            IEnumerable<IDomainIndex> indices,
+            InMemoryCache cache,
             IOptions<EndpointConfig> config,
             ILogger<EventStoreClient> logger)
         {
@@ -64,7 +63,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
                 logger.LogInformation($"Migrated stream '{_streamName}' from version '{migrationResult.fromVersion}' to version '{migrationResult.toVersion}'");
 
             // Setup IDomainIndex-indices
-            _indices = indices.ToList();
+            _cache = cache;
             PopulateIndicesAsync().Wait();
         }
 
@@ -100,8 +99,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
 
             // forward events to indices so they can update their state
             foreach (var ev in events)
-                foreach (var index in _indices)
-                    index.ApplyEvent(ev);
+                _cache.ApplyEvent(ev);
         }
 
         private async Task PopulateIndicesAsync()
@@ -115,18 +113,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
             while (await events.MoveNextAsync())
             {
                 totalCount++;
-
-                foreach (var index in _indices)
-                {
-                    try
-                    {
-                        index.ApplyEvent(events.Current);
-                    }
-                    catch (Exception e)
-                    {
-                        _logger.LogWarning($"Failed to populate index of type '{index.GetType().Name}' with event of type '{events.Current.GetType().Name}': {e}");
-                    }
-                }
+                _cache.ApplyEvent(events.Current);
             }
 
             _logger.LogInformation($"Populated indices with {totalCount} events");

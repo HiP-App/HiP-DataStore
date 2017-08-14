@@ -9,6 +9,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
+using PaderbornUniversity.SILab.Hip.EventSourcing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -31,15 +32,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             IOptions<ExhibitPagesConfig> exhibitPagesConfig,
             EventStoreClient eventStore,
             CacheDatabaseManager db,
-            IEnumerable<IDomainIndex> indices)
+            InMemoryCache cache)
         {
             _exhibitPagesConfig = exhibitPagesConfig;
             _eventStore = eventStore;
             _db = db;
-            _mediaIndex = indices.OfType<MediaIndex>().First();
-            _entityIndex = indices.OfType<EntityIndex>().First();
-            _referencesIndex = indices.OfType<ReferencesIndex>().First();
-            _exhibitPageIndex = indices.OfType<ExhibitPageIndex>().First();
+            _mediaIndex = cache.Index<MediaIndex>();
+            _entityIndex = cache.Index<EntityIndex>();
+            _referencesIndex = cache.Index<ReferencesIndex>();
+            _exhibitPageIndex = cache.Index<ExhibitPageIndex>();
         }
 
         [HttpGet("Pages/ids")]

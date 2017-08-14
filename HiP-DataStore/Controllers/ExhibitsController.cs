@@ -26,14 +26,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly ReferencesIndex _referencesIndex;
         private readonly RatingIndex _ratingIndex;
 
-        public ExhibitsController(EventStoreClient eventStore, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices)
+        public ExhibitsController(EventStoreClient eventStore, CacheDatabaseManager db, InMemoryCache cache)
         {
             _eventStore = eventStore;
             _db = db;
-            _mediaIndex = indices.OfType<MediaIndex>().First();
-            _entityIndex = indices.OfType<EntityIndex>().First();
-            _referencesIndex = indices.OfType<ReferencesIndex>().First();
-            _ratingIndex = indices.OfType<RatingIndex>().First();
+            _mediaIndex = cache.Index<MediaIndex>();
+            _entityIndex = cache.Index<EntityIndex>();
+            _referencesIndex = cache.Index<ReferencesIndex>();
+            _ratingIndex = cache.Index<RatingIndex>();
         }
 
         [HttpGet("ids")]

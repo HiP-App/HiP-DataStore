@@ -6,6 +6,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using PaderbornUniversity.SILab.Hip.EventSourcing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,14 +25,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly TagIndex _tagIndex;
         private readonly ReferencesIndex _referencesIndex;
 
-        public TagsController(EventStoreClient eventStore, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices)
+        public TagsController(EventStoreClient eventStore, CacheDatabaseManager db, InMemoryCache cache)
         {
             _ev = eventStore;
             _db = db;
-            _entityIndex = indices.OfType<EntityIndex>().First();
-            _mediaIndex = indices.OfType<MediaIndex>().First();
-            _tagIndex = indices.OfType<TagIndex>().First();
-            _referencesIndex = indices.OfType<ReferencesIndex>().First();
+            _entityIndex = cache.Index<EntityIndex>();
+            _mediaIndex = cache.Index<MediaIndex>();
+            _tagIndex = cache.Index<TagIndex>();
+            _referencesIndex = cache.Index<ReferencesIndex>();
         }
 
         [HttpGet("ids")]

@@ -8,6 +8,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Core;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
+using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.Webservice;
 using Swashbuckle.AspNetCore.Swagger;
 
@@ -52,6 +53,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             services.AddMvc();
             services.AddSingleton<EventStoreClient>()
                     .AddSingleton<CacheDatabaseManager>()
+                    .AddSingleton<InMemoryCache>()
                     .AddSingleton<IDomainIndex, MediaIndex>()
                     .AddSingleton<IDomainIndex, EntityIndex>()
                     .AddSingleton<IDomainIndex, ReferencesIndex>()
