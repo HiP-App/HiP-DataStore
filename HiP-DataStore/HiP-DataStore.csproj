@@ -28,7 +28,6 @@
     <DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="1.0.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\HiP-EventStoreLib\HiP-EventStoreLib\HiP-EventStoreLib.csproj" />
     <ProjectReference Include="..\HiP-DataStore.Model\HiP-DataStore.Model.csproj" />
   </ItemGroup>
 

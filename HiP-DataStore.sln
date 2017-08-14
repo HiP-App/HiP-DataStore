@@ -9,8 +9,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HiP-DataStore.Model", "HiP-
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HiP-DataStore.Tests", "HiP-DataStore.Tests\HiP-DataStore.Tests.csproj", "{2168A290-1074-4577-8F33-3872B39B02ED}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HiP-EventStoreLib", "..\HiP-EventStoreLib\HiP-EventStoreLib\HiP-EventStoreLib.csproj", "{2F9CE674-6A76-42C5-99F4-0F367DB67A7F}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,10 +27,6 @@ Global
 		{2168A290-1074-4577-8F33-3872B39B02ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2168A290-1074-4577-8F33-3872B39B02ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2168A290-1074-4577-8F33-3872B39B02ED}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2F9CE674-6A76-42C5-99F4-0F367DB67A7F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2F9CE674-6A76-42C5-99F4-0F367DB67A7F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2F9CE674-6A76-42C5-99F4-0F367DB67A7F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2F9CE674-6A76-42C5-99F4-0F367DB67A7F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
