@@ -45,6 +45,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(typeof(IReadOnlyCollection<int>), 200)]
         public IActionResult GetIds(ContentStatus? status)
         {
+            if (Auth.GetUserRoles(User.Identity).Any(x => x == "Administrator"))
+                return BadRequest();
+
             return Ok(_entityIndex.AllIds(ResourceType.Media, status ?? ContentStatus.Published));
         }
 
