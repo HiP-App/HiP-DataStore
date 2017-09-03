@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
@@ -103,6 +104,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         [HttpPost]
         [ProducesResponseType(typeof(int), 201)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(400)]
         public async Task<IActionResult> PostAsync([FromBody]RouteArgs args)
         {
@@ -110,6 +112,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
+            if (!UserPermissions.IsAllowedToCreate(User.Identity, args.Status))
+                return Forbid();
 
             // validation passed, emit events (create route, add references to image, audio, exhibits and tags)
             var ev = new RouteCreated
@@ -132,6 +137,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpPut("{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public async Task<IActionResult> PutAsync(int id, [FromBody]RouteArgs args)
         {
@@ -142,6 +148,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (!_entityIndex.Exists(ResourceType.Route, id))
                 return NotFound();
+            
+            ///TO DO Check the owner of the item (last parameter)
+            if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, true))
+                return Forbid();
 
             // validation passed, emit events (remove old references, update route, add new references)
             var ev = new RouteUpdated
@@ -165,6 +175,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpDelete("{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public async Task<IActionResult> DeleteAsync(int id)
         {
@@ -173,6 +184,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (!_entityIndex.Exists(ResourceType.Route, id))
                 return NotFound();
+
+            ///TO DO Check the owner of the item (last parameter)
+            if (!UserPermissions.IsAllowedToDelete(User.Identity, _entityIndex.Status(ResourceType.Route, id).GetValueOrDefault(), false))
+                return Forbid();
 
             if (_referencesIndex.IsUsed(ResourceType.Route, id))
                 return BadRequest(ErrorMessages.ResourceInUse);

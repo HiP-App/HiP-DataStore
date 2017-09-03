@@ -12,6 +12,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Tag = PaderbornUniversity.SILab.Hip.DataStore.Model.Entity.Tag;
 using Microsoft.AspNetCore.Authorization;
+using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
@@ -108,6 +109,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpPost]
         [ProducesResponseType(typeof(int), 201)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(409)]
         public async Task<IActionResult> PostAsync([FromBody]TagArgs args)
         {
@@ -115,6 +117,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
+            if (!UserPermissions.IsAllowedToCreate(User.Identity, args.Status))
+                return Forbid();
 
             if (_tagIndex.IsTitleExist(args.Title))
                 return StatusCode(409);
@@ -145,6 +150,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpPut("{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [ProducesResponseType(409)]
         public async Task<IActionResult> UpdateById(int id, [FromBody]TagArgs args)
@@ -156,6 +162,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (!_entityIndex.Exists(ResourceType.Tag, id))
                 return NotFound();
+
+            ///TO DO Check the owner of the item (last parameter)
+            if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, true))
+                return Forbid();
 
             var tagIdWithSameTitle = _tagIndex.GetIdByTagTitle(args.Title);
 
@@ -200,6 +210,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpDelete("{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public async Task<IActionResult> DeleteById(int id)
         {
@@ -208,6 +219,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (!_entityIndex.Exists(ResourceType.Tag, id))
                 return NotFound();
+
+            ///TO DO Check the owner of the item (last parameter)
+            if (!UserPermissions.IsAllowedToDelete(User.Identity, _entityIndex.Status(ResourceType.Tag, id).GetValueOrDefault(), false))
+                return Forbid();
 
             if (_referencesIndex.IsUsed(ResourceType.Tag, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
