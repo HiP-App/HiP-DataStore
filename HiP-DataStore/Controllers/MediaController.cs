@@ -45,9 +45,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(typeof(IReadOnlyCollection<int>), 200)]
         public IActionResult GetIds(ContentStatus? status)
         {
-            if (!UserPermissions.IsAllowedToGetAll(User.Identity, status ?? ContentStatus.Published))
-                return Forbid();
-
             return Ok(_entityIndex.AllIds(ResourceType.Media, status ?? ContentStatus.Published));
         }
 
@@ -81,9 +78,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-
-            if (!UserPermissions.IsAllowedToGetAll(User.Identity, args.Status))
-                return Forbid();
 
             var query = _db.Database.GetCollection<MediaElement>(ResourceType.Media.Name).AsQueryable();
 
@@ -138,10 +132,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (media == null)
                 return NotFound();
-
-            ///TO DO Check the owner of the item (last parameter)
-            if (!UserPermissions.IsAllowedToGet(User.Identity, media.Status, true))
-                return Forbid();
 
             // Media instance wasn`t modified after timestamp
             if (timestamp != null && media.Timestamp <= timestamp)
@@ -227,10 +217,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (!_entityIndex.Exists(ResourceType.Media, id))
                 return NotFound();
-
-            ///TO DO Check the owner of the item (last parameter)
-            if (!UserPermissions.IsAllowedToGet(User.Identity, _entityIndex.Status(ResourceType.Media, id).GetValueOrDefault(), true))
-                return Forbid();
 
             var media = _db.Database.GetCollection<MediaElement>(ResourceType.Media.Name)
                 .AsQueryable()
