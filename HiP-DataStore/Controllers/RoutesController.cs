@@ -103,7 +103,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpPost]
         [ProducesResponseType(typeof(int), 201)]
         [ProducesResponseType(400)]
-        public async Task<IActionResult> PostAsync([FromBody]RouteArgs args)
+        public IActionResult Post([FromBody]RouteArgs args)
         {
             ValidateRouteArgs(args);
 
@@ -122,7 +122,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             {
                 transaction.Append(ev);
                 transaction.Append(AddRouteReferences(args, ev.Id));
-                await transaction.CommitAsync();
+                transaction.Commit();
             }
 
             return Created($"{Request.Scheme}://{Request.Host}/api/Routes/{ev.Id}", ev.Id);
@@ -132,7 +132,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> PutAsync(int id, [FromBody]RouteArgs args)
+        public IActionResult Put(int id, [FromBody]RouteArgs args)
         {
             ValidateRouteArgs(args);
 
@@ -155,7 +155,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 transaction.Append(RemoveRouteReferences(ev.Id));
                 transaction.Append(ev);
                 transaction.Append(AddRouteReferences(args, ev.Id));
-                await transaction.CommitAsync();
+                transaction.Commit();
             }
 
             return StatusCode(204);
@@ -165,7 +165,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> DeleteAsync(int id)
+        public IActionResult Delete(int id)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -183,7 +183,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             {
                 transaction.Append(ev);
                 transaction.Append(RemoveRouteReferences(id));
-                await transaction.CommitAsync();
+                transaction.Commit();
             }
 
             return NoContent();

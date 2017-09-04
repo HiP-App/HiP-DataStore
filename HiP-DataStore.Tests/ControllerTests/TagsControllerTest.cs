@@ -62,7 +62,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
 
             MyMvc
                 .Controller<TagsController>()
-                .Calling(c => c.PostAsync(TagArgs)) //Creating a tag.
+                .Calling(c => c.Post(TagArgs)) //Creating a tag.
                 .ShouldReturn()
                 .Created();
 
@@ -98,7 +98,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
 
             MyMvc
                 .Controller<TagsController>()
-                .Calling(c => c.PostAsync(TagArgs)) //Creating a tag.
+                .Calling(c => c.Post(TagArgs)) //Creating a tag.
                 .ShouldReturn()
                 .Created();
             //This test will fail the next time when executed 
@@ -125,7 +125,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
 
             MyMvc
                 .Controller<TagsController>()
-                .Calling(c => c.PostAsync(tagArgs))
+                .Calling(c => c.Post(tagArgs))
                 .ShouldReturn()
                 .BadRequest();
         }
@@ -140,13 +140,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
 
             MyMvc
                 .Controller<TagsController>()
-                .Calling(c => c.PostAsync(TagArgs)) //Creating a tag.
+                .Calling(c => c.Post(TagArgs)) //Creating a tag.
                 .ShouldReturn()
                 .Created();
 
             MyMvc
                 .Controller<TagsController>()
-                .Calling(c => c.PostAsync(TagArgs))
+                .Calling(c => c.Post(TagArgs))
                 .ShouldReturn()
                 .StatusCode(409);
         }

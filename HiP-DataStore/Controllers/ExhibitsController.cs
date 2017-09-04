@@ -109,7 +109,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpPost]
         [ProducesResponseType(typeof(int), 201)]
         [ProducesResponseType(400)]
-        public async Task<IActionResult> PostAsync([FromBody]ExhibitArgs args)
+        public IActionResult Post([FromBody]ExhibitArgs args)
         {
             ValidateExhibitArgs(args);
 
@@ -128,7 +128,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             {
                 transaction.Append(ev);
                 transaction.Append(AddExhibitReferences(args, ev.Id));
-                await transaction.CommitAsync();
+                transaction.Commit();
             }
 
             return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/{ev.Id}", ev.Id);
@@ -138,7 +138,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> PutAsync(int id, [FromBody]ExhibitArgs args)
+        public IActionResult Put(int id, [FromBody]ExhibitArgs args)
         {
             ValidateExhibitArgs(args);
 
@@ -161,7 +161,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 transaction.Append(RemoveExhibitReferences(ev.Id));
                 transaction.Append(ev);
                 transaction.Append(AddExhibitReferences(args, ev.Id));
-                await transaction.CommitAsync();
+                transaction.Commit();
             }
 
             return StatusCode(204);
@@ -171,7 +171,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> DeleteAsync(int id)
+        public IActionResult Delete(int id)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -190,7 +190,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             {
                 transaction.Append(ev);
                 transaction.Append(RemoveExhibitReferences(id));
-                await transaction.CommitAsync();
+                transaction.Commit();
             }
 
             return NoContent();

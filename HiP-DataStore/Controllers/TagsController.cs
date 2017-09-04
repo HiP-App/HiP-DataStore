@@ -108,7 +108,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(typeof(int), 201)]
         [ProducesResponseType(400)]
         [ProducesResponseType(409)]
-        public async Task<IActionResult> PostAsync([FromBody]TagArgs args)
+        public IActionResult Post([FromBody]TagArgs args)
         {
             ValidateTagArgs(args);
 
@@ -134,7 +134,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 if (args.Image != null)
                     transaction.Append(new ReferenceAdded(ResourceType.Tag, id, ResourceType.Media, args.Image.Value));
 
-                await transaction.CommitAsync();
+                transaction.Commit();
             }
 
             return Created($"{Request.Scheme}://{Request.Host}/api/Tags/{id}", id);
@@ -146,7 +146,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(409)]
-        public async Task<IActionResult> UpdateById(int id, [FromBody]TagArgs args)
+        public IActionResult UpdateById(int id, [FromBody]TagArgs args)
         {
             ValidateTagArgs(args);
 
@@ -190,7 +190,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                     transaction.Append(newRefEvent);
                 }
 
-                await transaction.CommitAsync();
+                transaction.Commit();
             }
 
             return NoContent();
@@ -200,7 +200,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> DeleteById(int id)
+        public IActionResult DeleteById(int id)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -221,7 +221,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 foreach (var reference in _referencesIndex.ReferencesOf(ResourceType.Tag, id))
                     transaction.Append(new ReferenceRemoved(ResourceType.Tag, id, reference.Type, reference.Id));
 
-                await transaction.CommitAsync();
+                transaction.Commit();
             }
 
             return NoContent();
