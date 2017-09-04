@@ -15,6 +15,6 @@ WORKDIR /dotnetapp/HiP-DataStore
 
 EXPOSE 5000
 
-RUN dotnet restore --no-cache --configfile NuGet.Config
+RUN dotnet restore --no-cache --configfile ../NuGet.Config
 
 CMD /dotnetapp/HiP-DataStore/run.sh
