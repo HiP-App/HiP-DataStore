@@ -1,52 +1,47 @@
 ﻿using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Security.Principal;
-using System.Threading.Tasks;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Utility
 {
     public class UserPermissions
     {
-
-        public static bool IsAllowedToCreate(IIdentity identity,ContentStatus Status)
+        public static bool IsAllowedToCreate(IIdentity identity,ContentStatus status)
         {
-            if (Status != ContentStatus.Published && CheckRoles(identity, UserRoles.Student))
-                return true;
-
-            return CheckRoles(identity);
-
-        }
-
-        public static bool IsAllowedToEdit(IIdentity identity, ContentStatus Status, bool isOwner)
-        {
-            if (Status != ContentStatus.Published && isOwner)
-                return true;
-
-            return CheckRoles(identity);
-
-        }
-
-        public static bool IsAllowedToDelete(IIdentity identity, ContentStatus Status, bool isOwner)
-        {
-            if (Status != ContentStatus.Published && isOwner)
-                return true;
-
-            return CheckRoles(identity);          
-        }
-
-        public static bool IsAllowedToGet(IIdentity identity, ContentStatus Status, bool isOwner)
-        {
-            if (Status == ContentStatus.Published || isOwner)
+            if (status != ContentStatus.Published && CheckRoles(identity, UserRoles.Student))
                 return true;
 
             return CheckRoles(identity);
         }
 
-        public static bool IsAllowedToGetAll(IIdentity identity, ContentStatus Status)
+        public static bool IsAllowedToEdit(IIdentity identity, ContentStatus status, bool isOwner)
         {
-            if (Status == ContentStatus.Published)
+            if (status != ContentStatus.Published && isOwner)
+                return true;
+
+            return CheckRoles(identity);
+        }
+
+        public static bool IsAllowedToDelete(IIdentity identity, ContentStatus status, bool isOwner)
+        {
+            if (status != ContentStatus.Published && isOwner)
+                return true;
+
+            return CheckRoles(identity);
+        }
+
+        public static bool IsAllowedToGet(IIdentity identity, ContentStatus status, bool isOwner)
+        {
+            if (status == ContentStatus.Published || isOwner)
+                return true;
+
+            return CheckRoles(identity);
+        }
+
+        public static bool IsAllowedToGetAll(IIdentity identity, ContentStatus status)
+        {
+            if (status == ContentStatus.Published)
                 return true;
 
             return CheckRoles(identity);
