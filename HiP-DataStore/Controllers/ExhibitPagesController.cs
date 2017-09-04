@@ -201,6 +201,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return NotFound();
 
             // TO DO Check the owner of the item (last parameter)
+            // ReSharper disable once PossibleNullReferenceException (args == null is handled through ModelState.IsValid)
             if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, true))
                 return Forbid();
 
