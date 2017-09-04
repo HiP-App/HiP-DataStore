@@ -165,7 +165,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.Media, id))
                 return NotFound();
 
-            ///TO DO Check the owner of the item (last parameter)
+            ///TODO Check the owner of the item (last parameter)
             if (!UserPermissions.IsAllowedToDelete(User.Identity, _entityIndex.Status(ResourceType.Media, id).GetValueOrDefault(), false))
                 return Forbid();
 
@@ -195,7 +195,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.Media, id))
                 return NotFound();
 
-            ///TO DO Check the owner of the item (last parameter)
+            ///TODO Check the owner of the item (last parameter)
             if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, true))
                 return Forbid();
 
@@ -247,7 +247,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.Media, id))
                 return NotFound();
 
-            ///TO DO Check the owner of the item (last parameter)
+            ///TODO Check the owner of the item (last parameter)
             if (!UserPermissions.IsAllowedToEdit(User.Identity, _entityIndex.Status(ResourceType.Media, id).GetValueOrDefault(), true))
                 return Forbid();
 

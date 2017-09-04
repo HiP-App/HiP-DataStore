@@ -200,7 +200,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.ExhibitPage, id))
                 return NotFound();
 
-            // TO DO Check the owner of the item (last parameter)
+            // TODO Check the owner of the item (last parameter)
             // ReSharper disable once PossibleNullReferenceException (args == null is handled through ModelState.IsValid)
             if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, true))
                 return Forbid();
@@ -231,7 +231,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.ExhibitPage, id))
                 return NotFound();
 
-            ///TO DO Check the owner of the item (last parameter)
+            // TODO Check the owner of the item (last parameter)
             if (!UserPermissions.IsAllowedToDelete(User.Identity, _entityIndex.Status(ResourceType.ExhibitPage, id).GetValueOrDefault(), false))
                 return Forbid();
 
