@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="HiP-EventStoreLib" Version="0.6.0" />
+    <PackageReference Include="HiP-EventStoreLib" Version="0.7.0" />
     <PackageReference Include="MongoDB.Bson" Version="2.4.3" />
     <PackageReference Include="Newtonsoft.Json" Version="10.0.2" />
     <PackageReference Include="System.ComponentModel.Annotations" Version="4.3.0" />
