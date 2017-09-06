@@ -76,9 +76,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.Migrations
             using (var transaction = await connection.StartTransactionAsync(streamName, ExpectedVersion.Any))
             {
                 // Soft-delete the stream and recreate it by appending all new events
-                var events = args.EventsToAppend.Select(ev => ev.ToEventData(Guid.NewGuid()));
                 await connection.DeleteStreamAsync(streamName, ExpectedVersion.Any, hardDelete: false);
-                await connection.AppendToStreamAsync(streamName, ExpectedVersion.Any, events);
+                await connection.AppendToStreamAsync(streamName, ExpectedVersion.Any, args.EventsToAppend);
 
                 // Write new version to the stream's metadata
                 var metadata = await connection.GetStreamMetadataAsync(streamName);

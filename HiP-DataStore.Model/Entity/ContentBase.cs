@@ -11,6 +11,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
         public ContentStatus Status { get; set; }
 
         /// <summary>
+        /// Other entities that are referenced by this entity.
+        /// </summary>
+        public List<DocRef<ContentBase>> References { get; private set; } = new List<DocRef<ContentBase>>();
+
+        /// <summary>
         /// Other entities referencing this entity.
         /// </summary>
         /// <remarks>

@@ -16,5 +16,20 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         [JsonConverter(typeof(StringEnumConverter))]
         public ContentStatus Status { get; set; }
         public DateTimeOffset Timestamp { get; set; }
+
+        public MediaResult()
+        {
+        }
+
+        public MediaResult(MediaElement x)
+        {
+            Id = x.Id;
+            Title = x.Title;
+            Description = x.Description;
+            Used = x.Referencers.Count > 0;
+            Type = x.Type;
+            Status = x.Status;
+            Timestamp = x.Timestamp;
+        }
     }
 }

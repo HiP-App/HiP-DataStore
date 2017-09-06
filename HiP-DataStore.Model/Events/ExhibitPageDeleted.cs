@@ -7,6 +7,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
     {
         public int Id { get; set; }
 
+        public DateTimeOffset Timestamp { get; set; }
+
         public ResourceType GetEntityType() => ResourceType.ExhibitPage;
     }
 
@@ -14,6 +16,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
     public class ExhibitPageDeleted : IDeleteEvent
     {
         public int Id { get; set; }
+
+        public DateTimeOffset Timestamp { get; set; }
 
         public int ExhibitId { get; set; }
 
