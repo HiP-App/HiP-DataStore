@@ -47,7 +47,19 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             services.Configure<EndpointConfig>(Configuration.GetSection("Endpoints"))
                     .Configure<UploadFilesConfig>(Configuration.GetSection("UploadingFiles"))
                     .Configure<ExhibitPagesConfig>(Configuration.GetSection("ExhibitPages"))
+                    .Configure<AuthConfig>(Configuration.GetSection("Auth"))
                     .Configure<CorsConfig>(Configuration);
+
+            string domain = Configuration.GetSection("Auth").GetValue<string>("Authority");
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("read:datastore",
+                    policy => policy.Requirements.Add(new HasScopeRequirement("read:datastore", domain)));
+                options.AddPolicy("write:datastore",
+                    policy => policy.Requirements.Add(new HasScopeRequirement("write:datastore", domain)));
+                options.AddPolicy("write:cms",
+                    policy => policy.Requirements.Add(new HasScopeRequirement("write:cms", domain)));
+            });
 
             services.AddCors();
             services.AddMvc();
@@ -66,7 +78,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory,
-            IOptions<CorsConfig> corsConfig, IOptions<EndpointConfig> endpointConfig)
+            IOptions<AuthConfig> authConfig, IOptions<CorsConfig> corsConfig, IOptions<EndpointConfig> endpointConfig)
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"))
                          .AddDebug();
@@ -85,6 +97,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
                     .WithHeaders(corsEnvConf.Headers)
                     .WithExposedHeaders(corsEnvConf.ExposedHeaders);
             });
+
+            var options = new JwtBearerOptions
+            {
+                Audience = authConfig.Value.Audience,
+                Authority = authConfig.Value.Authority
+            };
+            app.UseJwtBearerAuthentication(options);
 
             app.UseMvc();
 
