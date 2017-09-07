@@ -30,7 +30,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 IncomingReferences = TransformToResult(referencesIndex.ReferencesTo(type, id))
             });
 
-            IReadOnlyCollection<ReferenceInfoResult.ReferenceInfo> TransformToResult(IEnumerable<ReferencesIndex.Entry> refs)
+            IReadOnlyCollection<ReferenceInfoResult.ReferenceInfo> TransformToResult(IEnumerable<EntityId> refs)
             {
                 return refs
                     .GroupBy(entry => entry.Type)

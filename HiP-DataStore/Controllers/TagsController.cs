@@ -20,7 +20,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
     [Route("api/[controller]")]
     public class TagsController : Controller
     {
-        private readonly EventStoreClient _ev;
+        private readonly EventStoreClient _eventStore;
         private readonly CacheDatabaseManager _db;
         private readonly EntityIndex _entityIndex;
         private readonly MediaIndex _mediaIndex;
@@ -29,7 +29,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         public TagsController(EventStoreClient eventStore, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices)
         {
-            _ev = eventStore;
+            _eventStore = eventStore;
             _db = db;
             _entityIndex = indices.OfType<EntityIndex>().First();
             _mediaIndex = indices.OfType<MediaIndex>().First();
@@ -68,7 +68,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                         ("id", x => x.Id),
                         ("title", x => x.Title),
                         ("timestamp", x => x.Timestamp))
-                    .PaginateAndSelect(args.Page, args.PageSize, x => TagResult.ConvertFromTag(x));
+                    .PaginateAndSelect(args.Page, args.PageSize, x => new TagResult(x)
+                    {
+                        Timestamp = _referencesIndex.LastModificationCascading(ResourceType.Tag, x.Id)
+                    });
 
 
                 return Ok(tags);
@@ -90,9 +93,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var query = _db.Database.GetCollection<Tag>(ResourceType.Tag.Name).AsQueryable();
-
-            var tag = query.FirstOrDefault(x => x.Id == id);
+            var tag = _db.Database.GetCollection<Tag>(ResourceType.Tag.Name)
+                .AsQueryable()
+                .FirstOrDefault(x => x.Id == id);
 
             if (tag == null)
                 return NotFound();
@@ -100,7 +103,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (timestamp != null && tag.Timestamp <= timestamp.Value)
                 return StatusCode(304);
 
-            var tagResult = TagResult.ConvertFromTag(tag);
+            var tagResult = new TagResult(tag)
+            {
+                Timestamp = _referencesIndex.LastModificationCascading(ResourceType.Tag, id)
+            };
 
             return Ok(tagResult);
 
@@ -133,16 +139,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 Timestamp = DateTimeOffset.Now
             };
 
-            using (var transaction = _ev.BeginTransaction())
-            {
-                transaction.Append(ev);
-
-                if (args.Image != null)
-                    transaction.Append(new ReferenceAdded(ResourceType.Tag, id, ResourceType.Media, args.Image.Value));
-
-                await transaction.CommitAsync();
-            }
-
+            await _eventStore.AppendEventAsync(ev);
             return Created($"{Request.Scheme}://{Request.Host}/api/Tags/{id}", id);
 
         }
@@ -179,31 +176,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 Timestamp = DateTimeOffset.Now,
             };
 
-            using (var transaction = _ev.BeginTransaction())
-            {
-                transaction.Append(ev);
-
-                var oldReferences = _referencesIndex
-                    .ReferencesOf(ResourceType.Tag, ev.Id)
-                    .Where(x => x.Type == ResourceType.Media)
-                    .ToList();
-
-                if (oldReferences.Count > 0)
-                {
-                    var oldRef = oldReferences.FirstOrDefault();
-                    var oldRefEvent = new ReferenceRemoved(ResourceType.Tag, ev.Id, oldRef.Type, oldRef.Id);
-                    transaction.Append(oldRefEvent);
-                }
-
-                if (args.Image != null)
-                {
-                    var newRefEvent = new ReferenceAdded(ResourceType.Tag, id, ResourceType.Media, args.Image.Value);
-                    transaction.Append(newRefEvent);
-                }
-
-                await transaction.CommitAsync();
-            }
-
+            await _eventStore.AppendEventAsync(ev);
             return NoContent();
         }
 
@@ -228,18 +201,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return BadRequest(ErrorMessages.ResourceInUse);
 
             var ev = new TagDeleted { Id = id };
-
-            using (var transaction = _ev.BeginTransaction())
-            {
-                transaction.Append(ev);
-
-                // Remove references
-                foreach (var reference in _referencesIndex.ReferencesOf(ResourceType.Tag, id))
-                    transaction.Append(new ReferenceRemoved(ResourceType.Tag, id, reference.Type, reference.Id));
-
-                await transaction.CommitAsync();
-            }
-
+            await _eventStore.AppendEventAsync(ev);
             return NoContent();
         }
 

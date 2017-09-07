@@ -97,15 +97,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                         ("id", x => x.Id),
                         ("title", x => x.Title),
                         ("timestamp", x => x.Timestamp))
-                    .PaginateAndSelect(args.Page, args.PageSize, x => new MediaResult
+                    .PaginateAndSelect(args.Page, args.PageSize, x => new MediaResult(x)
                     {
-                        Id = x.Id,
-                        Title = x.Title,
-                        Description = x.Description,
-                        Used = x.Referencers.Count > 0,
-                        Type = x.Type,
-                        Status = x.Status,
-                        Timestamp = x.Timestamp
+                        Timestamp = _referencesIndex.LastModificationCascading(ResourceType.Media, x.Id)
                     });
 
                 return Ok(medias);
@@ -138,15 +132,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (timestamp != null && media.Timestamp <= timestamp)
                 return StatusCode(304);
 
-            var result = new MediaResult
+            var result = new MediaResult(media)
             {
-                Id = media.Id,
-                Title = media.Title,
-                Description = media.Description,
-                Used = media.Referencers.Count > 0,
-                Type = media.Type,
-                Timestamp = media.Timestamp,
-                Status = media.Status
+                Timestamp = _referencesIndex.LastModificationCascading(ResourceType.Media, id)
             };
 
             return Ok(result);
