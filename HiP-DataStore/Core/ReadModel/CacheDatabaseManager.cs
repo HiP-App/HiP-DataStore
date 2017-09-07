@@ -7,6 +7,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
+using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
 using System;
 using System.Linq;
 using Tag = PaderbornUniversity.SILab.Hip.DataStore.Model.Entity.Tag;

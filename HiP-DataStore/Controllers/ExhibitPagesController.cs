@@ -10,6 +10,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
+using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
 using System;
 using System.Collections.Generic;
 using System.Linq;
