@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
@@ -116,6 +117,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         [HttpPost]
         [ProducesResponseType(typeof(int), 201)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(400)]
         public async Task<IActionResult> PostAsync([FromBody]ExhibitArgs args)
         {
@@ -123,6 +125,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
+            if (!UserPermissions.IsAllowedToCreate(User.Identity, args.Status))
+                return Forbid();
 
             // validation passed, emit event
             var ev = new ExhibitCreated
@@ -139,6 +144,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpPut("{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public async Task<IActionResult> PutAsync(int id, [FromBody]ExhibitArgs args)
         {
@@ -149,6 +155,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (!_entityIndex.Exists(ResourceType.Exhibit, id))
                 return NotFound();
+
+            // TODO Check the owner of the item (last parameter)
+            if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, true))
+                return Forbid();
 
             // validation passed, emit event
             var ev = new ExhibitUpdated
@@ -165,6 +175,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpDelete("{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public async Task<IActionResult> DeleteAsync(int id)
         {
@@ -173,6 +184,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (!_entityIndex.Exists(ResourceType.Exhibit, id))
                 return NotFound();
+
+            // TODO Check the owner of the item (last parameter)
+            if (!UserPermissions.IsAllowedToDelete(User.Identity, _entityIndex.Status(ResourceType.Exhibit, id).GetValueOrDefault(), false))
+                return Forbid();
 
             // check if exhibit is in use and can't be deleted (it's in use if and only if it is contained in a route).
             if (_referencesIndex.IsUsed(ResourceType.Exhibit, id))

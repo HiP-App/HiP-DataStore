@@ -159,6 +159,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         [HttpPost("Pages")]
         [ProducesResponseType(typeof(int), 201)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(400)]
         public async Task<IActionResult> PostAsync([FromBody]ExhibitPageArgs2 args)
         {
@@ -170,7 +171,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            
+
+            // ReSharper disable once PossibleNullReferenceException (args == null is handled through ModelState.IsValid)
+            if (!UserPermissions.IsAllowedToCreate(User.Identity, args.Status))
+                return Forbid();
+
             // validation passed, emit event
             var newPageId = _entityIndex.NextId(ResourceType.ExhibitPage);
             
@@ -188,6 +193,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpPut("Pages/{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [ProducesResponseType(422)]
         public async Task<IActionResult> PutAsync(int id, [FromBody]ExhibitPageArgs2 args)
@@ -203,6 +209,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             
             if (!_entityIndex.Exists(ResourceType.ExhibitPage, id))
                 return NotFound();
+
+            // TODO Check the owner of the item (last parameter)
+            // ReSharper disable once PossibleNullReferenceException (args == null is handled through ModelState.IsValid)
+            if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, true))
+                return Forbid();
 
             // ReSharper disable once PossibleInvalidOperationException (.Value is safe here since we know the entity exists)
             var currentPageType = _exhibitPageIndex.PageType(id).Value;
@@ -225,6 +236,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpDelete("Pages/{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public async Task<IActionResult> DeleteAsync(int id)
         {
@@ -233,6 +245,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (!_entityIndex.Exists(ResourceType.ExhibitPage, id))
                 return NotFound();
+
+            // TODO Check the owner of the item (last parameter)
+            if (!UserPermissions.IsAllowedToDelete(User.Identity, _entityIndex.Status(ResourceType.ExhibitPage, id).GetValueOrDefault(), false))
+                return Forbid();
 
             if (_referencesIndex.IsUsed(ResourceType.ExhibitPage, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
