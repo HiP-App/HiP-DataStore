@@ -1,4 +1,6 @@
-﻿using PaderbornUniversity.SILab.Hip.EventSourcing;
+﻿using System;
+
+using PaderbornUniversity.SILab.Hip.EventSourcing;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 {
@@ -40,6 +42,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
     /// <summary>
     /// The event that is raised when a reference from one entity to another entity is established.
     /// </summary>
+    [Obsolete]
     public class ReferenceAdded : ReferenceEventBase
     {
         public ReferenceAdded()
@@ -55,6 +58,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
     /// <summary>
     /// The event that is raised when a reference from one entity to another entity is cleared.
     /// </summary>
+    [Obsolete]
     public class ReferenceRemoved : ReferenceEventBase
     {
         public ReferenceRemoved()

@@ -79,7 +79,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
         /// <summary>
         /// Appends a single event to the event stream. If you need to append multiple events in one batch,
         /// either use <see cref="AppendEventsAsync(IEnumerable{IEvent})"/> or <see cref="BeginTransaction"/>
-        /// and <see cref="EventStoreClientTransaction.CommitAsync"/> instead.
+        /// and <see cref="EventStreamTransaction.Commit"/> instead.
         /// </summary>
         public async Task AppendEventAsync(IEvent ev)
         {

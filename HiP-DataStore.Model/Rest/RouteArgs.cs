@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 {
@@ -25,5 +26,20 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         public ContentStatus Status { get; set; }
 
         public List<int> Tags { get; set; }
+
+        public IEnumerable<EntityId> GetReferences()
+        {
+            if (Image != null)
+                yield return (ResourceType.Media, Image.Value);
+
+            if (Audio != null)
+                yield return (ResourceType.Media, Audio.Value);
+
+            foreach (var exhibitId in Exhibits?.Distinct() ?? Enumerable.Empty<int>())
+                yield return (ResourceType.Exhibit, exhibitId);
+
+            foreach (var tagId in Tags?.Distinct() ?? Enumerable.Empty<int>())
+                yield return (ResourceType.Tag, tagId);
+        }
     }
 }

@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
@@ -67,7 +68,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                         ("id", x => x.Id),
                         ("title", x => x.Title),
                         ("timestamp", x => x.Timestamp))
-                    .PaginateAndSelect(args.Page, args.PageSize, x => new RouteResult(x));
+                    .PaginateAndSelect(args.Page, args.PageSize, x => new RouteResult(x)
+                    {
+                        Timestamp = _referencesIndex.LastModificationCascading(ResourceType.Route, x.Id)
+                    });
 
                 return Ok(routes);
             }
@@ -98,43 +102,46 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (timestamp != null && route.Timestamp <= timestamp.Value)
                 return StatusCode(304);
 
-            var result = new RouteResult(route);
+            var result = new RouteResult(route)
+            {
+                Timestamp = _referencesIndex.LastModificationCascading(ResourceType.Route, id)
+            };
+
             return Ok(result);
         }
 
         [HttpPost]
         [ProducesResponseType(typeof(int), 201)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(400)]
-        public IActionResult Post([FromBody]RouteArgs args)
+        public async Task<IActionResult> PostAsync([FromBody]RouteArgs args)
         {
             ValidateRouteArgs(args);
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            // validation passed, emit events (create route, add references to image, audio, exhibits and tags)
+            if (!UserPermissions.IsAllowedToCreate(User.Identity, args.Status))
+                return Forbid();
+
+            // validation passed, emit event
             var ev = new RouteCreated
             {
                 Id = _entityIndex.NextId(ResourceType.Route),
                 Properties = args,
                 Timestamp = DateTimeOffset.Now
             };
-
-            using (var transaction = _eventStore.BeginTransaction())
-            {
-                transaction.Append(ev);
-                transaction.Append(AddRouteReferences(args, ev.Id));
-                transaction.Commit();
-            }
-
+            
+            await _eventStore.AppendEventAsync(ev);
             return Created($"{Request.Scheme}://{Request.Host}/api/Routes/{ev.Id}", ev.Id);
         }
 
         [HttpPut("{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
-        public IActionResult Put(int id, [FromBody]RouteArgs args)
+        public async Task<IActionResult> PutAsync(int id, [FromBody]RouteArgs args)
         {
             ValidateRouteArgs(args);
 
@@ -143,8 +150,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (!_entityIndex.Exists(ResourceType.Route, id))
                 return NotFound();
+            
+            // TODO Check the owner of the item (last parameter)
+            if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, true))
+                return Forbid();
 
-            // validation passed, emit events (remove old references, update route, add new references)
+            // validation passed, emit event
             var ev = new RouteUpdated
             {
                 Id = id,
@@ -152,22 +163,16 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 Timestamp = DateTimeOffset.Now,
             };
 
-            using (var transaction = _eventStore.BeginTransaction())
-            {
-                transaction.Append(RemoveRouteReferences(ev.Id));
-                transaction.Append(ev);
-                transaction.Append(AddRouteReferences(args, ev.Id));
-                transaction.Commit();
-            }
-
+            await _eventStore.AppendEventAsync(ev);
             return StatusCode(204);
         }
 
         [HttpDelete("{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> DeleteAsync(int id)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -175,19 +180,16 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.Route, id))
                 return NotFound();
 
+            // TODO Check the owner of the item (last parameter)
+            if (!UserPermissions.IsAllowedToDelete(User.Identity, _entityIndex.Status(ResourceType.Route, id).GetValueOrDefault(), false))
+                return Forbid();
+
             if (_referencesIndex.IsUsed(ResourceType.Route, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
 
-            // validation passed, emit events (delete route, remove references to image, audio, exhibits and tags)
+            // validation passed, emit event
             var ev = new RouteDeleted { Id = id };
-
-            using (var transaction = _eventStore.BeginTransaction())
-            {
-                transaction.Append(ev);
-                transaction.Append(RemoveRouteReferences(id));
-                transaction.Commit();
-            }
-
+            await _eventStore.AppendEventAsync(ev);
             return NoContent();
         }
 
@@ -242,27 +244,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                     ModelState.AddModelError(nameof(args.Tags),
                         ErrorMessages.TagNotFound(id));
             }
-        }
-
-        private IEnumerable<IEvent> AddRouteReferences(RouteArgs args, int routeId)
-        {
-            if (args.Image != null)
-                yield return new ReferenceAdded(ResourceType.Route, routeId, ResourceType.Media, args.Image.Value);
-
-            if (args.Audio != null)
-                yield return new ReferenceAdded(ResourceType.Route, routeId, ResourceType.Media, args.Audio.Value);
-
-            foreach (var exhibitId in args.Exhibits?.Distinct() ?? Enumerable.Empty<int>())
-                yield return new ReferenceAdded(ResourceType.Route, routeId, ResourceType.Exhibit, exhibitId);
-
-            foreach (var tagId in args.Tags?.Distinct() ?? Enumerable.Empty<int>())
-                yield return new ReferenceAdded(ResourceType.Route, routeId, ResourceType.Tag, tagId);
-        }
-
-        private IEnumerable<IEvent> RemoveRouteReferences(int routeId)
-        {
-            foreach (var reference in _referencesIndex.ReferencesOf(ResourceType.Route, routeId))
-                yield return new ReferenceRemoved(ResourceType.Route, routeId, reference.Type, reference.Id);
         }
     }
 }

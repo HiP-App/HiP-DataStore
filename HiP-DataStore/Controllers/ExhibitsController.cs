@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
@@ -74,7 +75,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                         ("id", x => x.Id),
                         ("name", x => x.Name),
                         ("timestamp", x => x.Timestamp))
-                    .PaginateAndSelect(args.Page, args.PageSize, x => new ExhibitResult(x));
+                    .PaginateAndSelect(args.Page, args.PageSize, x => new ExhibitResult(x)
+                    {
+                        Timestamp = _referencesIndex.LastModificationCascading(ResourceType.Exhibit, x.Id)
+                    });
 
                 return Ok(exhibits);
             }
@@ -104,21 +108,29 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (timestamp != null && exhibit.Timestamp <= timestamp.Value)
                 return StatusCode(304);
 
-            var result = new ExhibitResult(exhibit);
+            var result = new ExhibitResult(exhibit)
+            {
+                Timestamp = _referencesIndex.LastModificationCascading(ResourceType.Exhibit, id)
+            };
+
             return Ok(result);
         }
 
         [HttpPost]
         [ProducesResponseType(typeof(int), 201)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(400)]
-        public IActionResult Post([FromBody]ExhibitArgs args)
+        public async Task<IActionResult> PostAsync([FromBody]ExhibitArgs args)
         {
             ValidateExhibitArgs(args);
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            // validation passed, emit events (create exhibit, add references to image and tags)
+            if (!UserPermissions.IsAllowedToCreate(User.Identity, args.Status))
+                return Forbid();
+
+            // validation passed, emit event
             var ev = new ExhibitCreated
             {
                 Id = _entityIndex.NextId(ResourceType.Exhibit),
@@ -126,21 +138,16 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 Timestamp = DateTimeOffset.Now
             };
 
-            using (var transaction = _eventStore.BeginTransaction())
-            {
-                transaction.Append(ev);
-                transaction.Append(AddExhibitReferences(args, ev.Id));
-                transaction.Commit();
-            }
-
+            await _eventStore.AppendEventAsync(ev);
             return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/{ev.Id}", ev.Id);
         }
 
         [HttpPut("{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
-        public IActionResult Put(int id, [FromBody]ExhibitArgs args)
+        public async Task<IActionResult> PutAsync(int id, [FromBody]ExhibitArgs args)
         {
             ValidateExhibitArgs(args);
 
@@ -150,30 +157,28 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.Exhibit, id))
                 return NotFound();
 
-            // validation passed, emit events (remove old references, update exhibit, add new references)
+            // TODO Check the owner of the item (last parameter)
+            if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, true))
+                return Forbid();
+
+            // validation passed, emit event
             var ev = new ExhibitUpdated
             {
                 Id = id,
                 Properties = args,
                 Timestamp = DateTimeOffset.Now
             };
-
-            using (var transaction = _eventStore.BeginTransaction())
-            {
-                transaction.Append(RemoveExhibitReferences(ev.Id));
-                transaction.Append(ev);
-                transaction.Append(AddExhibitReferences(args, ev.Id));
-                transaction.Commit();
-            }
-
+            
+            await _eventStore.AppendEventAsync(ev);
             return StatusCode(204);
         }
 
         [HttpDelete("{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> DeleteAsync(int id)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -181,20 +186,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.Exhibit, id))
                 return NotFound();
 
+            // TODO Check the owner of the item (last parameter)
+            if (!UserPermissions.IsAllowedToDelete(User.Identity, _entityIndex.Status(ResourceType.Exhibit, id).GetValueOrDefault(), false))
+                return Forbid();
+
             // check if exhibit is in use and can't be deleted (it's in use if and only if it is contained in a route).
             if (_referencesIndex.IsUsed(ResourceType.Exhibit, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
 
             // remove the exhibit
             var ev = new ExhibitDeleted { Id = id };
-
-            using (var transaction = _eventStore.BeginTransaction())
-            {
-                transaction.Append(ev);
-                transaction.Append(RemoveExhibitReferences(id));
-                transaction.Commit();
-            }
-
+            await _eventStore.AppendEventAsync(ev);
             return NoContent();
         }
 
@@ -280,24 +282,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                     ModelState.AddModelError(nameof(args.Tags),
                         ErrorMessages.TagNotFound(id));
             }
-        }
-        
-        private IEnumerable<IEvent> AddExhibitReferences(ExhibitArgs args, int exhibitId)
-        {
-            if (args.Image != null)
-                yield return new ReferenceAdded(ResourceType.Exhibit, exhibitId, ResourceType.Media, args.Image.Value);
-
-            foreach (var pageId in args.Pages?.Distinct() ?? Enumerable.Empty<int>())
-                yield return new ReferenceAdded(ResourceType.Exhibit, exhibitId, ResourceType.ExhibitPage, pageId);
-
-            foreach (var tagId in args.Tags?.Distinct() ?? Enumerable.Empty<int>())
-                yield return new ReferenceAdded(ResourceType.Exhibit, exhibitId, ResourceType.Tag, tagId);
-        }
-        
-        private IEnumerable<IEvent> RemoveExhibitReferences(int exhibitId)
-        {
-            foreach (var reference in _referencesIndex.ReferencesOf(ResourceType.Exhibit, exhibitId))
-                yield return new ReferenceRemoved(ResourceType.Exhibit, exhibitId, reference.Type, reference.Id);
         }
     }
 }

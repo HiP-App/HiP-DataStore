@@ -62,7 +62,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
 
             MyMvc
                 .Controller<TagsController>()
-                .Calling(c => c.Post(TagArgs)) //Creating a tag.
+                .Calling(c => c.PostAsync(TagArgs)) //Creating a tag.
                 .ShouldReturn()
                 .Created();
 
@@ -98,7 +98,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
 
             MyMvc
                 .Controller<TagsController>()
-                .Calling(c => c.Post(TagArgs)) //Creating a tag.
+                .Calling(c => c.PostAsync(TagArgs)) //Creating a tag.
                 .ShouldReturn()
                 .Created();
             //This test will fail the next time when executed 
@@ -110,7 +110,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
 
             MyMvc
                 .Controller<TagsController>()
-                .Calling(c => c.DeleteById(tagId))
+                .Calling(c => c.DeleteByIdAsync(tagId))
                 .ShouldReturn()
                 .NoContent();
         }
@@ -125,7 +125,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
 
             MyMvc
                 .Controller<TagsController>()
-                .Calling(c => c.Post(tagArgs))
+                .Calling(c => c.PostAsync(tagArgs))
                 .ShouldReturn()
                 .BadRequest();
         }
@@ -140,13 +140,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
 
             MyMvc
                 .Controller<TagsController>()
-                .Calling(c => c.Post(TagArgs)) //Creating a tag.
+                .Calling(c => c.PostAsync(TagArgs)) //Creating a tag.
                 .ShouldReturn()
                 .Created();
 
             MyMvc
                 .Controller<TagsController>()
-                .Calling(c => c.Post(TagArgs))
+                .Calling(c => c.PostAsync(TagArgs))
                 .ShouldReturn()
                 .StatusCode(409);
         }
@@ -161,7 +161,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
 
             MyMvc
                 .Controller<TagsController>()
-                .Calling(c => c.UpdateById(1, TagArgs))
+                .Calling(c => c.UpdateByIdAsync(1, TagArgs))
                 .ShouldReturn()
                 .NoContent();
         }
@@ -176,7 +176,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
 
             MyMvc
                 .Controller<TagsController>()
-                .Calling(c => c.UpdateById(0, TagArgs))
+                .Calling(c => c.UpdateByIdAsync(0, TagArgs))
                 .ShouldReturn()
                 .NotFound();
         }
@@ -191,7 +191,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
 
             MyMvc
                 .Controller<TagsController>()
-                .Calling(c => c.UpdateById(1, tagArgs))
+                .Calling(c => c.UpdateByIdAsync(1, tagArgs))
                 .ShouldReturn()
                 .BadRequest();
         }
@@ -204,7 +204,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
         {
             MyMvc
                 .Controller<TagsController>()
-                .Calling(c => c.DeleteById(11))
+                .Calling(c => c.DeleteByIdAsync(11))
                 .ShouldReturn()
                 .NotFound();
         }

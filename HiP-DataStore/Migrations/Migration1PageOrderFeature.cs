@@ -16,7 +16,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
     ///   the page can be removed from the exhibit's pages array
     /// </summary>
     [StreamMigration(from: 0, to: 1)]
-    public class PageOrderFeatureMigration : IStreamMigration
+    public class Migration1PageOrderFeature : IStreamMigration
     {
         public async Task MigrateAsync(IStreamMigrationArgs e)
         {

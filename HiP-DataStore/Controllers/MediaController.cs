@@ -51,11 +51,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         [HttpPost]
         [ProducesResponseType(typeof(int), 201)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(400)]
         public async Task<IActionResult> PostAsync([FromBody]MediaArgs args)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
+            if (!UserPermissions.IsAllowedToCreate(User.Identity, args.Status))
+                return Forbid();
 
             var ev = new MediaCreated
             {
@@ -94,15 +98,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                         ("id", x => x.Id),
                         ("title", x => x.Title),
                         ("timestamp", x => x.Timestamp))
-                    .PaginateAndSelect(args.Page, args.PageSize, x => new MediaResult
+                    .PaginateAndSelect(args.Page, args.PageSize, x => new MediaResult(x)
                     {
-                        Id = x.Id,
-                        Title = x.Title,
-                        Description = x.Description,
-                        Used = x.Referencers.Count > 0,
-                        Type = x.Type,
-                        Status = x.Status,
-                        Timestamp = x.Timestamp
+                        Timestamp = _referencesIndex.LastModificationCascading(ResourceType.Media, x.Id)
                     });
 
                 return Ok(medias);
@@ -135,15 +133,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (timestamp != null && media.Timestamp <= timestamp)
                 return StatusCode(304);
 
-            var result = new MediaResult
+            var result = new MediaResult(media)
             {
-                Id = media.Id,
-                Title = media.Title,
-                Description = media.Description,
-                Used = media.Referencers.Count > 0,
-                Type = media.Type,
-                Timestamp = media.Timestamp,
-                Status = media.Status
+                Timestamp = _referencesIndex.LastModificationCascading(ResourceType.Media, id)
             };
 
             return Ok(result);
@@ -152,6 +144,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpDelete("{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public async Task<IActionResult> DeleteById(int id)
         {
@@ -160,6 +153,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (!_entityIndex.Exists(ResourceType.Media, id))
                 return NotFound();
+
+            ///TODO Check the owner of the item (last parameter)
+            if (!UserPermissions.IsAllowedToDelete(User.Identity, _entityIndex.Status(ResourceType.Media, id).GetValueOrDefault(), false))
+                return Forbid();
 
             if (_referencesIndex.IsUsed(ResourceType.Media, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
@@ -177,6 +174,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpPut("{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public async Task<IActionResult> PutById(int id, [FromBody]MediaArgs args)
         {
@@ -185,6 +183,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (!_entityIndex.Exists(ResourceType.Media, id))
                 return NotFound();
+
+            ///TODO Check the owner of the item (last parameter)
+            if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, true))
+                return Forbid();
 
             var ev = new MediaUpdate
             {
@@ -205,6 +207,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            if (!_entityIndex.Exists(ResourceType.Media, id))
+                return NotFound();
+
             var media = _db.Database.GetCollection<MediaElement>(ResourceType.Media.Name)
                 .AsQueryable()
                 .FirstOrDefault(x => x.Id == id);
@@ -221,6 +226,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpPut("{id}/File")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public async Task<IActionResult> PutFileById(int id, IFormFile file)
         {
@@ -229,6 +235,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (!_entityIndex.Exists(ResourceType.Media, id))
                 return NotFound();
+
+            ///TODO Check the owner of the item (last parameter)
+            if (!UserPermissions.IsAllowedToEdit(User.Identity, _entityIndex.Status(ResourceType.Media, id).GetValueOrDefault(), true))
+                return Forbid();
 
             var extension = file.FileName.Split('.').Last();
             var fileType = Enum.GetName(typeof(MediaType), _mediaIndex.GetMediaType(id));

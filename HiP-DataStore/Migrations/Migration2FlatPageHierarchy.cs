@@ -15,7 +15,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
     /// * (Pages keep storing references to additional information pages)
     /// </summary>
     [StreamMigration(from: 1, to: 2)]
-    public class FlatPageHierarchyMigration : IStreamMigration
+    public class Migration2FlatPageHierarchy : IStreamMigration
     {
         public async Task MigrateAsync(IStreamMigrationArgs e)
         {

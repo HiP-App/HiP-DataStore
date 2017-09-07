@@ -20,7 +20,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
         /// </summary>
         [BsonElement]
         public string Name { get; }
-        
+
         [BsonConstructor]
         public ResourceType(string name)
         {
