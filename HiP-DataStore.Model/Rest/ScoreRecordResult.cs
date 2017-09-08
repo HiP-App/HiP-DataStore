@@ -4,7 +4,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 {
     public class ScoreRecordResult : ScoreResult
     {
-        public int UserId { get; set; }
+        public string UserId { get; set; }
 
         public ScoreRecordResult() { }
 

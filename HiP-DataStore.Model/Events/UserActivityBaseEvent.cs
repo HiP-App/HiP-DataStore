@@ -6,7 +6,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
     {
         public int Id { get; set; }
 
-        public int UserId { get; set; }
+        public string UserId { get; set; }
 
         public DateTimeOffset Timestamp { get; set; }
 

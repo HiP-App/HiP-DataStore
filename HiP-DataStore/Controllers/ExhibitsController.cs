@@ -250,7 +250,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             {
                 Id = _ratingIndex.NextId(ResourceType.Exhibit),
                 EntityId = id,
-                UserId = args.UserId.GetValueOrDefault(),
+                UserId = User.Identity.GetUserIdentity(),
                 Value = args.Rating.GetValueOrDefault(),
                 RatedType = ResourceType.Exhibit,
                 Timestamp = DateTimeOffset.Now
