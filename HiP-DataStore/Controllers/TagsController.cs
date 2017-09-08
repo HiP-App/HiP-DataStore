@@ -201,7 +201,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (_referencesIndex.IsUsed(ResourceType.Tag, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
 
-            var ev = new TagDeleted { Id = id };
+            var ev = new TagDeleted
+            {
+                Id = id,
+                Timestamp = DateTimeOffset.Now
+            };
+
             await _eventStore.AppendEventAsync(ev);
             return NoContent();
         }

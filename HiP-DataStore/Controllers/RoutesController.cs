@@ -131,7 +131,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 Properties = args,
                 Timestamp = DateTimeOffset.Now
             };
-            
+
             await _eventStore.AppendEventAsync(ev);
             return Created($"{Request.Scheme}://{Request.Host}/api/Routes/{ev.Id}", ev.Id);
         }
@@ -150,7 +150,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (!_entityIndex.Exists(ResourceType.Route, id))
                 return NotFound();
-            
+
             // TODO Check the owner of the item (last parameter)
             if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, true))
                 return Forbid();
@@ -188,7 +188,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return BadRequest(ErrorMessages.ResourceInUse);
 
             // validation passed, emit event
-            var ev = new RouteDeleted { Id = id };
+            var ev = new RouteDeleted
+            {
+                Id = id,
+                Timestamp = DateTimeOffset.Now
+            };
+
             await _eventStore.AppendEventAsync(ev);
             return NoContent();
         }

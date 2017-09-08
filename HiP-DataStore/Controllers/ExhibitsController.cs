@@ -168,7 +168,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 Properties = args,
                 Timestamp = DateTimeOffset.Now
             };
-            
+
             await _eventStore.AppendEventAsync(ev);
             return StatusCode(204);
         }
@@ -195,7 +195,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return BadRequest(ErrorMessages.ResourceInUse);
 
             // remove the exhibit
-            var ev = new ExhibitDeleted { Id = id };
+            var ev = new ExhibitDeleted
+            {
+                Id = id,
+                Timestamp = DateTimeOffset.Now
+            };
+
             await _eventStore.AppendEventAsync(ev);
             return NoContent();
         }
@@ -216,7 +221,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(typeof(RatingResult), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public IActionResult GetRating(int id) {
+        public IActionResult GetRating(int id)
+        {
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -235,10 +241,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         }
 
         [HttpPost("Rating/{id}")]
-        [ProducesResponseType(typeof(int),201)]
+        [ProducesResponseType(typeof(int), 201)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> PostRatingAsync(int id,RatingArgs args)
+        public async Task<IActionResult> PostRatingAsync(int id, RatingArgs args)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
