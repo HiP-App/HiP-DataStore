@@ -330,6 +330,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 ModelState.AddModelError(nameof(args.Image),
                     ErrorMessages.ImageNotFound(args.Image.Value));
 
+            // ensure referenced audio exists
+            if (args.Audio != null && !_mediaIndex.IsAudio(args.Audio.Value))
+                ModelState.AddModelError(nameof(args.Audio),
+                    ErrorMessages.AudioNotFound(args.Audio.Value));
+
             // ensure referenced slider page images exist
             if (args.Images != null)
             {
