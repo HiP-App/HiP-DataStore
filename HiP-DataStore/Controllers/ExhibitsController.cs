@@ -282,6 +282,18 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                     ModelState.AddModelError(nameof(args.Tags),
                         ErrorMessages.TagNotFound(id));
             }
+
+            // ensure referenced pages exist
+            if (args.Pages != null)
+            {
+                var invalidIds = args.Pages
+                    .Where(id => !_entityIndex.Exists(ResourceType.ExhibitPage, id))
+                    .ToList();
+
+                foreach (var id in invalidIds)
+                    ModelState.AddModelError(nameof(args.Pages),
+                        ErrorMessages.ExhibitPageNotFound(id));
+            }
         }
     }
 }
