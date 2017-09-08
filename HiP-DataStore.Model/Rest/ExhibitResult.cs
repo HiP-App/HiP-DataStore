@@ -9,7 +9,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
     public class ExhibitResult
     {
         public int Id { get; set; }
-
+        
         public string Name { get; set; }
 
         public string Description { get; set; }
@@ -21,6 +21,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         public float Longitude { get; set; }
 
         public bool Used { get; set; }
+
+        public string UserId { get; set; }
 
         public int[] Pages { get; set; }
 
@@ -40,6 +42,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
             Id = x.Id;
             Name = x.Name;
             Description = x.Description;
+            UserId = x.UserId;
             Image = (int?)x.Image.Id;
             Latitude = x.Latitude;
             Longitude = x.Longitude;

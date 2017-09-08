@@ -11,6 +11,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         public string Title { get; set; }
         public string Description { get; set; }
         public bool Used { get; set; }
+        public string UserId { get; set; }
         [JsonConverter(typeof(StringEnumConverter))]
         public MediaType Type { get; set; }
         [JsonConverter(typeof(StringEnumConverter))]
@@ -27,6 +28,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
             Title = x.Title;
             Description = x.Description;
             Used = x.Referencers.Count > 0;
+            UserId = x.UserId;
             Type = x.Type;
             Status = x.Status;
             Timestamp = x.Timestamp;

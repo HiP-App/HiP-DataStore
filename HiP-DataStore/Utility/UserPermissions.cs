@@ -42,6 +42,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Utility
             return CheckRoles(identity);
         }
 
+        public static bool IsAllowedToGet(IIdentity identity, string OwnerId)
+        {
+            return (OwnerId == identity.GetUserIdentity()) || CheckRoles(identity);
+        }
+
         public static bool IsAllowedToGetAll(IIdentity identity, ContentStatus status)
         {
             if (status == ContentStatus.Published)
