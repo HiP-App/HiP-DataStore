@@ -151,8 +151,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.Route, id))
                 return NotFound();
             
-            // TODO Check the owner of the item (last parameter)
-            if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, true))
+            if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, _entityIndex.Owner(ResourceType.Route, id)))
                 return Forbid();
 
             // validation passed, emit event
@@ -181,8 +180,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.Route, id))
                 return NotFound();
 
-            // TODO Check the owner of the item (last parameter)
-            if (!UserPermissions.IsAllowedToDelete(User.Identity, _entityIndex.Status(ResourceType.Route, id).GetValueOrDefault(), false))
+            var status = _entityIndex.Status(ResourceType.Route, id).GetValueOrDefault();
+            if (!UserPermissions.IsAllowedToDelete(User.Identity, status, _entityIndex.Owner(ResourceType.Route, id)))
                 return Forbid();
 
             if (_referencesIndex.IsUsed(ResourceType.Route, id))

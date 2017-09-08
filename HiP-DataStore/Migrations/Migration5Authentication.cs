@@ -13,7 +13,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
     {
         public async Task MigrateAsync(IStreamMigrationArgs e)
         {
-            var adminId = "auth0|596c67a14349fc3abb248b58";
+            var adminId = "auth0|5968ed8cdd1b3733ca94865d";
             var events = e.GetExistingEvents();
 
 

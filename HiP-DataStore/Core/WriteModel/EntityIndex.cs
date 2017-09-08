@@ -41,6 +41,21 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                 return null;
             }
         }
+        /// <summary>
+        /// Get UserId of an entity owner
+        /// </summary>
+        /// <param name="entityType"></param>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public string Owner(ResourceType entityType, int id)
+        {
+            var info = GetOrCreateEntityTypeInfo(entityType);
+
+            if (info.Entities.TryGetValue(id, out var entity))
+                return entity.UserId;
+
+            return null;
+        }
 
         /// <summary>
         /// Gets the IDs of all entities of the given type and status.
@@ -79,9 +94,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                 case ICreateEvent ev:
                     lock (_lockObject)
                     {
+                        var owner = (ev as UserActivityBaseEvent)?.UserId;
                         var info = GetOrCreateEntityTypeInfo(ev.GetEntityType());
                         info.MaximumId = Math.Max(info.MaximumId, ev.Id);
-                        info.Entities.Add(ev.Id, new EntityInfo { Status = ev.GetStatus() });
+                        info.Entities.Add(ev.Id, new EntityInfo { Status = ev.GetStatus(), UserId = owner });
                     }
                     break;
 
@@ -129,6 +145,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
         class EntityInfo
         {
             public ContentStatus Status { get; set; }
+
+            /// <summary>
+            /// Owner of the entity
+            /// </summary>
+            public string UserId { get; set; }
         }
     }
 }

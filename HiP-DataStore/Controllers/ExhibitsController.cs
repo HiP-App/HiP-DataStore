@@ -157,8 +157,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.Exhibit, id))
                 return NotFound();
 
-            // TODO Check the owner of the item (last parameter)
-            if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, true))
+            if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, _entityIndex.Owner(ResourceType.Exhibit, id)))
                 return Forbid();
 
             // validation passed, emit event
@@ -187,8 +186,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.Exhibit, id))
                 return NotFound();
 
-            // TODO Check the owner of the item (last parameter)
-            if (!UserPermissions.IsAllowedToDelete(User.Identity, _entityIndex.Status(ResourceType.Exhibit, id).GetValueOrDefault(), false))
+            var status = _entityIndex.Status(ResourceType.Exhibit, id).GetValueOrDefault();
+            if (!UserPermissions.IsAllowedToDelete(User.Identity, status, _entityIndex.Owner(ResourceType.Exhibit, id)))
                 return Forbid();
 
             // check if exhibit is in use and can't be deleted (it's in use if and only if it is contained in a route).
@@ -252,7 +251,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.Exhibit, id))
                 return NotFound(ErrorMessages.ExhibitNotFound(id));
 
-            // TODO When AUTH service will work change the UserID
             var ev = new RatingAdded()
             {
                 Id = _ratingIndex.NextId(ResourceType.Exhibit),
