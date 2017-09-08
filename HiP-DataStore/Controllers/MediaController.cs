@@ -63,6 +63,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             var ev = new MediaCreated
             {
                 Id = _entityIndex.NextId(ResourceType.Media),
+                UserId = User.Identity.GetUserIdentity(),
                 Properties = args,
                 Timestamp = DateTimeOffset.Now
             };
@@ -165,7 +166,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (directoryPath != null && System.IO.Directory.Exists(directoryPath))
                 Directory.Delete(directoryPath, true);
 
-            var ev = new MediaDeleted { Id = id };
+            var ev = new MediaDeleted
+            {
+                Id = id,
+                UserId = User.Identity.GetUserIdentity(),
+                Timestamp = DateTimeOffset.Now
+            };
             await _eventStore.AppendEventAsync(ev);
             return StatusCode(204);
         }
@@ -190,6 +196,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             var ev = new MediaUpdate
             {
                 Id = id,
+                UserId = User.Identity.GetUserIdentity(),
                 Properties = args,
                 Timestamp = DateTimeOffset.Now,
             };
@@ -268,6 +275,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             var ev = new MediaFileUpdated
             {
                 Id = id,
+                UserId = User.Identity.GetUserIdentity(),
                 File = filePath,
                 Timestamp = DateTimeOffset.Now
             };

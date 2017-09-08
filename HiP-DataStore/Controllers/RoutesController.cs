@@ -127,6 +127,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             var ev = new RouteCreated
             {
                 Id = _entityIndex.NextId(ResourceType.Route),
+                UserId = User.Identity.GetUserIdentity(),
                 Properties = args,
                 Timestamp = DateTimeOffset.Now
             };
@@ -158,6 +159,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             var ev = new RouteUpdated
             {
                 Id = id,
+                UserId = User.Identity.GetUserIdentity(),
                 Properties = args,
                 Timestamp = DateTimeOffset.Now,
             };
@@ -187,7 +189,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return BadRequest(ErrorMessages.ResourceInUse);
 
             // validation passed, emit event
-            var ev = new RouteDeleted { Id = id };
+            var ev = new RouteDeleted
+            {
+                Id = id,
+                UserId = User.Identity.GetUserIdentity(),
+                Timestamp = DateTimeOffset.Now
+            };
             await _eventStore.AppendEventAsync(ev);
             return NoContent();
         }

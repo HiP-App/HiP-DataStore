@@ -133,6 +133,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             var ev = new ExhibitCreated
             {
                 Id = _entityIndex.NextId(ResourceType.Exhibit),
+                UserId = User.Identity.GetUserIdentity(),
                 Properties = args,
                 Timestamp = DateTimeOffset.Now
             };
@@ -164,6 +165,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             var ev = new ExhibitUpdated
             {
                 Id = id,
+                UserId = User.Identity.GetUserIdentity(),
                 Properties = args,
                 Timestamp = DateTimeOffset.Now
             };
@@ -194,7 +196,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return BadRequest(ErrorMessages.ResourceInUse);
 
             // remove the exhibit
-            var ev = new ExhibitDeleted { Id = id };
+            var ev = new ExhibitDeleted
+            {
+                Id = id,
+                UserId = User.Identity.GetUserIdentity(),
+                Timestamp = DateTimeOffset.Now
+            };
             await _eventStore.AppendEventAsync(ev);
             return NoContent();
         }

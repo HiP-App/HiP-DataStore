@@ -178,10 +178,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             // validation passed, emit event
             var newPageId = _entityIndex.NextId(ResourceType.ExhibitPage);
-            
+
+
             var ev = new ExhibitPageCreated3
             {
                 Id = newPageId,
+                UserId = User.Identity.GetUserIdentity(),
                 Properties = args,
                 Timestamp = DateTimeOffset.Now
             };
@@ -225,6 +227,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             var ev = new ExhibitPageUpdated3
             {
                 Id = id,
+                UserId = User.Identity.GetUserIdentity(),
                 Properties = args,
                 Timestamp = DateTimeOffset.Now
             };
@@ -253,7 +256,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (_referencesIndex.IsUsed(ResourceType.ExhibitPage, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
 
-            var ev = new ExhibitPageDeleted2 { Id = id };
+            var ev = new ExhibitPageDeleted2
+            {
+                Id = id,
+                UserId = User.Identity.GetUserIdentity(),
+                Timestamp = DateTimeOffset.Now
+            };
             await _eventStore.AppendEventAsync(ev);
 
             return NoContent();
