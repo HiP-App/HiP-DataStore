@@ -13,6 +13,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         public string Description { get; set; }
         public int Duration { get; set; }
         public double Distance { get; set; }
+        public string UserId { get; set; }
         public int? Image { get; set; }
         public int? Audio { get; set; }
         public int[] Exhibits { get; set; }
@@ -32,6 +33,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
             Description = route.Description;
             Duration = route.Duration;
             Distance = route.Distance;
+            UserId = route.UserId;
             Image = (int?)route.Image.Id;
             Audio = (int?)route.Audio.Id;
             Exhibits = route.Exhibits.Ids.Select(id => (int)id).ToArray();

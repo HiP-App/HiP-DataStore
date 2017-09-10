@@ -22,6 +22,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 
         public string FontFamily { get; set; }
 
+        public string UserId { get; set; }
+
         public int? Audio { get; set; }
 
         public int? Image { get; set; }
@@ -51,6 +53,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
             Text = page.Text;
             Description = page.Description;
             FontFamily = page.FontFamily;
+            UserId = page.UserId;
             Audio = (int?)page.Audio.Id;
             AdditionalInformationPages = page.AdditionalInformationPages.Ids.Select(id => (int)id).ToList();
             Status = page.Status;

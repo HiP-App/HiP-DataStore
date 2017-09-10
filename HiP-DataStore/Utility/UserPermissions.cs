@@ -15,28 +15,36 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Utility
             return CheckRoles(identity);
         }
 
-        public static bool IsAllowedToEdit(IIdentity identity, ContentStatus status, bool isOwner)
+        public static bool IsAllowedToEdit(IIdentity identity, ContentStatus status, string OwnerId)
         {
+            bool isOwner = OwnerId == identity.GetUserIdentity();
             if (status != ContentStatus.Published && isOwner)
                 return true;
 
             return CheckRoles(identity);
         }
 
-        public static bool IsAllowedToDelete(IIdentity identity, ContentStatus status, bool isOwner)
+        public static bool IsAllowedToDelete(IIdentity identity, ContentStatus status, string OwnerId)
         {
+            bool isOwner = OwnerId == identity.GetUserIdentity();
             if (status != ContentStatus.Published && isOwner)
                 return true;
 
             return CheckRoles(identity);
         }
 
-        public static bool IsAllowedToGet(IIdentity identity, ContentStatus status, bool isOwner)
+        public static bool IsAllowedToGet(IIdentity identity, ContentStatus status, string OwnerId)
         {
+            bool isOwner = OwnerId == identity.GetUserIdentity();
             if (status == ContentStatus.Published || isOwner)
                 return true;
 
             return CheckRoles(identity);
+        }
+
+        public static bool IsAllowedToGet(IIdentity identity, string OwnerId)
+        {
+            return (OwnerId == identity.GetUserIdentity()) || CheckRoles(identity);
         }
 
         public static bool IsAllowedToGetAll(IIdentity identity, ContentStatus status)

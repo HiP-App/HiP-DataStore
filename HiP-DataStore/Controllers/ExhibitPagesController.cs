@@ -51,7 +51,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            return Ok(_entityIndex.AllIds(ResourceType.ExhibitPage, status ?? ContentStatus.Published));
+            return Ok(_entityIndex.AllIds(ResourceType.ExhibitPage, status ?? ContentStatus.Published, User.Identity));
         }
 
         /// <summary>
@@ -94,6 +94,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             var pageIds = exhibit.Pages
                 .LoadAll(_db.Database)
+                .Where(x => x.UserId == User.Identity.GetUserIdentity())
                 .Where(p => status == ContentStatus.All || p.Status == status)
                 .Select(p => p.Id)
                 .ToList();
@@ -139,8 +140,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            var status = _entityIndex.Status(ResourceType.ExhibitPage, id) ?? ContentStatus.Published;
+            if (!UserPermissions.IsAllowedToGet(User.Identity, status, _entityIndex.Owner(ResourceType.ExhibitPage, id)))
+                return Forbid();
+
             var page = _db.Database.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name)
                 .AsQueryable()
+                .Where(x => x.UserId == User.Identity.GetUserIdentity())
                 .FirstOrDefault(x => x.Id == id);
 
             if (page == null)
@@ -178,10 +184,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             // validation passed, emit event
             var newPageId = _entityIndex.NextId(ResourceType.ExhibitPage);
-            
+
+
             var ev = new ExhibitPageCreated3
             {
                 Id = newPageId,
+                UserId = User.Identity.GetUserIdentity(),
                 Properties = args,
                 Timestamp = DateTimeOffset.Now
             };
@@ -210,9 +218,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.ExhibitPage, id))
                 return NotFound();
 
-            // TODO Check the owner of the item (last parameter)
             // ReSharper disable once PossibleNullReferenceException (args == null is handled through ModelState.IsValid)
-            if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, true))
+            if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, _entityIndex.Owner(ResourceType.ExhibitPage, id)))
                 return Forbid();
 
             // ReSharper disable once PossibleInvalidOperationException (.Value is safe here since we know the entity exists)
@@ -225,6 +232,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             var ev = new ExhibitPageUpdated3
             {
                 Id = id,
+                UserId = User.Identity.GetUserIdentity(),
                 Properties = args,
                 Timestamp = DateTimeOffset.Now
             };
@@ -246,14 +254,19 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.ExhibitPage, id))
                 return NotFound();
 
-            // TODO Check the owner of the item (last parameter)
-            if (!UserPermissions.IsAllowedToDelete(User.Identity, _entityIndex.Status(ResourceType.ExhibitPage, id).GetValueOrDefault(), false))
+            var status = _entityIndex.Status(ResourceType.ExhibitPage, id).GetValueOrDefault();
+            if (!UserPermissions.IsAllowedToDelete(User.Identity, status, _entityIndex.Owner(ResourceType.ExhibitPage, id)))
                 return Forbid();
 
             if (_referencesIndex.IsUsed(ResourceType.ExhibitPage, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
 
-            var ev = new ExhibitPageDeleted2 { Id = id };
+            var ev = new ExhibitPageDeleted2
+            {
+                Id = id,
+                UserId = User.Identity.GetUserIdentity(),
+                Timestamp = DateTimeOffset.Now
+            };
             await _eventStore.AppendEventAsync(ev);
 
             return NoContent();
@@ -268,6 +281,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            if (!UserPermissions.IsAllowedToGet(User.Identity, _entityIndex.Owner(ResourceType.ExhibitPage, id)))
+                return Forbid();
+
             return ReferenceInfoHelper.GetReferenceInfo(ResourceType.ExhibitPage, id, _entityIndex, _referencesIndex);
         }
 
@@ -278,6 +294,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             {
                 var pages = allPages
                     .FilterByIds(args.Exclude, args.IncludeOnly)
+                    .FilterByUser(args.Status,User.Identity)
                     .FilterByStatus(args.Status)
                     .FilterByTimestamp(args.Timestamp)
                     .FilterIf(!string.IsNullOrEmpty(args.Query), x =>

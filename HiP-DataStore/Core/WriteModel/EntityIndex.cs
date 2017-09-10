@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using PaderbornUniversity.SILab.Hip.DataStore.Controllers;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using System.Linq;
+using PaderbornUniversity.SILab.Hip.DataStore.Utility;
+using System.Security.Principal;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 {
@@ -41,6 +44,21 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                 return null;
             }
         }
+        /// <summary>
+        /// Get UserId of an entity owner
+        /// </summary>
+        /// <param name="entityType"></param>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public string Owner(ResourceType entityType, int id)
+        {
+            var info = GetOrCreateEntityTypeInfo(entityType);
+
+            if (info.Entities.TryGetValue(id, out var entity))
+                return entity.UserId;
+
+            return null;
+        }
 
         /// <summary>
         /// Gets the IDs of all entities of the given type and status.
@@ -48,12 +66,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
         /// <param name="entityType"></param>
         /// <param name="status"></param>
         /// <returns></returns>
-        public IReadOnlyCollection<int> AllIds(ResourceType entityType, ContentStatus status)
+        public IReadOnlyCollection<int> AllIds(ResourceType entityType, ContentStatus status, IIdentity User)
         {
             lock (_lockObject)
             {
+                bool isAllowedGetAll = UserPermissions.IsAllowedToGetAll(User, status);
+                string userId = User.GetUserIdentity();
                 var info = GetOrCreateEntityTypeInfo(entityType);
                 return info.Entities
+                    .AsQueryable()
+                    .FilterIf(!isAllowedGetAll, x =>
+                        ((status == ContentStatus.All) && (x.Value.Status == ContentStatus.Published)) || (x.Value.UserId == userId))
                     .Where(x => status == ContentStatus.All || x.Value.Status == status)
                     .Select(x => x.Key)
                     .ToList();
@@ -79,9 +102,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                 case ICreateEvent ev:
                     lock (_lockObject)
                     {
+                        var owner = (ev as UserActivityBaseEvent)?.UserId;
                         var info = GetOrCreateEntityTypeInfo(ev.GetEntityType());
                         info.MaximumId = Math.Max(info.MaximumId, ev.Id);
-                        info.Entities.Add(ev.Id, new EntityInfo { Status = ev.GetStatus() });
+                        info.Entities.Add(ev.Id, new EntityInfo { Status = ev.GetStatus(), UserId = owner });
                     }
                     break;
 
@@ -129,6 +153,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
         class EntityInfo
         {
             public ContentStatus Status { get; set; }
+
+            /// <summary>
+            /// Owner of the entity
+            /// </summary>
+            public string UserId { get; set; }
         }
     }
 }

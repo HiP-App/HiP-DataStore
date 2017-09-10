@@ -62,6 +62,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 
     public interface IUserActivityEvent : ICrudEvent
     {
-        int UserId { get; }
+        string UserId { get; }
     }
 }

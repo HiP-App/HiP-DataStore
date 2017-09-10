@@ -42,7 +42,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(typeof(IReadOnlyCollection<int>), 200)]
         public IActionResult GetIds(ContentStatus? status)
         {
-            return Ok(_entityIndex.AllIds(ResourceType.Exhibit, status ?? ContentStatus.Published));
+            return Ok(_entityIndex.AllIds(ResourceType.Exhibit, status ?? ContentStatus.Published, User.Identity));
         }
 
         [HttpGet]
@@ -63,6 +63,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
                 var exhibits = query
                     .FilterByIds(args.Exclude, args.IncludeOnly)
+                    .FilterByUser(args.Status,User.Identity)
                     .FilterByStatus(args.Status)
                     .FilterByTimestamp(args.Timestamp)
                     .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
@@ -97,8 +98,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            var status = _entityIndex.Status(ResourceType.Exhibit, id) ?? ContentStatus.Published;
+            if (!UserPermissions.IsAllowedToGet(User.Identity, status, _entityIndex.Owner(ResourceType.Exhibit, id)))
+                return Forbid();
+
             var exhibit = _db.Database.GetCollection<Exhibit>(ResourceType.Exhibit.Name)
                 .AsQueryable()
+                .Where(x => x.UserId == User.Identity.GetUserIdentity())
                 .FirstOrDefault(x => x.Id == id);
 
             if (exhibit == null)
@@ -133,6 +139,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             var ev = new ExhibitCreated
             {
                 Id = _entityIndex.NextId(ResourceType.Exhibit),
+                UserId = User.Identity.GetUserIdentity(),
                 Properties = args,
                 Timestamp = DateTimeOffset.Now
             };
@@ -156,14 +163,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.Exhibit, id))
                 return NotFound();
 
-            // TODO Check the owner of the item (last parameter)
-            if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, true))
+            if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, _entityIndex.Owner(ResourceType.Exhibit, id)))
                 return Forbid();
 
             // validation passed, emit event
             var ev = new ExhibitUpdated
             {
                 Id = id,
+                UserId = User.Identity.GetUserIdentity(),
                 Properties = args,
                 Timestamp = DateTimeOffset.Now
             };
@@ -185,8 +192,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.Exhibit, id))
                 return NotFound();
 
-            // TODO Check the owner of the item (last parameter)
-            if (!UserPermissions.IsAllowedToDelete(User.Identity, _entityIndex.Status(ResourceType.Exhibit, id).GetValueOrDefault(), false))
+            var status = _entityIndex.Status(ResourceType.Exhibit, id).GetValueOrDefault();
+            if (!UserPermissions.IsAllowedToDelete(User.Identity, status, _entityIndex.Owner(ResourceType.Exhibit, id)))
                 return Forbid();
 
             // check if exhibit is in use and can't be deleted (it's in use if and only if it is contained in a route).
@@ -194,7 +201,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return BadRequest(ErrorMessages.ResourceInUse);
 
             // remove the exhibit
-            var ev = new ExhibitDeleted { Id = id };
+            var ev = new ExhibitDeleted
+            {
+                Id = id,
+                UserId = User.Identity.GetUserIdentity(),
+                Timestamp = DateTimeOffset.Now
+            };
             await _eventStore.AppendEventAsync(ev);
             return NoContent();
         }
@@ -207,6 +219,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
+            if (!UserPermissions.IsAllowedToGet(User.Identity, _entityIndex.Owner(ResourceType.Exhibit, id)))
+                return Forbid();
 
             return ReferenceInfoHelper.GetReferenceInfo(ResourceType.Exhibit, id, _entityIndex, _referencesIndex);
         }
@@ -245,12 +260,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.Exhibit, id))
                 return NotFound(ErrorMessages.ExhibitNotFound(id));
 
-            // TODO When AUTH service will work change the UserID
             var ev = new RatingAdded()
             {
                 Id = _ratingIndex.NextId(ResourceType.Exhibit),
                 EntityId = id,
-                UserId = args.UserId.GetValueOrDefault(),
+                UserId = User.Identity.GetUserIdentity(),
                 Value = args.Rating.GetValueOrDefault(),
                 RatedType = ResourceType.Exhibit,
                 Timestamp = DateTimeOffset.Now

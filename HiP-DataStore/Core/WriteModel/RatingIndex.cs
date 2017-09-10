@@ -72,10 +72,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
         public int NumberRates { get; private set; }
 
         // <UserId, Rating>
-        private Dictionary<int, byte> _allRates = new Dictionary<int, byte>();
+        private Dictionary<string, byte> _allRates = new Dictionary<string, byte>();
         private int _sumRate;
 
-        public void AddRating(int userId, byte rate)
+        public void AddRating(string userId, byte rate)
         {
             if (_allRates.TryGetValue(userId, out var oldRate))
             {

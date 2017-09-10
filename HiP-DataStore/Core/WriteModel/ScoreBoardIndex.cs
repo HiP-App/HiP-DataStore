@@ -26,7 +26,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                 return _board.ToList();
         }
 
-        public bool Exists(int userId)
+        public bool Exists(string userId)
         {
             lock (_lockObject)
                 return _board.Any(x => x.UserId == userId);

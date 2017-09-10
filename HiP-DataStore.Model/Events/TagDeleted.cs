@@ -1,14 +1,7 @@
-﻿using System;
-
-namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
+﻿namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 {
-    public class TagDeleted : IDeleteEvent
+    public class TagDeleted : UserActivityBaseEvent, IDeleteEvent
     {
-        public int Id { get; set; }
-
-        public DateTimeOffset Timestamp { get; set; }
-
-        public ResourceType GetEntityType() => ResourceType.Tag;
-
+        public override ResourceType GetEntityType() => ResourceType.Tag;
     }
 }
