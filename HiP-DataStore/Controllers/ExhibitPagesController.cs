@@ -301,6 +301,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                         x.Title.ToLower().Contains(args.Query.ToLower()) ||
                         x.Text.ToLower().Contains(args.Query.ToLower()) ||
                         x.Description.ToLower().Contains(args.Query.ToLower()))
+                    .FilterIf(args.Type != null, x => x.Type == args.Type)
                     .Sort(args.OrderBy,
                         ("id", x => x.Id),
                         ("title", x => x.Title),
