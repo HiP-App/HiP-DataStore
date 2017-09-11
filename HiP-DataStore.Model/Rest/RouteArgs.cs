@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Utility;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 
@@ -23,6 +24,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 
         public List<int> Exhibits { get; set; }
 
+        [AllowedStatuses]
         public ContentStatus Status { get; set; }
 
         public List<int> Tags { get; set; }
