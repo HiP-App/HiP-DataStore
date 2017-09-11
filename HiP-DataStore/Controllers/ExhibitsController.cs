@@ -40,9 +40,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         [HttpGet("ids")]
         [ProducesResponseType(typeof(IReadOnlyCollection<int>), 200)]
-        public IActionResult GetIds(ContentStatus? status)
+        public IActionResult GetIds(ContentStatus status = ContentStatus.Published)
         {
-            return Ok(_entityIndex.AllIds(ResourceType.Exhibit, status ?? ContentStatus.Published, User.Identity));
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
+                return Forbid();
+
+            return Ok(_entityIndex.AllIds(ResourceType.Exhibit, status , User.Identity));
         }
 
         [HttpGet]
@@ -52,6 +58,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
+            if (args.Status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
+                return Forbid();
 
             args = args ?? new ExhibitQueryArgs();
 
@@ -71,6 +80,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                         x.Description.ToLower().Contains(args.Query.ToLower()))
                     .FilterIf(args.OnlyRoutes != null, x => x.Referencers
                         .Any(r => r.Collection == ResourceType.Route.Name && routeIds.Contains(r.Id)))
+                    .FilterIf(args.Status == ContentStatus.All && !UserPermissions.IsAllowedToGetDeleted(User.Identity), 
+                                                                  x => x.Status != ContentStatus.Deleted)
                     .Sort(args.OrderBy,
                         ("id", x => x.Id),
                         ("name", x => x.Name),
@@ -98,7 +109,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var status = _entityIndex.Status(ResourceType.Exhibit, id) ?? ContentStatus.Published;
+            var status = _entityIndex.Status(ResourceType.Exhibit, id) ?? ContentStatus.Deleted;
             if (!UserPermissions.IsAllowedToGet(User.Identity, status, _entityIndex.Owner(ResourceType.Exhibit, id)))
                 return Forbid();
 
@@ -278,7 +289,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         {
             if (args == null)
                 return;
-
             // ensure referenced image exists
             if (args.Image != null && !_mediaIndex.IsImage(args.Image.Value))
                 ModelState.AddModelError(nameof(args.Image),

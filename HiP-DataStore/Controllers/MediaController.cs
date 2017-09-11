@@ -43,9 +43,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         [HttpGet("ids")]
         [ProducesResponseType(typeof(IReadOnlyCollection<int>), 200)]
-        public IActionResult GetIds(ContentStatus? status)
+        public IActionResult GetIds(ContentStatus status = ContentStatus.Published)
         {
-            return Ok(_entityIndex.AllIds(ResourceType.Media, status ?? ContentStatus.Published, User.Identity));
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
+                return Forbid();
+
+            return Ok(_entityIndex.AllIds(ResourceType.Media, status, User.Identity));
         }
 
         [HttpPost]
@@ -77,9 +83,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(400)]
         public IActionResult Get(MediaQueryArgs args)
         {
-
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
+            if (args.Status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
+                return Forbid();
 
             var query = _db.Database.GetCollection<MediaElement>(ResourceType.Media.Name).AsQueryable();
 
@@ -95,6 +103,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                     .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
                         x.Title.ToLower().Contains(args.Query.ToLower()) ||
                         x.Description.ToLower().Contains(args.Query.ToLower()))
+                    .FilterIf(args.Status == ContentStatus.All && !UserPermissions.IsAllowedToGetDeleted(User.Identity),
+                                                                  x => x.Status != ContentStatus.Deleted)
                     .Sort(args.OrderBy,
                         ("id", x => x.Id),
                         ("title", x => x.Title),
@@ -123,7 +133,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var status = _entityIndex.Status(ResourceType.Media, id) ?? ContentStatus.Published;
+            var status = _entityIndex.Status(ResourceType.Media, id) ?? ContentStatus.Deleted;
             if (!UserPermissions.IsAllowedToGet(User.Identity, status, _entityIndex.Owner(ResourceType.Media, id)))
                 return Forbid();
 
@@ -169,7 +179,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             // Remove file
             string directoryPath = Path.GetDirectoryName(_mediaIndex.GetFilePath(id));
-            if (directoryPath != null && System.IO.Directory.Exists(directoryPath))
+            if (directoryPath != null && Directory.Exists(directoryPath))
                 Directory.Delete(directoryPath, true);
 
             var ev = new MediaDeleted

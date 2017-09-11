@@ -115,7 +115,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     break;
 
                 case ExhibitDeleted e:
-                    _db.GetCollection<Exhibit>(ResourceType.Exhibit.Name).DeleteOne(x => x.Id == e.Id);
+                    var deleteExhibit = _db.GetCollection<Exhibit>(ResourceType.Exhibit.Name).AsQueryable().First(x => x.Id == e.Id);
+                    deleteExhibit.Status = ContentStatus.Deleted;
+
+                    _db.GetCollection<Exhibit>(ResourceType.Exhibit.Name).ReplaceOne(x => x.Id == e.Id, deleteExhibit);
                     break;
 
                 case ExhibitPageCreated3 e:
@@ -143,7 +146,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     break;
 
                 case ExhibitPageDeleted2 e:
-                    _db.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name).DeleteOne(x => x.Id == e.Id);
+                    var deleteExhibitPage = _db.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name)
+                                                .AsQueryable()
+                                                .First(x => x.Id == e.Id);
+                    deleteExhibitPage.Status = ContentStatus.Deleted;
+
+                    _db.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name).ReplaceOne(x => x.Id == e.Id, deleteExhibitPage);
                     break;
 
                 case RouteCreated e:
@@ -171,7 +179,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     break;
 
                 case RouteDeleted e:
-                    _db.GetCollection<Route>(ResourceType.Route.Name).DeleteOne(r => r.Id == e.Id);
+                    var deleteRoute = _db.GetCollection<Route>(ResourceType.Route.Name)
+                                                              .AsQueryable()
+                                                              .First(x => x.Id == e.Id);
+                    deleteRoute.Status = ContentStatus.Deleted;
+
+                    _db.GetCollection<Route>(ResourceType.Route.Name).ReplaceOne(x => x.Id == e.Id, deleteRoute);
                     break;
 
                 case MediaCreated e:
@@ -200,7 +213,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     break;
 
                 case MediaDeleted e:
-                    _db.GetCollection<MediaElement>(ResourceType.Media.Name).DeleteOne(m => m.Id == e.Id);
+                    var deleteMedia = _db.GetCollection<MediaElement>(ResourceType.Media.Name)
+                                                              .AsQueryable()
+                                                              .First(x => x.Id == e.Id);
+                    deleteMedia.Status = ContentStatus.Deleted;
+
+                    _db.GetCollection<MediaElement>(ResourceType.Media.Name).ReplaceOne(x => x.Id == e.Id, deleteMedia);
                     break;
 
                 case MediaFileUpdated e:
@@ -235,7 +253,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     break;
 
                 case TagDeleted e:
-                    _db.GetCollection<Tag>(ResourceType.Tag.Name).DeleteOne(x => x.Id == e.Id);
+                    var deleteTag = _db.GetCollection<Tag>(ResourceType.Tag.Name)
+                                                              .AsQueryable()
+                                                              .First(x => x.Id == e.Id);
+                    deleteTag.Status = ContentStatus.Deleted;
+
+                    _db.GetCollection<Tag>(ResourceType.Tag.Name).ReplaceOne(x => x.Id == e.Id, deleteTag);
                     break;
 
                 case ScoreAdded e:

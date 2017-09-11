@@ -46,12 +46,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         [HttpGet("Pages/ids")]
         [ProducesResponseType(typeof(IReadOnlyCollection<int>), 200)]
-        public IActionResult GetAllIds(ContentStatus? status)
+        public IActionResult GetAllIds(ContentStatus status = ContentStatus.Published)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            return Ok(_entityIndex.AllIds(ResourceType.ExhibitPage, status ?? ContentStatus.Published, User.Identity));
+            if (status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
+                return Forbid();
+
+            return Ok(_entityIndex.AllIds(ResourceType.ExhibitPage, status, User.Identity));
         }
 
         /// <summary>
@@ -68,6 +71,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            if (args.Status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
+                return Forbid();
+
             args = args ?? new ExhibitPageQueryArgs();
 
             var query = _db.Database.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name).AsQueryable();
@@ -78,12 +84,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(typeof(IReadOnlyCollection<int>), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public IActionResult GetIdsForExhibit(int exhibitId, ContentStatus? status)
+        public IActionResult GetIdsForExhibit(int exhibitId, ContentStatus status = ContentStatus.Published)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            status = status ?? ContentStatus.Published;
+            if (status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
+                return Forbid();
 
             var exhibit = _db.Database.GetCollection<Exhibit>(ResourceType.Exhibit.Name)
                 .AsQueryable()
@@ -94,8 +101,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             var pageIds = exhibit.Pages
                 .LoadAll(_db.Database)
+                .AsQueryable()
                 .Where(x => x.UserId == User.Identity.GetUserIdentity())
                 .Where(p => status == ContentStatus.All || p.Status == status)
+                .FilterIf(status == ContentStatus.All && !UserPermissions.IsAllowedToGetDeleted(User.Identity),
+                                                                  x => x.Status != ContentStatus.Deleted)
                 .Select(p => p.Id)
                 .ToList();
 
@@ -115,6 +125,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
+            if (args.Status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
+                return Forbid();
 
             args = args ?? new ExhibitPageQueryArgs();
 
@@ -140,7 +153,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var status = _entityIndex.Status(ResourceType.ExhibitPage, id) ?? ContentStatus.Published;
+            var status = _entityIndex.Status(ResourceType.ExhibitPage, id) ?? ContentStatus.Deleted;
             if (!UserPermissions.IsAllowedToGet(User.Identity, status, _entityIndex.Owner(ResourceType.ExhibitPage, id)))
                 return Forbid();
 
@@ -301,6 +314,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                         x.Title.ToLower().Contains(args.Query.ToLower()) ||
                         x.Text.ToLower().Contains(args.Query.ToLower()) ||
                         x.Description.ToLower().Contains(args.Query.ToLower()))
+                    .FilterIf(args.Status == ContentStatus.All && !UserPermissions.IsAllowedToGetDeleted(User.Identity),
+                                                                  x => x.Status != ContentStatus.Deleted)
                     .FilterIf(args.Type != null, x => x.Type == args.Type)
                     .Sort(args.OrderBy,
                         ("id", x => x.Id),

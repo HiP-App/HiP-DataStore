@@ -37,9 +37,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         [HttpGet("ids")]
         [ProducesResponseType(typeof(IReadOnlyCollection<int>), 200)]
-        public IActionResult GetIds(ContentStatus? status)
+        public IActionResult GetIds(ContentStatus status = ContentStatus.Published)
         {
-            return Ok(_entityIndex.AllIds(ResourceType.Route, status ?? ContentStatus.Published, User.Identity));
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
+                return Forbid();
+
+            return Ok(_entityIndex.AllIds(ResourceType.Route, status, User.Identity));
         }
 
         [HttpGet]
@@ -49,6 +55,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
+            if (args.Status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
+                return Forbid();
 
             args = args ?? new RouteQueryArgs();
 
@@ -64,6 +73,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                     .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
                         x.Title.ToLower().Contains(args.Query.ToLower()) ||
                         x.Description.ToLower().Contains(args.Query.ToLower()))
+                    .FilterIf(args.Status == ContentStatus.All && !UserPermissions.IsAllowedToGetDeleted(User.Identity),
+                                                                  x => x.Status != ContentStatus.Deleted)
                     .Sort(args.OrderBy,
                         ("id", x => x.Id),
                         ("title", x => x.Title),
@@ -91,7 +102,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var status = _entityIndex.Status(ResourceType.Route, id) ?? ContentStatus.Published;
+            var status = _entityIndex.Status(ResourceType.Route, id) ?? ContentStatus.Deleted;
             if (!UserPermissions.IsAllowedToGet(User.Identity, status, _entityIndex.Owner(ResourceType.Route, id)))
                 return Forbid();
 
