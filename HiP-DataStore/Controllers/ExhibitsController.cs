@@ -236,7 +236,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return BadRequest(ModelState);
 
             if (!_entityIndex.Exists(ResourceType.Exhibit, id))
-                return NotFound(ErrorMessages.ExhibitNotFound(id));
+                return NotFound(ErrorMessages.ContentNotFound(ResourceType.Exhibit,id));
 
             var result = new RatingResult()
             {
@@ -258,7 +258,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return BadRequest(ModelState);
 
             if (!_entityIndex.Exists(ResourceType.Exhibit, id))
-                return NotFound(ErrorMessages.ExhibitNotFound(id));
+                return NotFound(ErrorMessages.ContentNotFound(ResourceType.Exhibit, id));
 
             var ev = new RatingAdded()
             {
@@ -293,7 +293,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
                 foreach (var id in invalidIds)
                     ModelState.AddModelError(nameof(args.Tags),
-                        ErrorMessages.TagNotFound(id));
+                        ErrorMessages.ContentNotFound(ResourceType.Tag,id));
             }
         }
     }
