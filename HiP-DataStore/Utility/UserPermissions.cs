@@ -7,7 +7,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Utility
 {
     public class UserPermissions
     {
-        public static bool IsAllowedToCreate(IIdentity identity,ContentStatus status)
+        public static bool IsAllowedToCreate(IIdentity identity, ContentStatus status)
         {
             if (status != ContentStatus.Published && CheckRoles(identity, UserRoles.Student))
                 return true;
@@ -15,36 +15,36 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Utility
             return CheckRoles(identity);
         }
 
-        public static bool IsAllowedToEdit(IIdentity identity, ContentStatus status, string OwnerId)
+        public static bool IsAllowedToEdit(IIdentity identity, ContentStatus status, string ownerId)
         {
-            bool isOwner = OwnerId == identity.GetUserIdentity();
+            bool isOwner = ownerId == identity.GetUserIdentity();
             if (status != ContentStatus.Published && isOwner)
                 return true;
 
             return CheckRoles(identity);
         }
 
-        public static bool IsAllowedToDelete(IIdentity identity, ContentStatus status, string OwnerId)
+        public static bool IsAllowedToDelete(IIdentity identity, ContentStatus status, string ownerId)
         {
-            bool isOwner = OwnerId == identity.GetUserIdentity();
+            bool isOwner = ownerId == identity.GetUserIdentity();
             if (status != ContentStatus.Published && isOwner)
                 return true;
 
             return CheckRoles(identity);
         }
 
-        public static bool IsAllowedToGet(IIdentity identity, ContentStatus status, string OwnerId)
+        public static bool IsAllowedToGet(IIdentity identity, ContentStatus status, string ownerId)
         {
-            bool isOwner = OwnerId == identity.GetUserIdentity();
+            bool isOwner = ownerId == identity.GetUserIdentity();
             if (status == ContentStatus.Published || isOwner)
                 return true;
 
             return CheckRoles(identity);
         }
 
-        public static bool IsAllowedToGet(IIdentity identity, string OwnerId)
+        public static bool IsAllowedToGet(IIdentity identity, string ownerId)
         {
-            return (OwnerId == identity.GetUserIdentity()) || CheckRoles(identity);
+            return (ownerId == identity.GetUserIdentity()) || CheckRoles(identity);
         }
 
         public static bool IsAllowedToGetAll(IIdentity identity, ContentStatus status)
@@ -56,7 +56,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Utility
         }
 
         //Check if the user has the nessesary roles
-        static bool CheckRoles(IIdentity identity ,UserRoles allowedToProceed = UserRoles.Administrator | UserRoles.Supervisor)
+        static bool CheckRoles(IIdentity identity, UserRoles allowedToProceed = UserRoles.Administrator | UserRoles.Supervisor)
         {
             return identity.GetUserRoles()
                            .Any(x => (Enum.TryParse(x.Value, out UserRoles role) && (allowedToProceed & role) != 0)); // Bitwise AND
