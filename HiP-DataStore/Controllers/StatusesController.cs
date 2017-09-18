@@ -5,6 +5,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model;
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
     [Authorize]
+    [Route("api/[controller]")]
     public class StatusesController : Controller
     {
         [HttpGet]

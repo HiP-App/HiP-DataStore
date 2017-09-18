@@ -9,24 +9,38 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Utility
     public static class Auth
     {
         // Adds function to get User Id from Context.User.Identity
-        public static string GetUserIdentity(this IIdentity identity)
+        public static UserIdentity GetUserIdentity(this IIdentity identity)
         {
-            var claimsIdentity = identity as ClaimsIdentity;
-            if (claimsIdentity == null) throw new InvalidOperationException("identity not found");
-
-            var sub = claimsIdentity.Claims.FirstOrDefault(c => c.Type == "https://hip.cs.upb.de/sub");
-            if (sub == null) throw new InvalidOperationException("sub claim not found");
-
-            return sub.Value;
+            var sub = (identity as ClaimsIdentity)?.Claims.FirstOrDefault(c => c.Type == "https://hip.cs.upb.de/sub");
+            return (sub == null) ? UserIdentity.Anonymous : new UserIdentity(sub.Value);
         }
 
-        public static List<Claim> GetUserRoles(this IIdentity identity)
+        public static IReadOnlyList<Claim> GetUserRoles(this IIdentity identity)
         {
-            var claimsIdentity = identity as ClaimsIdentity;
-            if (claimsIdentity == null) throw new InvalidOperationException("identity not found");
-
-            var roles = claimsIdentity.FindAll(c => c.Type == "https://hip.cs.upb.de/roles");
-            return roles.ToList();
+            return (identity as ClaimsIdentity)?.FindAll(c => c.Type == "https://hip.cs.upb.de/roles").ToList() ?? new List<Claim>();
         }
+    }
+
+    public struct UserIdentity : IEquatable<UserIdentity>
+    {
+        public static readonly UserIdentity Anonymous = new UserIdentity(null);
+
+        public string Id { get; }
+
+        public UserIdentity(string id) => Id = id;
+
+        public bool Equals(UserIdentity other) => other.Id == Id;
+
+        public override bool Equals(object obj) => obj is UserIdentity other && Equals(other);
+
+        public override int GetHashCode() => Id?.GetHashCode() ?? 0;
+
+        public static bool operator ==(UserIdentity a, UserIdentity b) => Equals(a, b);
+
+        public static bool operator !=(UserIdentity a, UserIdentity b) => !Equals(a, b);
+
+        // Allows implicit casting between string and UserIdentity
+        public static implicit operator UserIdentity(string id) => new UserIdentity(id);
+        public static implicit operator string(UserIdentity identity) => identity.Id;
     }
 }
