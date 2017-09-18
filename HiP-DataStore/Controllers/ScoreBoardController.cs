@@ -12,6 +12,8 @@ using PaderbornUniversity.SILab.Hip.EventSourcing;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
@@ -44,14 +46,16 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return Ok(result);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("history")]
         [ProducesResponseType(typeof(ScoreResults), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public IActionResult GetByUserId(int id)
+        public IActionResult GetByUserId()
         {
             if (!ModelState.IsValid)
                 return BadRequest();
+
+            var id = User.Identity.GetUserIdentity();
 
             if (!_board.AllRecords().Any(x => x.UserId == id))
                 return NotFound();
@@ -66,23 +70,24 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return Ok(allRecords);
         }
 
-        //id = User ID
-        [HttpPut("{id}")]
+        [HttpPut]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
-        public async Task<IActionResult> PutAsync(int id, int? score)
+        public async Task<IActionResult> PutAsync(int score)
         {
-            if (score == null || score < 0)
+            if (score < 0)
                 ModelState.AddModelError("score", "Parameter is missing or value is negative");
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            var id = User.Identity.GetUserIdentity();
+
             var ev = new ScoreAdded
             {
                 Id = _board.NewId(),
                 UserId = id,
-                Score = score.GetValueOrDefault(),
+                Score = score,
                 Timestamp = DateTimeOffset.Now,
             };
 

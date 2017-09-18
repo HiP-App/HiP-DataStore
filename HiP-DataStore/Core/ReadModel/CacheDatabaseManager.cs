@@ -71,6 +71,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     var newExhibit = new Exhibit(e.Properties)
                     {
                         Id = e.Id,
+                        UserId = e.UserId,
                         Timestamp = e.Timestamp
                     };
 
@@ -83,6 +84,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     var updatedExhibit = new Exhibit(e.Properties)
                     {
                         Id = e.Id,
+                        UserId = originalExhibit.UserId,
                         Timestamp = e.Timestamp
                     };
 
@@ -98,6 +100,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     var newPage = new ExhibitPage(e.Properties)
                     {
                         Id = e.Id,
+                        UserId = e.UserId,
                         Timestamp = e.Timestamp
                     };
 
@@ -109,6 +112,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     var updatedPage = new ExhibitPage(e.Properties)
                     {
                         Id = e.Id,
+                        UserId = originalPage.UserId,
                         Timestamp = e.Timestamp
                     };
 
@@ -124,6 +128,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     var newRoute = new Route(e.Properties)
                     {
                         Id = e.Id,
+                        UserId = e.UserId,
                         Timestamp = e.Timestamp
                     };
 
@@ -135,6 +140,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     var updatedRoute = new Route(e.Properties)
                     {
                         Id = e.Id,
+                        UserId = originalRoute.UserId,
                         Timestamp = e.Timestamp
                     };
 
@@ -150,6 +156,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     var newMedia = new MediaElement(e.Properties)
                     {
                         Id = e.Id,
+                        UserId = e.UserId,
                         Timestamp = e.Timestamp
                     };
 
@@ -161,6 +168,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     var updatedMedia = new MediaElement(e.Properties)
                     {
                         Id = e.Id,
+                        UserId = originalMedia.UserId,
                         Timestamp = e.Timestamp
                     };
 
@@ -184,6 +192,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     var newTag = new Tag(e.Properties)
                     {
                         Id = e.Id,
+                        UserId = e.UserId,
                         Timestamp = e.Timestamp,
                     };
 
@@ -195,6 +204,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     var updatedTag = new Tag(e.Properties)
                     {
                         Id = e.Id,
+                        UserId = originalTag.UserId,
                         Timestamp = e.Timestamp,
                     };
 

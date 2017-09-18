@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using System.Security.Principal;
+using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
@@ -47,6 +49,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 : query.Where(x => x.Timestamp > timestamp.Value);
         }
 
+        public static IQueryable<T> FilterByUser<T>(this IQueryable<T> query, ContentStatus status, IIdentity User) where T : ContentBase
+        {
+            bool isAllowedGetAll = UserPermissions.IsAllowedToGetAll(User, status);
+            return query.FilterIf(!isAllowedGetAll, x =>
+                        ((status == ContentStatus.All) && (x.Status == ContentStatus.Published)) || (x.UserId == User.GetUserIdentity()));
+        }
         /// <summary>
         /// Executes the query to determine the number of results, then retrieves a subset of the results
         /// (determined by <paramref name="page"/> and <paramref name="pageSize"/>) and projects them to objects of

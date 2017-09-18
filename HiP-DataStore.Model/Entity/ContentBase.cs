@@ -9,6 +9,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
     /// </summary>
     public abstract class ContentBase : IEntity<int>
     {
+        /// <summary>
+        /// Owner of the content
+        /// </summary>
+        public string UserId { get; set; }
+
         public ContentStatus Status { get; set; }
 
         /// <summary>

@@ -10,6 +10,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         public int Id { get; set; }
         public string Title { get; set; }
         public string Description { get; set; }
+        public string UserId { get; set; }
         public int? Image { get; set; }
         public bool Used { get; set; }
         public DateTimeOffset Timestamp { get; set; }
@@ -26,6 +27,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
             Id = tag.Id;
             Title = tag.Title;
             Description = tag.Description;
+            UserId = tag.UserId;
             Image = tag.Image.Id.AsNullableInt32;
             Used = tag.Referencers.Count > 0;
             Status = tag.Status;
