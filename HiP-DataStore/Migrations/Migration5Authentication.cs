@@ -1,5 +1,5 @@
-﻿using PaderbornUniversity.SILab.Hip.DataStore.Core.Migrations;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
+﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
+using PaderbornUniversity.SILab.Hip.EventSourcing.Migrations;
 using System.Threading.Tasks;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
