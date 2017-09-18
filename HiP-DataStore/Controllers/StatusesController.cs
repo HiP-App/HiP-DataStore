@@ -15,6 +15,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             ContentStatus.Published,
             ContentStatus.In_Review,
             ContentStatus.Draft
-        };
+        });
     }
 }
