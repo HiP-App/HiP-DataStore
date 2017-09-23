@@ -1,9 +1,15 @@
-﻿using PaderbornUniversity.SILab.Hip.EventSourcing;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 {
+    /// <summary>
+    /// Marker interface for events.
+    /// </summary>
+    public interface IEvent
+    {
+    }
+
     /// <summary>
     /// An event for simple create, update and delete operations.
     /// </summary>

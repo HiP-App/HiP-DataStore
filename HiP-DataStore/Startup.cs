@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,7 +8,6 @@ using PaderbornUniversity.SILab.Hip.DataStore.Core;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
-using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.Webservice;
 using Swashbuckle.AspNetCore.Swagger;
 
@@ -51,20 +49,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
                     .Configure<AuthConfig>(Configuration.GetSection("Auth"))
                     .Configure<CorsConfig>(Configuration);
 
-            var serviceProvider = services.BuildServiceProvider(); // allows us to actually get the configured services
-            var authConfig = serviceProvider.GetService<IOptions<AuthConfig>>();
-
-            // Configure authentication
-            services
-                .AddAuthentication(options => options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(options =>
-                {
-                    options.Audience = authConfig.Value.Audience;
-                    options.Authority = authConfig.Value.Authority;
-                });
-
-            // Configure authorization
-            var domain = authConfig.Value.Authority;
+            string domain = Configuration.GetSection("Auth").GetValue<string>("Authority");
             services.AddAuthorization(options =>
             {
                 options.AddPolicy("read:datastore",
@@ -77,18 +62,16 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
 
             services.AddCors();
             services.AddMvc();
+            services.AddSingleton<EventStoreClient>()
+                    .AddSingleton<CacheDatabaseManager>()
+                    .AddSingleton<IDomainIndex, MediaIndex>()
+                    .AddSingleton<IDomainIndex, EntityIndex>()
+                    .AddSingleton<IDomainIndex, ReferencesIndex>()
+                    .AddSingleton<IDomainIndex, TagIndex>()
+                    .AddSingleton<IDomainIndex, ExhibitPageIndex>()
+                    .AddSingleton<IDomainIndex, ScoreBoardIndex>()
+                    .AddSingleton<IDomainIndex, RatingIndex>();
 
-            services
-                .AddSingleton<EventStoreClient>()
-                .AddSingleton<CacheDatabaseManager>()
-                .AddSingleton<InMemoryCache>()
-                .AddSingleton<IDomainIndex, MediaIndex>()
-                .AddSingleton<IDomainIndex, EntityIndex>()
-                .AddSingleton<IDomainIndex, ReferencesIndex>()
-                .AddSingleton<IDomainIndex, TagIndex>()
-                .AddSingleton<IDomainIndex, ExhibitPageIndex>()
-                .AddSingleton<IDomainIndex, ScoreBoardIndex>()
-                .AddSingleton<IDomainIndex, RatingIndex>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -113,7 +96,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
                     .WithExposedHeaders(corsEnvConf.ExposedHeaders);
             });
 
-            app.UseAuthentication();
+            var options = new JwtBearerOptions
+            {
+                Audience = authConfig.Value.Audience,
+                Authority = authConfig.Value.Authority
+            };
+            app.UseJwtBearerAuthentication(options);
+
             app.UseMvc();
 
             // Swagger / Swashbuckle configuration:

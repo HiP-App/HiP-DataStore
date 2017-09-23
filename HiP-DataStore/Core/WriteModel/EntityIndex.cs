@@ -4,7 +4,6 @@ using PaderbornUniversity.SILab.Hip.DataStore.Controllers;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using System.Linq;
-using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using System.Security.Principal;
 

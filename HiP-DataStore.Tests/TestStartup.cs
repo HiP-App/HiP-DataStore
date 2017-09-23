@@ -10,7 +10,6 @@ using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using Microsoft.Extensions.Options;
-using PaderbornUniversity.SILab.Hip.EventSourcing;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Tests
 {
@@ -36,14 +35,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests
                 .Configure<UploadFilesConfig>(Configuration.GetSection("UploadingFiles"))
                 .Configure<ExhibitPagesConfig>(Configuration.GetSection("ExhibitPages"))
                 .Configure<CorsConfig>(Configuration);
-
+            
             // Add framework services
             services.AddMvc();
 
             services
                 .AddSingleton<EventStoreClient>()
                 .AddSingleton<CacheDatabaseManager>()
-                .AddSingleton<InMemoryCache>()
                 .AddSingleton<IDomainIndex, MediaIndex>()
                 .AddSingleton<IDomainIndex, EntityIndex>()
                 .AddSingleton<IDomainIndex, ReferencesIndex>()

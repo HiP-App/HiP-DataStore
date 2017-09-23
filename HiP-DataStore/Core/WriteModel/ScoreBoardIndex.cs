@@ -1,9 +1,8 @@
-﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
-using PaderbornUniversity.SILab.Hip.EventSourcing;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 {

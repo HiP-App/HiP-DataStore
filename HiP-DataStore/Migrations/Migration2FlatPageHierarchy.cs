@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
+using PaderbornUniversity.SILab.Hip.DataStore.Core.Migrations;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using System.Threading.Tasks;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
-using PaderbornUniversity.SILab.Hip.EventSourcing.Migrations;
 
 #pragma warning disable CS0612 // We explicitly work with obsolete types here, so disable warnings for that
 namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
