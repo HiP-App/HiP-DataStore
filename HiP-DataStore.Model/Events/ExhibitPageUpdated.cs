@@ -1,5 +1,4 @@
 ﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
-using PaderbornUniversity.SILab.Hip.EventSourcing.Migrations;
 using System;
 using System.Collections.Generic;
 using System.Linq;

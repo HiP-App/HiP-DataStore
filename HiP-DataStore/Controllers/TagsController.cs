@@ -6,7 +6,6 @@ using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
-using PaderbornUniversity.SILab.Hip.EventSourcing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,14 +27,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly TagIndex _tagIndex;
         private readonly ReferencesIndex _referencesIndex;
 
-        public TagsController(EventStoreClient eventStore, CacheDatabaseManager db, InMemoryCache cache)
+        public TagsController(EventStoreClient eventStore, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices)
         {
             _eventStore = eventStore;
             _db = db;
-            _entityIndex = cache.Index<EntityIndex>();
-            _mediaIndex = cache.Index<MediaIndex>();
-            _tagIndex = cache.Index<TagIndex>();
-            _referencesIndex = cache.Index<ReferencesIndex>();
+            _entityIndex = indices.OfType<EntityIndex>().First();
+            _mediaIndex = indices.OfType<MediaIndex>().First();
+            _tagIndex = indices.OfType<TagIndex>().First();
+            _referencesIndex = indices.OfType<ReferencesIndex>().First();
         }
 
         [HttpGet("ids")]
@@ -158,7 +157,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [ProducesResponseType(409)]
-        public async Task<IActionResult> UpdateByIdAsync(int id, [FromBody]TagArgs args)
+        public async Task<IActionResult> UpdateById(int id, [FromBody]TagArgs args)
         {
             ValidateTagArgs(args);
 
@@ -193,7 +192,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> DeleteByIdAsync(int id)
+        public async Task<IActionResult> DeleteById(int id)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -214,7 +213,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 UserId = User.Identity.GetUserIdentity(),
                 Timestamp = DateTimeOffset.Now
             };
-
             await _eventStore.AppendEventAsync(ev);
             return NoContent();
         }

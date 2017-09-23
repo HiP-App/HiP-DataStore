@@ -1,7 +1,7 @@
-﻿using PaderbornUniversity.SILab.Hip.DataStore.Model;
+﻿using PaderbornUniversity.SILab.Hip.DataStore.Core.Migrations;
+using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
-using PaderbornUniversity.SILab.Hip.EventSourcing.Migrations;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 

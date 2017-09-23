@@ -1,23 +1,22 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.StaticFiles;
-using Microsoft.Extensions.Options;
-using MongoDB.Driver;
 using PaderbornUniversity.SILab.Hip.DataStore.Core;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
-using PaderbornUniversity.SILab.Hip.DataStore.Model;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
+using MongoDB.Driver;
+using Microsoft.AspNetCore.Http;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
-using PaderbornUniversity.SILab.Hip.EventSourcing;
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.StaticFiles;
+using PaderbornUniversity.SILab.Hip.DataStore.Model;
+using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Authorization;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
@@ -32,13 +31,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly MediaIndex _mediaIndex;
         private readonly ReferencesIndex _referencesIndex;
 
-        public MediaController(EventStoreClient eventStore, CacheDatabaseManager db, InMemoryCache cache, IOptions<UploadFilesConfig> uploadConfig)
+        public MediaController(EventStoreClient eventStore, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices, IOptions<UploadFilesConfig> uploadConfig)
         {
             _eventStore = eventStore;
             _db = db;
-            _entityIndex = cache.Index<EntityIndex>();
-            _mediaIndex = cache.Index<MediaIndex>();
-            _referencesIndex = cache.Index<ReferencesIndex>();
+            _entityIndex = indices.OfType<EntityIndex>().First();
+            _mediaIndex = indices.OfType<MediaIndex>().First();
+            _referencesIndex = indices.OfType<ReferencesIndex>().First();
             _uploadConfig = uploadConfig.Value;
         }
 
@@ -169,8 +168,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return BadRequest(ErrorMessages.ResourceInUse);
 
             // Remove file
-            var directoryPath = Path.GetDirectoryName(_mediaIndex.GetFilePath(id));
-            if (directoryPath != null && Directory.Exists(directoryPath))
+            string directoryPath = Path.GetDirectoryName(_mediaIndex.GetFilePath(id));
+            if (directoryPath != null && System.IO.Directory.Exists(directoryPath))
                 Directory.Delete(directoryPath, true);
 
             var ev = new MediaDeleted
@@ -179,7 +178,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 UserId = User.Identity.GetUserIdentity(),
                 Timestamp = DateTimeOffset.Now
             };
-
             await _eventStore.AppendEventAsync(ev);
             return StatusCode(204);
         }

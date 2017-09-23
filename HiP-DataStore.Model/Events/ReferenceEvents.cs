@@ -1,7 +1,5 @@
 ﻿using System;
 
-using PaderbornUniversity.SILab.Hip.EventSourcing;
-
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 {
     public abstract class ReferenceEventBase : IEvent
