@@ -1,18 +1,17 @@
-﻿using System;
-using MyTested.AspNetCore.Mvc;
+﻿using MyTested.AspNetCore.Mvc;
 using PaderbornUniversity.SILab.Hip.DataStore.Controllers;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using PaderbornUniversity.SILab.Hip.EventSourcing;
+using System;
 using Xunit;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
 {
     public class TagsControllerTest
     {
-        private TagIndex _tagIndex => MvcTestContext.Services.GetService<IEnumerable<IDomainIndex>>().OfType<TagIndex>().First();
+        private TagIndex _tagIndex => MvcTestContext.Services.GetService<InMemoryCache>().Index<TagIndex>();
         private TagArgs TagArgs { get; set; }
 
         public TagsControllerTest()
@@ -111,7 +110,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
 
             MyMvc
                 .Controller<TagsController>()
-                .Calling(c => c.DeleteById(tagId))
+                .Calling(c => c.DeleteByIdAsync(tagId))
                 .ShouldReturn()
                 .NoContent();
         }
@@ -162,7 +161,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
 
             MyMvc
                 .Controller<TagsController>()
-                .Calling(c => c.UpdateById(1, TagArgs))
+                .Calling(c => c.UpdateByIdAsync(1, TagArgs))
                 .ShouldReturn()
                 .NoContent();
         }
@@ -177,7 +176,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
 
             MyMvc
                 .Controller<TagsController>()
-                .Calling(c => c.UpdateById(0, TagArgs))
+                .Calling(c => c.UpdateByIdAsync(0, TagArgs))
                 .ShouldReturn()
                 .NotFound();
         }
@@ -192,7 +191,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
 
             MyMvc
                 .Controller<TagsController>()
-                .Calling(c => c.UpdateById(1, tagArgs))
+                .Calling(c => c.UpdateByIdAsync(1, tagArgs))
                 .ShouldReturn()
                 .BadRequest();
         }
@@ -205,7 +204,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
         {
             MyMvc
                 .Controller<TagsController>()
-                .Calling(c => c.DeleteById(11))
+                .Calling(c => c.DeleteByIdAsync(11))
                 .ShouldReturn()
                 .NotFound();
         }

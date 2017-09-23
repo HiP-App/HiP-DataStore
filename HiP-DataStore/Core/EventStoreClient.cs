@@ -1,15 +1,15 @@
 ﻿using EventStore.ClientAPI;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using PaderbornUniversity.SILab.Hip.DataStore.Core.Migrations;
-using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
+using PaderbornUniversity.SILab.Hip.EventSourcing;
+using PaderbornUniversity.SILab.Hip.EventSourcing.Migrations;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using ESL = PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core
 {
@@ -22,14 +22,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
     /// </remarks>
     public class EventStoreClient
     {
-        private readonly IReadOnlyCollection<IDomainIndex> _indices;
         private readonly ILogger<EventStoreClient> _logger;
         private readonly string _streamName;
+        private readonly IEventStore _store;
+        private readonly InMemoryCache _cache;
 
-        public IEventStoreConnection Connection { get; }
+        public IEventStream EventStream => _store.Streams[_streamName];
 
         public EventStoreClient(
-            IEnumerable<IDomainIndex> indices,
+            InMemoryCache cache,
             IOptions<EndpointConfig> config,
             ILogger<EventStoreClient> logger)
         {
@@ -49,18 +50,20 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
 
             // Establish connection to Event Store
             var uri = new Uri(config.Value.EventStoreHost);
-            Connection = EventStoreConnection.Create(settings, uri);
-            Connection.ConnectAsync().Wait();
+            var connection = EventStoreConnection.Create(settings, uri);
+            connection.ConnectAsync().Wait();
+            
+            _store = new ESL.EventStore(connection);
 
             logger.LogInformation($"Connected to Event Store on '{uri.Host}', using stream '{_streamName}'");
 
             // Update stream to the latest version
-            var migrationResult = StreamMigrator.MigrateAsync(Connection, _streamName).Result;
+            var migrationResult = StreamMigrator.MigrateAsync(_store, _streamName).Result;
             if (migrationResult.fromVersion != migrationResult.toVersion)
                 logger.LogInformation($"Migrated stream '{_streamName}' from version '{migrationResult.fromVersion}' to version '{migrationResult.toVersion}'");
 
             // Setup IDomainIndex-indices
-            _indices = indices.ToList();
+            _cache = cache;
             PopulateIndicesAsync().Wait();
         }
 
@@ -68,44 +71,40 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
         /// Starts a new transaction. Append events to the transaction and eventually commit
         /// the transaction to persist the events to the event stream.
         /// </summary>
-        public EventStoreClientTransaction BeginTransaction()
+        public EventStreamTransaction BeginTransaction()
         {
-            return new EventStoreClientTransaction(this);
+            return _store.Streams[_streamName].BeginTransaction();
         }
 
         /// <summary>
         /// Appends a single event to the event stream. If you need to append multiple events in one batch,
         /// either use <see cref="AppendEventsAsync(IEnumerable{IEvent})"/> or <see cref="BeginTransaction"/>
-        /// and <see cref="EventStoreClientTransaction.CommitAsync"/> instead.
+        /// and <see cref="EventStreamTransaction.Commit"/> instead.
         /// </summary>
         public async Task AppendEventAsync(IEvent ev)
         {
             await AppendEventsAsync(new[] { ev });
         }
 
-        public Task<WriteResult> AppendEventsAsync(IEnumerable<IEvent> events) =>
+        public Task AppendEventsAsync(IEnumerable<IEvent> events) =>
             AppendEventsAsync(events?.ToList());
 
-        public async Task<WriteResult> AppendEventsAsync(IReadOnlyCollection<IEvent> events)
+        public async Task AppendEventsAsync(IReadOnlyCollection<IEvent> events)
         {
             if (events == null)
                 throw new ArgumentNullException(nameof(events));
 
             // persist events in Event Store
-            var eventData = events.Select(ev => ev.ToEventData(Guid.NewGuid()));
-            var result = await Connection.AppendToStreamAsync(_streamName, ExpectedVersion.Any, eventData);
+            await _store.Streams[_streamName].AppendManyAsync(events);
 
             // forward events to indices so they can update their state
             foreach (var ev in events)
-                foreach (var index in _indices)
-                    index.ApplyEvent(ev);
-
-            return result;
+                _cache.ApplyEvent(ev);
         }
 
         private async Task PopulateIndicesAsync()
         {
-            var events = new EventStoreStreamEnumerator(Connection, _streamName);
+            var events = _store.Streams[_streamName].GetEnumerator();
             var totalCount = 0;
 
             events.EventParsingFailed += (_, exception) =>
@@ -114,18 +113,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
             while (await events.MoveNextAsync())
             {
                 totalCount++;
-
-                foreach (var index in _indices)
-                {
-                    try
-                    {
-                        index.ApplyEvent(events.Current);
-                    }
-                    catch (Exception e)
-                    {
-                        _logger.LogWarning($"Failed to populate index of type '{index.GetType().Name}' with event of type '{events.Current.GetType().Name}': {e}");
-                    }
-                }
+                _cache.ApplyEvent(events.Current);
             }
 
             _logger.LogInformation($"Populated indices with {totalCount} events");
