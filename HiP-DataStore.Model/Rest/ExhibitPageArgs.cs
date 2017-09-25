@@ -1,4 +1,4 @@
-﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
+﻿using PaderbornUniversity.SILab.Hip.EventSourcing.Migrations;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -31,6 +31,21 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         public IReadOnlyCollection<int> AdditionalInformationPages { get; set; }
 
         public ContentStatus Status { get; set; }
+
+        public IEnumerable<EntityId> GetReferences()
+        {
+            if (Audio != null)
+                yield return (ResourceType.Media, Audio.Value);
+
+            if (Image != null)
+                yield return (ResourceType.Media, Image.Value);
+
+            foreach (var img in Images?.Select(i => i.Image).Distinct() ?? Enumerable.Empty<int>())
+                yield return (ResourceType.Media, img);
+
+            foreach (var id in AdditionalInformationPages?.Distinct() ?? Enumerable.Empty<int>())
+                yield return (ResourceType.ExhibitPage, id);
+        }
     }
 
     public class ExhibitPageArgs : IMigratable<ExhibitPageArgs2>

@@ -4,18 +4,21 @@ using MongoDB.Driver;
 using PaderbornUniversity.SILab.Hip.DataStore.Core;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
-using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using PaderbornUniversity.SILab.Hip.EventSourcing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     public class ExhibitsController : Controller
     {
@@ -24,23 +27,23 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly MediaIndex _mediaIndex;
         private readonly EntityIndex _entityIndex;
         private readonly ReferencesIndex _referencesIndex;
-        private readonly ExhibitPageIndex _exhibitPageIndex;
+        private readonly RatingIndex _ratingIndex;
 
-        public ExhibitsController(EventStoreClient eventStore, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices)
+        public ExhibitsController(EventStoreClient eventStore, CacheDatabaseManager db, InMemoryCache cache)
         {
             _eventStore = eventStore;
             _db = db;
-            _mediaIndex = indices.OfType<MediaIndex>().First();
-            _entityIndex = indices.OfType<EntityIndex>().First();
-            _referencesIndex = indices.OfType<ReferencesIndex>().First();
-            _exhibitPageIndex = indices.OfType<ExhibitPageIndex>().First();
+            _mediaIndex = cache.Index<MediaIndex>();
+            _entityIndex = cache.Index<EntityIndex>();
+            _referencesIndex = cache.Index<ReferencesIndex>();
+            _ratingIndex = cache.Index<RatingIndex>();
         }
 
         [HttpGet("ids")]
         [ProducesResponseType(typeof(IReadOnlyCollection<int>), 200)]
         public IActionResult GetIds(ContentStatus? status)
         {
-            return Ok(_entityIndex.AllIds(ResourceType.Exhibit, status ?? ContentStatus.Published));
+            return Ok(_entityIndex.AllIds(ResourceType.Exhibit, status ?? ContentStatus.Published, User.Identity));
         }
 
         [HttpGet]
@@ -61,18 +64,22 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
                 var exhibits = query
                     .FilterByIds(args.Exclude, args.IncludeOnly)
+                    .FilterByUser(args.Status,User.Identity)
                     .FilterByStatus(args.Status)
                     .FilterByTimestamp(args.Timestamp)
                     .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
                         x.Name.ToLower().Contains(args.Query.ToLower()) ||
                         x.Description.ToLower().Contains(args.Query.ToLower()))
-                    .FilterIf(args.OnlyRoutes != null, x => x.Referencees
+                    .FilterIf(args.OnlyRoutes != null, x => x.Referencers
                         .Any(r => r.Collection == ResourceType.Route.Name && routeIds.Contains(r.Id)))
                     .Sort(args.OrderBy,
                         ("id", x => x.Id),
                         ("name", x => x.Name),
                         ("timestamp", x => x.Timestamp))
-                    .PaginateAndSelect(args.Page, args.PageSize, x => new ExhibitResult(x));
+                    .PaginateAndSelect(args.Page, args.PageSize, x => new ExhibitResult(x)
+                    {
+                        Timestamp = _referencesIndex.LastModificationCascading(ResourceType.Exhibit, x.Id)
+                    });
 
                 return Ok(exhibits);
             }
@@ -92,8 +99,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            var status = _entityIndex.Status(ResourceType.Exhibit, id) ?? ContentStatus.Published;
+            if (!UserPermissions.IsAllowedToGet(User.Identity, status, _entityIndex.Owner(ResourceType.Exhibit, id)))
+                return Forbid();
+
             var exhibit = _db.Database.GetCollection<Exhibit>(ResourceType.Exhibit.Name)
                 .AsQueryable()
+                .Where(x => x.UserId == User.Identity.GetUserIdentity())
                 .FirstOrDefault(x => x.Id == id);
 
             if (exhibit == null)
@@ -102,12 +114,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (timestamp != null && exhibit.Timestamp <= timestamp.Value)
                 return StatusCode(304);
 
-            var result = new ExhibitResult(exhibit);
+            var result = new ExhibitResult(exhibit)
+            {
+                Timestamp = _referencesIndex.LastModificationCascading(ResourceType.Exhibit, id)
+            };
+
             return Ok(result);
         }
 
         [HttpPost]
         [ProducesResponseType(typeof(int), 201)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(400)]
         public async Task<IActionResult> PostAsync([FromBody]ExhibitArgs args)
         {
@@ -116,26 +133,30 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            // validation passed, emit events (create exhibit, add references to image and tags)
+            if (!UserPermissions.IsAllowedToCreate(User.Identity, args.Status))
+                return Forbid();
+
+            // validation passed, emit event
             var ev = new ExhibitCreated
             {
                 Id = _entityIndex.NextId(ResourceType.Exhibit),
+                UserId = User.Identity.GetUserIdentity(),
                 Properties = args,
                 Timestamp = DateTimeOffset.Now
             };
 
             await _eventStore.AppendEventAsync(ev);
-            await AddExhibitReferencesAsync(args, ev.Id);
             return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/{ev.Id}", ev.Id);
         }
 
         [HttpPut("{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> PutAsync(int id, [FromBody]ExhibitUpdateArgs args)
+        public async Task<IActionResult> PutAsync(int id, [FromBody]ExhibitArgs args)
         {
-            ValidateExhibitArgs(args, id);
+            ValidateExhibitArgs(args);
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -143,23 +164,26 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.Exhibit, id))
                 return NotFound();
 
-            // validation passed, emit events (remove old references, update exhibit, add new references)
+            if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, _entityIndex.Owner(ResourceType.Exhibit, id)))
+                return Forbid();
+
+            // validation passed, emit event
             var ev = new ExhibitUpdated
             {
                 Id = id,
+                UserId = User.Identity.GetUserIdentity(),
                 Properties = args,
                 Timestamp = DateTimeOffset.Now
             };
 
-            await RemoveExhibitReferencesAsync(ev.Id);
             await _eventStore.AppendEventAsync(ev);
-            await AddExhibitReferencesAsync(args, ev.Id);
             return StatusCode(204);
         }
 
         [HttpDelete("{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public async Task<IActionResult> DeleteAsync(int id)
         {
@@ -169,90 +193,122 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.Exhibit, id))
                 return NotFound();
 
+            var status = _entityIndex.Status(ResourceType.Exhibit, id).GetValueOrDefault();
+            if (!UserPermissions.IsAllowedToDelete(User.Identity, status, _entityIndex.Owner(ResourceType.Exhibit, id)))
+                return Forbid();
+
             // check if exhibit is in use and can't be deleted (it's in use if and only if it is contained in a route).
             if (_referencesIndex.IsUsed(ResourceType.Exhibit, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
 
-            // pages should be deleted along with the exhibit (cascading deletion) => first, remove the pages
-            var pageIds = _exhibitPageIndex.PageIds(id);
-
-            foreach (var pageId in pageIds)
+            // remove the exhibit
+            var ev = new ExhibitDeleted
             {
-                if (_referencesIndex.IsUsed(ResourceType.ExhibitPage, pageId))
-                    return BadRequest("The exhibit cannot be deleted because it contains pages that are referenced by other resources");
+                Id = id,
+                UserId = User.Identity.GetUserIdentity(),
+                Timestamp = DateTimeOffset.Now
+            };
 
-                var pageDeleteEvents = ExhibitPageCommands.Delete(pageId, _referencesIndex, _exhibitPageIndex);
-                await _eventStore.AppendEventsAsync(pageDeleteEvents);
-            }
-
-            // now remove the actual exhibit
-            var ev = new ExhibitDeleted { Id = id };
             await _eventStore.AppendEventAsync(ev);
-            await RemoveExhibitReferencesAsync(id);
-
             return NoContent();
         }
 
+        [HttpGet("{id}/Refs")]
+        [ProducesResponseType(typeof(ReferenceInfoResult), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public IActionResult GetReferenceInfo(int id)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!UserPermissions.IsAllowedToGet(User.Identity, _entityIndex.Owner(ResourceType.Exhibit, id)))
+                return Forbid();
+
+            return ReferenceInfoHelper.GetReferenceInfo(ResourceType.Exhibit, id, _entityIndex, _referencesIndex);
+        }
+
+        [HttpGet("Rating/{id}")]
+        [ProducesResponseType(typeof(RatingResult), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public IActionResult GetRating(int id)
+        {
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!_entityIndex.Exists(ResourceType.Exhibit, id))
+                return NotFound(ErrorMessages.ExhibitNotFound(id));
+
+            var result = new RatingResult()
+            {
+                Id = id,
+                Average = _ratingIndex.Average(ResourceType.Exhibit, id),
+                Count = _ratingIndex.Count(ResourceType.Exhibit, id)
+            };
+
+            return Ok(result);
+        }
+
+        [HttpPost("Rating/{id}")]
+        [ProducesResponseType(typeof(int), 201)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> PostRatingAsync(int id, RatingArgs args)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!_entityIndex.Exists(ResourceType.Exhibit, id))
+                return NotFound(ErrorMessages.ExhibitNotFound(id));
+
+            var ev = new RatingAdded()
+            {
+                Id = _ratingIndex.NextId(ResourceType.Exhibit),
+                EntityId = id,
+                UserId = User.Identity.GetUserIdentity(),
+                Value = args.Rating.GetValueOrDefault(),
+                RatedType = ResourceType.Exhibit,
+                Timestamp = DateTimeOffset.Now
+            };
+
+            await _eventStore.AppendEventAsync(ev);
+            return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Rating/{ev.Id}", ev.Id);
+        }
 
         private void ValidateExhibitArgs(ExhibitArgs args)
         {
             if (args == null)
                 return;
 
-            // ensure referenced image exists and is published
-            if (args.Image != null && !_mediaIndex.IsPublishedImage(args.Image.Value))
+            // ensure referenced image exists
+            if (args.Image != null && !_mediaIndex.IsImage(args.Image.Value))
                 ModelState.AddModelError(nameof(args.Image),
-                    ErrorMessages.ImageNotFoundOrNotPublished(args.Image.Value));
+                    ErrorMessages.ImageNotFound(args.Image.Value));
 
-            // ensure referenced tags exist and are published
+            // ensure referenced tags exist
             if (args.Tags != null)
             {
                 var invalidIds = args.Tags
-                    .Where(id => _entityIndex.Status(ResourceType.Tag, id) != ContentStatus.Published)
+                    .Where(id => !_entityIndex.Exists(ResourceType.Tag, id))
                     .ToList();
 
                 foreach (var id in invalidIds)
                     ModelState.AddModelError(nameof(args.Tags),
-                        ErrorMessages.TagNotFoundOrNotPublished(id));
-            }
-        }
-
-        private void ValidateExhibitArgs(ExhibitUpdateArgs args, int exhibitId)
-        {
-            ValidateExhibitArgs(args);
-
-            // check if pages contains exactly the same elements as expected
-            var actualPages = _exhibitPageIndex.PageIds(exhibitId);
-            var givenPages = args.Pages?.OrderBy(id => id) ?? Enumerable.Empty<int>();
-
-            if (!givenPages.SequenceEqual(actualPages))
-            {
-                ModelState.AddModelError(nameof(args.Pages),
-                    ErrorMessages.ExhibitPageOnlyReorderAllowed);
-            }
-        }
-
-        private async Task AddExhibitReferencesAsync(ExhibitArgs args, int exhibitId)
-        {
-            if (args.Image != null)
-            {
-                var imageRef = new ReferenceAdded(ResourceType.Exhibit, exhibitId, ResourceType.Media, args.Image.Value);
-                await _eventStore.AppendEventAsync(imageRef);
+                        ErrorMessages.TagNotFound(id));
             }
 
-            foreach (var tagId in args.Tags ?? Enumerable.Empty<int>())
+            // ensure referenced pages exist
+            if (args.Pages != null)
             {
-                var tagRef = new ReferenceAdded(ResourceType.Exhibit, exhibitId, ResourceType.Tag, tagId);
-                await _eventStore.AppendEventAsync(tagRef);
-            }
-        }
-        
-        private async Task RemoveExhibitReferencesAsync(int exhibitId)
-        {
-            foreach (var reference in _referencesIndex.ReferencesOf(ResourceType.Exhibit, exhibitId))
-            {
-                var refRemoved = new ReferenceRemoved(ResourceType.Exhibit, exhibitId, reference.Type, reference.Id);
-                await _eventStore.AppendEventAsync(refRemoved);
+                var invalidIds = args.Pages
+                    .Where(id => !_entityIndex.Exists(ResourceType.ExhibitPage, id))
+                    .ToList();
+
+                foreach (var id in invalidIds)
+                    ModelState.AddModelError(nameof(args.Pages),
+                        ErrorMessages.ExhibitPageNotFound(id));
             }
         }
     }

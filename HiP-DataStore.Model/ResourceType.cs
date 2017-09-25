@@ -3,13 +3,15 @@ using System;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model
 {
-    public struct ResourceType : IEquatable<ResourceType>
+    public class ResourceType : IEquatable<ResourceType>
     {
         public static readonly ResourceType Exhibit = new ResourceType("Exhibit");
         public static readonly ResourceType ExhibitPage = new ResourceType("ExhibitPage");
         public static readonly ResourceType Route = new ResourceType("Route");
         public static readonly ResourceType Media = new ResourceType("Media");
         public static readonly ResourceType Tag = new ResourceType("Tag");
+        public static readonly ResourceType ScoreRecord = new ResourceType("ScoreRecord");
+        public static readonly ResourceType Rating = new ResourceType("Rating");
 
         /// <summary>
         /// This name is used in two ways:
@@ -36,8 +38,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
 
         public bool Equals(ResourceType other) => Name == other.Name;
 
-        public static bool operator ==(ResourceType a, ResourceType b) => a.Equals(b);
+        public static bool operator ==(ResourceType a, ResourceType b) => a?.Equals(b) ?? b == null;
 
-        public static bool operator !=(ResourceType a, ResourceType b) => !a.Equals(b);
+        public static bool operator !=(ResourceType a, ResourceType b) => !(a == b);
     }
 }

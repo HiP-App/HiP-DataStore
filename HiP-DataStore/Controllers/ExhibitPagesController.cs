@@ -4,18 +4,22 @@ using MongoDB.Driver;
 using PaderbornUniversity.SILab.Hip.DataStore.Core;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
-using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel.Commands;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
+using PaderbornUniversity.SILab.Hip.EventSourcing;
+using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
+    [Authorize]
     [Route("api/Exhibits")]
     public class ExhibitPagesController : Controller
     {
@@ -31,15 +35,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             IOptions<ExhibitPagesConfig> exhibitPagesConfig,
             EventStoreClient eventStore,
             CacheDatabaseManager db,
-            IEnumerable<IDomainIndex> indices)
+            InMemoryCache cache)
         {
             _exhibitPagesConfig = exhibitPagesConfig;
             _eventStore = eventStore;
             _db = db;
-            _mediaIndex = indices.OfType<MediaIndex>().First();
-            _entityIndex = indices.OfType<EntityIndex>().First();
-            _referencesIndex = indices.OfType<ReferencesIndex>().First();
-            _exhibitPageIndex = indices.OfType<ExhibitPageIndex>().First();
+            _mediaIndex = cache.Index<MediaIndex>();
+            _entityIndex = cache.Index<EntityIndex>();
+            _referencesIndex = cache.Index<ReferencesIndex>();
+            _exhibitPageIndex = cache.Index<ExhibitPageIndex>();
         }
 
         [HttpGet("Pages/ids")]
@@ -49,9 +53,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            return Ok(_entityIndex.AllIds(ResourceType.ExhibitPage, status ?? ContentStatus.Published));
+            return Ok(_entityIndex.AllIds(ResourceType.ExhibitPage, status ?? ContentStatus.Published, User.Identity));
         }
 
+        /// <summary>
+        /// Gets all pages in no particular order, unless otherwise specified in the query arguments.
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
         [HttpGet("Pages")]
         [ProducesResponseType(typeof(AllItemsResult<ExhibitPageResult>), 200)]
         [ProducesResponseType(400)]
@@ -87,6 +96,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             var pageIds = exhibit.Pages
                 .LoadAll(_db.Database)
+                .Where(x => x.UserId == User.Identity.GetUserIdentity())
                 .Where(p => status == ContentStatus.All || p.Status == status)
                 .Select(p => p.Id)
                 .ToList();
@@ -94,6 +104,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return Ok(pageIds);
         }
 
+        /// <summary>
+        /// Gets the pages of an exhibit in the correct order (as specified in the exhibit),
+        /// unless otherwise specified in the query arguments.
+        /// </summary>
         [HttpGet("{exhibitId}/Pages")]
         [ProducesResponseType(typeof(AllItemsResult<ExhibitPageResult>), 200)]
         [ProducesResponseType(400)]
@@ -112,7 +126,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (exhibit == null)
                 return NotFound();
-            
+
             var query = exhibit.Pages.LoadAll(_db.Database).AsQueryable();
 
             return QueryExhibitPages(query, args);
@@ -128,8 +142,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            var status = _entityIndex.Status(ResourceType.ExhibitPage, id) ?? ContentStatus.Published;
+            if (!UserPermissions.IsAllowedToGet(User.Identity, status, _entityIndex.Owner(ResourceType.ExhibitPage, id)))
+                return Forbid();
+
             var page = _db.Database.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name)
                 .AsQueryable()
+                .Where(x => x.UserId == User.Identity.GetUserIdentity())
                 .FirstOrDefault(x => x.Id == id);
 
             if (page == null)
@@ -138,39 +157,52 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (timestamp != null && page.Timestamp <= timestamp.Value)
                 return StatusCode(304);
 
-            var result = new ExhibitPageResult(page);
+            var result = new ExhibitPageResult(page)
+            {
+                Timestamp = _referencesIndex.LastModificationCascading(ResourceType.ExhibitPage, id)
+            };
+
             return Ok(result);
         }
 
-        [HttpPost("{exhibitId}/Pages")]
+        [HttpPost("Pages")]
         [ProducesResponseType(typeof(int), 201)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(400)]
-        [ProducesResponseType(404)]
-        public async Task<IActionResult> PostForExhibitAsync(int exhibitId, [FromBody]ExhibitPageArgs2 args)
+        public async Task<IActionResult> PostAsync([FromBody]ExhibitPageArgs2 args)
         {
             // if font family is not specified, fallback to the configured default font family
             if (args != null && args.FontFamily == null)
                 args.FontFamily = _exhibitPagesConfig.Value.DefaultFontFamily;
 
-            ExhibitPageCommands.ValidateExhibitPageArgs(args, ModelState.AddModelError, _entityIndex, _mediaIndex, _exhibitPagesConfig.Value);
+            ValidateExhibitPageArgs(args);
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!_entityIndex.Exists(ResourceType.Exhibit, exhibitId))
-                return NotFound();
+            // ReSharper disable once PossibleNullReferenceException (args == null is handled through ModelState.IsValid)
+            if (!UserPermissions.IsAllowedToCreate(User.Identity, args.Status))
+                return Forbid();
 
-            // validation passed, emit events (create page, add references to image(s) and additional info pages)
+            // validation passed, emit event
             var newPageId = _entityIndex.NextId(ResourceType.ExhibitPage);
-            var events = ExhibitPageCommands.Create(newPageId, exhibitId, args);
-            await _eventStore.AppendEventsAsync(events);
 
+            var ev = new ExhibitPageCreated3
+            {
+                Id = newPageId,
+                UserId = User.Identity.GetUserIdentity(),
+                Properties = args,
+                Timestamp = DateTimeOffset.Now
+            };
+
+            await _eventStore.AppendEventAsync(ev);
             return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Pages/{newPageId}", newPageId);
         }
 
         [HttpPut("Pages/{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [ProducesResponseType(422)]
         public async Task<IActionResult> PutAsync(int id, [FromBody]ExhibitPageArgs2 args)
@@ -179,13 +211,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (args != null && args.FontFamily == null)
                 args.FontFamily = _exhibitPagesConfig.Value.DefaultFontFamily;
 
-            ExhibitPageCommands.ValidateExhibitPageArgs(args, ModelState.AddModelError, _entityIndex, _mediaIndex, _exhibitPagesConfig.Value);
+            ValidateExhibitPageArgs(args);
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            
+
             if (!_entityIndex.Exists(ResourceType.ExhibitPage, id))
                 return NotFound();
+
+            // ReSharper disable once PossibleNullReferenceException (args == null is handled through ModelState.IsValid)
+            if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, _entityIndex.Owner(ResourceType.ExhibitPage, id)))
+                return Forbid();
 
             // ReSharper disable once PossibleInvalidOperationException (.Value is safe here since we know the entity exists)
             var currentPageType = _exhibitPageIndex.PageType(id).Value;
@@ -193,16 +229,23 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (currentPageType != args.Type)
                 return StatusCode(422, ErrorMessages.CannotChangeExhibitPageType(currentPageType, args.Type));
 
-            // validation passed, emit events (remove old references, update exhibit, add new references)
-            var events = ExhibitPageCommands.Update(id, args, _referencesIndex, _exhibitPageIndex);
-            await _eventStore.AppendEventsAsync(events);
+            // validation passed, emit event
+            var ev = new ExhibitPageUpdated3
+            {
+                Id = id,
+                UserId = User.Identity.GetUserIdentity(),
+                Properties = args,
+                Timestamp = DateTimeOffset.Now
+            };
 
+            await _eventStore.AppendEventAsync(ev);
             return StatusCode(204);
         }
 
         [HttpDelete("Pages/{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public async Task<IActionResult> DeleteAsync(int id)
         {
@@ -212,13 +255,37 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.ExhibitPage, id))
                 return NotFound();
 
+            var status = _entityIndex.Status(ResourceType.ExhibitPage, id).GetValueOrDefault();
+            if (!UserPermissions.IsAllowedToDelete(User.Identity, status, _entityIndex.Owner(ResourceType.ExhibitPage, id)))
+                return Forbid();
+
             if (_referencesIndex.IsUsed(ResourceType.ExhibitPage, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
 
-            var events = ExhibitPageCommands.Delete(id, _referencesIndex, _exhibitPageIndex);
-            await _eventStore.AppendEventsAsync(events);
+            var ev = new ExhibitPageDeleted2
+            {
+                Id = id,
+                UserId = User.Identity.GetUserIdentity(),
+                Timestamp = DateTimeOffset.Now
+            };
 
+            await _eventStore.AppendEventAsync(ev);
             return NoContent();
+        }
+
+        [HttpGet("Pages/{id}/Refs")]
+        [ProducesResponseType(typeof(ReferenceInfoResult), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public IActionResult GetReferenceInfo(int id)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!UserPermissions.IsAllowedToGet(User.Identity, _entityIndex.Owner(ResourceType.ExhibitPage, id)))
+                return Forbid();
+
+            return ReferenceInfoHelper.GetReferenceInfo(ResourceType.ExhibitPage, id, _entityIndex, _referencesIndex);
         }
 
 
@@ -228,17 +295,22 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             {
                 var pages = allPages
                     .FilterByIds(args.Exclude, args.IncludeOnly)
+                    .FilterByUser(args.Status,User.Identity)
                     .FilterByStatus(args.Status)
                     .FilterByTimestamp(args.Timestamp)
                     .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
                         x.Title.ToLower().Contains(args.Query.ToLower()) ||
                         x.Text.ToLower().Contains(args.Query.ToLower()) ||
                         x.Description.ToLower().Contains(args.Query.ToLower()))
+                    .FilterIf(args.Type != null, x => x.Type == args.Type)
                     .Sort(args.OrderBy,
                         ("id", x => x.Id),
                         ("title", x => x.Title),
                         ("timestamp", x => x.Timestamp))
-                    .PaginateAndSelect(args.Page, args.PageSize, x => new ExhibitPageResult(x));
+                    .PaginateAndSelect(args.Page, args.PageSize, x => new ExhibitPageResult(x)
+                    {
+                        Timestamp = _referencesIndex.LastModificationCascading(ResourceType.ExhibitPage, x.Id)
+                    });
 
                 return Ok(pages);
             }
@@ -246,6 +318,64 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             {
                 return StatusCode(422, e.Message);
             }
-        }   
+        }
+
+        private void ValidateExhibitPageArgs(ExhibitPageArgs2 args)
+        {
+            if (args == null)
+                return;
+
+            // constrain properties Image, Images and HideYearNumbers to their respective page types
+            if (args.Image != null && args.Type != PageType.Appetizer_Page && args.Type != PageType.Image_Page)
+                ModelState.AddModelError(nameof(args.Image),
+                    ErrorMessages.FieldNotAllowedForPageType(nameof(args.Image), args.Type));
+
+            if (args.Images != null && args.Type != PageType.Slider_Page)
+                ModelState.AddModelError(nameof(args.Images),
+                    ErrorMessages.FieldNotAllowedForPageType(nameof(args.Images), args.Type));
+
+            if (args.HideYearNumbers != null && args.Type != PageType.Slider_Page)
+                ModelState.AddModelError(nameof(args.HideYearNumbers),
+                    ErrorMessages.FieldNotAllowedForPageType(nameof(args.HideYearNumbers), args.Type));
+
+            // validate font family
+            if (!_exhibitPagesConfig.Value.IsFontFamilyValid(args.FontFamily))
+                ModelState.AddModelError(nameof(args.FontFamily), $"Font family must be null/unspecified (which defaults to {_exhibitPagesConfig.Value.DefaultFontFamily}) or one of the following: {string.Join(", ", _exhibitPagesConfig.Value.FontFamilies)}");
+
+            // ensure referenced image exists
+            if (args.Image != null && !_mediaIndex.IsImage(args.Image.Value))
+                ModelState.AddModelError(nameof(args.Image),
+                    ErrorMessages.ImageNotFound(args.Image.Value));
+
+            // ensure referenced audio exists
+            if (args.Audio != null && !_mediaIndex.IsAudio(args.Audio.Value))
+                ModelState.AddModelError(nameof(args.Audio),
+                    ErrorMessages.AudioNotFound(args.Audio.Value));
+
+            // ensure referenced slider page images exist
+            if (args.Images != null)
+            {
+                var invalidIds = args.Images
+                    .Select(img => img.Image)
+                    .Where(id => !_mediaIndex.IsImage(id))
+                    .ToList();
+
+                foreach (var id in invalidIds)
+                    ModelState.AddModelError(nameof(args.Images),
+                        ErrorMessages.ImageNotFound(id));
+            }
+
+            // ensure referenced additional info pages exist
+            if (args.AdditionalInformationPages != null)
+            {
+                var invalidIds = args.AdditionalInformationPages
+                    .Where(id => !_entityIndex.Exists(ResourceType.ExhibitPage, id))
+                    .ToList();
+
+                foreach (var id in invalidIds)
+                    ModelState.AddModelError(nameof(args.AdditionalInformationPages),
+                        ErrorMessages.ExhibitPageNotFound(id));
+            }
+        }
     }
 }

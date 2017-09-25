@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 {
@@ -13,5 +14,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 
         public ContentStatus Status { get; set; }
         
+        public IEnumerable<EntityId> GetReferences()
+        {
+            if (Image != null)
+                yield return (ResourceType.Media, Image.Value);
+        }
     }
 }

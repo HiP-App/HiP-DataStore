@@ -2,6 +2,7 @@
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
+using PaderbornUniversity.SILab.Hip.EventSourcing;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 {
@@ -13,25 +14,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
         private readonly Dictionary<int, MediaInfo> _media = new Dictionary<int, MediaInfo>();
         private readonly object _lockObject = new object();
 
-        public bool IsPublishedImage(int id)
-        {
-            lock (_lockObject)
-            {
-                return _media.TryGetValue(id, out var info) &&
-                info.Status == ContentStatus.Published &&
-                info.Type == MediaType.Image;
-            }
-        }
-
-        public bool IsPublishedAudio(int id)
-        {
-            lock (_lockObject)
-            {
-                return _media.TryGetValue(id, out var info) &&
-                info.Status == ContentStatus.Published &&
-                info.Type == MediaType.Audio;
-            }
-        }
         public MediaType? GetMediaType(int id)
         {
             lock (_lockObject)
@@ -55,7 +37,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
         {
             lock (_lockObject)
             {
-                return _media.ContainsKey(id) && _media[id].Type == MediaType.Image;
+                return _media.TryGetValue(id, out var info) && info.Type == MediaType.Image;
             }
         }
 
@@ -63,7 +45,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
         {
             lock (_lockObject)
             {
-                return _media.ContainsKey(id) && _media[id].Type == MediaType.Audio;
+                return _media.TryGetValue(id, out var info) && info.Type == MediaType.Audio;
             }
         }
 

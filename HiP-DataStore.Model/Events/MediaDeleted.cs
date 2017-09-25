@@ -1,9 +1,7 @@
 ﻿namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 {
-    public class MediaDeleted : IDeleteEvent
+    public class MediaDeleted : UserActivityBaseEvent, IDeleteEvent
     {
-        public int Id { get; set; }
-
-        public ResourceType GetEntityType() => ResourceType.Media;
+        public override ResourceType GetEntityType() => ResourceType.Media;
     }
 }

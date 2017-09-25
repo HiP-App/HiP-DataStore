@@ -11,8 +11,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
     {
         public int Id { get; set; }
 
-        public int? ExhibitId { get; set; }
-
         [JsonConverter(typeof(StringEnumConverter))]
         public PageType Type { get; set; }
 
@@ -23,6 +21,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         public string Description { get; set; }
 
         public string FontFamily { get; set; }
+
+        public string UserId { get; set; }
 
         public int? Audio { get; set; }
 
@@ -39,6 +39,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 
         public DateTimeOffset Timestamp { get; set; }
 
+        public bool Used { get; set; }
+
         public ExhibitPageResult()
         {
         }
@@ -46,16 +48,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         public ExhibitPageResult(ExhibitPage page)
         {
             Id = page.Id;
-            ExhibitId = (int)page.Exhibit.Id;
             Type = page.Type;
             Title = page.Title;
             Text = page.Text;
             Description = page.Description;
             FontFamily = page.FontFamily;
+            UserId = page.UserId;
             Audio = (int?)page.Audio.Id;
             AdditionalInformationPages = page.AdditionalInformationPages.Ids.Select(id => (int)id).ToList();
             Status = page.Status;
             Timestamp = page.Timestamp;
+            Used = page.Referencers.Count > 0; // a page is in use if it is referenced by an exhibit or page
 
             // properties only valid for certain page types:
 

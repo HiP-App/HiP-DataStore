@@ -1,8 +1,24 @@
 ﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using PaderbornUniversity.SILab.Hip.EventSourcing.Migrations;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 {
+    // Version info: As a consequence of a flat page hierarchy, pages no longer belong to exactly one exhibit
+    public class ExhibitPageUpdated3 : UserActivityBaseEvent, IUpdateEvent
+    {
+        public ExhibitPageArgs2 Properties { get; set; }
+
+        public override ResourceType GetEntityType() => ResourceType.ExhibitPage;
+
+        public ContentStatus GetStatus() => Properties.Status;
+
+        public IEnumerable<EntityId> GetReferences() => Properties?.GetReferences() ?? Enumerable.Empty<EntityId>();
+    }
+
+    [Obsolete]
     public class ExhibitPageUpdated2 : IUpdateEvent
     {
         public int Id { get; set; }
@@ -16,6 +32,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
         public ResourceType GetEntityType() => ResourceType.ExhibitPage;
 
         public ContentStatus GetStatus() => Properties.Status;
+
+        public IEnumerable<EntityId> GetReferences() => throw new NotSupportedException();
     }
 
     [Obsolete]
@@ -32,6 +50,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
         public ResourceType GetEntityType() => ResourceType.ExhibitPage;
 
         public ContentStatus GetStatus() => Properties.Status;
+
+        public IEnumerable<EntityId> GetReferences() => throw new NotSupportedException();
 
         public ExhibitPageUpdated2 Migrate() => new ExhibitPageUpdated2
         {

@@ -1,6 +1,7 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -22,10 +23,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
         public string Description { get; set; }
 
         public string FontFamily { get; set; }
-
-        [BsonElement]
-        public DocRef<Exhibit> Exhibit { get; private set; } =
-            new DocRef<Exhibit>(ResourceType.Exhibit.Name);
 
         [BsonElement]
         public DocRef<MediaElement> Audio { get; private set; } =

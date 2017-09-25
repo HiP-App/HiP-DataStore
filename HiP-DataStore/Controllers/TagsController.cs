@@ -1,44 +1,48 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using MongoDB.Driver;
 using PaderbornUniversity.SILab.Hip.DataStore.Core;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using PaderbornUniversity.SILab.Hip.EventSourcing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using MongoDB.Driver;
 using Tag = PaderbornUniversity.SILab.Hip.DataStore.Model.Entity.Tag;
-using PaderbornUniversity.SILab.Hip.DataStore.Model;
+using Microsoft.AspNetCore.Authorization;
+using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     public class TagsController : Controller
     {
-        private readonly EventStoreClient _ev;
+        private readonly EventStoreClient _eventStore;
         private readonly CacheDatabaseManager _db;
         private readonly EntityIndex _entityIndex;
         private readonly MediaIndex _mediaIndex;
         private readonly TagIndex _tagIndex;
         private readonly ReferencesIndex _referencesIndex;
 
-        public TagsController(EventStoreClient eventStore, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices)
+        public TagsController(EventStoreClient eventStore, CacheDatabaseManager db, InMemoryCache cache)
         {
-            _ev = eventStore;
+            _eventStore = eventStore;
             _db = db;
-            _entityIndex = indices.OfType<EntityIndex>().First();
-            _mediaIndex = indices.OfType<MediaIndex>().First();
-            _tagIndex = indices.OfType<TagIndex>().First();
-            _referencesIndex = indices.OfType<ReferencesIndex>().First();
+            _entityIndex = cache.Index<EntityIndex>();
+            _mediaIndex = cache.Index<MediaIndex>();
+            _tagIndex = cache.Index<TagIndex>();
+            _referencesIndex = cache.Index<ReferencesIndex>();
         }
 
         [HttpGet("ids")]
         [ProducesResponseType(typeof(IReadOnlyCollection<int>), 200)]
         public IActionResult GetIds(ContentStatus? status)
         {
-            return Ok(_entityIndex.AllIds(ResourceType.Tag, status ?? ContentStatus.Published));
+            return Ok(_entityIndex.AllIds(ResourceType.Tag, status ?? ContentStatus.Published, User.Identity));
         }
 
         [HttpGet]
@@ -55,6 +59,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             {
                 var tags = query
                     .FilterByIds(args.Exclude, args.IncludeOnly)
+                    .FilterByUser(args.Status, User.Identity)
                     .FilterByStatus(args.Status)
                     .FilterByTimestamp(args.Timestamp)
                     .FilterByUsage(args.Used)
@@ -65,7 +70,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                         ("id", x => x.Id),
                         ("title", x => x.Title),
                         ("timestamp", x => x.Timestamp))
-                    .PaginateAndSelect(args.Page, args.PageSize, x => TagResult.ConvertFromTag(x));
+                    .PaginateAndSelect(args.Page, args.PageSize, x => new TagResult(x)
+                    {
+                        Timestamp = _referencesIndex.LastModificationCascading(ResourceType.Tag, x.Id)
+                    });
 
 
                 return Ok(tags);
@@ -87,9 +95,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var query = _db.Database.GetCollection<Tag>(ResourceType.Tag.Name).AsQueryable();
+            var status = _entityIndex.Status(ResourceType.Tag, id) ?? ContentStatus.Published;
+            if (!UserPermissions.IsAllowedToGet(User.Identity, status, _entityIndex.Owner(ResourceType.Tag, id)))
+                return Forbid();
 
-            var tag = query.FirstOrDefault(x => x.Id == id);
+            var tag = _db.Database.GetCollection<Tag>(ResourceType.Tag.Name)
+                .AsQueryable()
+                .Where(x => x.UserId == User.Identity.GetUserIdentity())
+                .FirstOrDefault(x => x.Id == id);
 
             if (tag == null)
                 return NotFound();
@@ -97,15 +110,19 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (timestamp != null && tag.Timestamp <= timestamp.Value)
                 return StatusCode(304);
 
-            var tagResult = TagResult.ConvertFromTag(tag);
+            var tagResult = new TagResult(tag)
+            {
+                Timestamp = _referencesIndex.LastModificationCascading(ResourceType.Tag, id)
+            };
 
             return Ok(tagResult);
 
         }
 
         [HttpPost]
-        [ProducesResponseType(typeof(int), 200)]
+        [ProducesResponseType(typeof(int), 201)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(409)]
         public async Task<IActionResult> PostAsync([FromBody]TagArgs args)
         {
@@ -114,35 +131,34 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            if (!UserPermissions.IsAllowedToCreate(User.Identity, args.Status))
+                return Forbid();
+
             if (_tagIndex.IsTitleExist(args.Title))
                 return StatusCode(409);
 
             int id = _entityIndex.NextId(ResourceType.Tag);
+
             var ev = new TagCreated
             {
                 Id = id,
+                UserId = User.Identity.GetUserIdentity(),
                 Properties = args,
                 Timestamp = DateTimeOffset.Now
             };
 
-            await _ev.AppendEventAsync(ev);
-
-            if (args.Image != null)
-            {
-                var newRef = new ReferenceAdded(ResourceType.Tag, id, ResourceType.Media, args.Image.Value);
-                await _ev.AppendEventAsync(newRef);
-            }
-
-            return Ok(id);
+            await _eventStore.AppendEventAsync(ev);
+            return Created($"{Request.Scheme}://{Request.Host}/api/Tags/{id}", id);
 
         }
 
         [HttpPut("{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [ProducesResponseType(409)]
-        public async Task<IActionResult> UpdateById(int id, [FromBody]TagArgs args)
+        public async Task<IActionResult> UpdateByIdAsync(int id, [FromBody]TagArgs args)
         {
             ValidateTagArgs(args);
 
@@ -151,6 +167,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (!_entityIndex.Exists(ResourceType.Tag, id))
                 return NotFound();
+
+            if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, _entityIndex.Owner(ResourceType.Tag, id)))
+                return Forbid();
 
             var tagIdWithSameTitle = _tagIndex.GetIdByTagTitle(args.Title);
 
@@ -160,34 +179,21 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             var ev = new TagUpdated
             {
                 Id = id,
+                UserId = User.Identity.GetUserIdentity(),
                 Properties = args,
                 Timestamp = DateTimeOffset.Now,
             };
 
-            await _ev.AppendEventAsync(ev);
-
-            var oldReferences = _referencesIndex.ReferencesOf(ResourceType.Tag, ev.Id).Where(x => x.Type == ResourceType.Media);
-            if (oldReferences.Count() > 0)
-            {
-                var oldRef = oldReferences.FirstOrDefault();
-                var oldRefEvent = new ReferenceRemoved(ResourceType.Tag, ev.Id, oldRef.Type, oldRef.Id);
-                await _ev.AppendEventAsync(oldRefEvent);
-            }
-
-            if (args.Image != null)
-            {
-                var newRefEvent = new ReferenceAdded(ResourceType.Tag, id, ResourceType.Media, args.Image.Value);
-                await _ev.AppendEventAsync(newRefEvent);
-            }
-
+            await _eventStore.AppendEventAsync(ev);
             return NoContent();
         }
 
         [HttpDelete("{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> DeleteById(int id)
+        public async Task<IActionResult> DeleteByIdAsync(int id)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -195,21 +201,37 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.Tag, id))
                 return NotFound();
 
+            var status = _entityIndex.Status(ResourceType.Tag, id).GetValueOrDefault();
+            if (!UserPermissions.IsAllowedToDelete(User.Identity, status, _entityIndex.Owner(ResourceType.Tag, id)))
+                return Forbid();
+
             if (_referencesIndex.IsUsed(ResourceType.Tag, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
 
-
-            var ev = new TagDeleted { Id = id };
-            await _ev.AppendEventAsync(ev);
-
-            //Remove references
-            foreach (var reference in _referencesIndex.ReferencesOf(ResourceType.Tag, id))
+            var ev = new TagDeleted
             {
-                var refRemoved = new ReferenceRemoved(ResourceType.Tag, id, reference.Type, reference.Id);
-                await _ev.AppendEventAsync(refRemoved);
-            }
+                Id = id,
+                UserId = User.Identity.GetUserIdentity(),
+                Timestamp = DateTimeOffset.Now
+            };
 
+            await _eventStore.AppendEventAsync(ev);
             return NoContent();
+        }
+
+        [HttpGet("{id}/Refs")]
+        [ProducesResponseType(typeof(ReferenceInfoResult), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public IActionResult GetReferenceInfo(int id)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!UserPermissions.IsAllowedToGet(User.Identity, _entityIndex.Owner(ResourceType.Tag, id)))
+                return Forbid();
+
+            return ReferenceInfoHelper.GetReferenceInfo(ResourceType.Tag, id, _entityIndex, _referencesIndex);
         }
 
 
@@ -218,9 +240,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (args == null)
                 return;
 
-            if (args.Image != null && !_mediaIndex.IsPublishedImage(args.Image.Value))
+            // ensure referenced image exists
+            if (args.Image != null && !_mediaIndex.IsImage(args.Image.Value))
                 ModelState.AddModelError(nameof(args.Image),
-                    ErrorMessages.ImageNotFoundOrNotPublished(args.Image.Value));
+                    ErrorMessages.ImageNotFound(args.Image.Value));
         }
     }
 

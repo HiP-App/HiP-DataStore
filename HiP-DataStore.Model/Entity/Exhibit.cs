@@ -1,6 +1,7 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
 using System.Linq;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
@@ -23,10 +24,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
         public DocRefList<Tag> Tags { get; private set; } =
             new DocRefList<Tag>(ResourceType.Tag.Name);
 
-        /// <remarks>
-        /// This property and the references from pages to exhibit should always be in sync.
-        /// Thus, when pages are created/deleted for a specific exhibit, that exhibit's Pages property must be updated.
-        /// </remarks>
         [BsonElement]
         public DocRefList<ExhibitPage> Pages { get; private set; } =
             new DocRefList<ExhibitPage>(ResourceType.ExhibitPage.Name);
@@ -44,10 +41,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
             Longitude = args.Longitude;
             Status = args.Status;
             Tags.Add(args.Tags?.Select(id => (BsonValue)id));
-        }
-
-        public Exhibit(ExhibitUpdateArgs args) : this((ExhibitArgs)args)
-        {
             Pages.Add(args.Pages?.Select(id => (BsonValue)id));
         }
     }

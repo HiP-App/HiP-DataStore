@@ -7,13 +7,17 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using PaderbornUniversity.SILab.Hip.EventSourcing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     public class RoutesController : Controller
     {
@@ -36,7 +40,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(typeof(IReadOnlyCollection<int>), 200)]
         public IActionResult GetIds(ContentStatus? status)
         {
-            return Ok(_entityIndex.AllIds(ResourceType.Route, status ?? ContentStatus.Published));
+            return Ok(_entityIndex.AllIds(ResourceType.Route, status ?? ContentStatus.Published, User.Identity));
         }
 
         [HttpGet]
@@ -55,6 +59,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             {
                 var routes = query
                     .FilterByIds(args.Exclude, args.IncludeOnly)
+                    .FilterByUser(args.Status, User.Identity)
                     .FilterByStatus(args.Status)
                     .FilterByTimestamp(args.Timestamp)
                     .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
@@ -64,7 +69,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                         ("id", x => x.Id),
                         ("title", x => x.Title),
                         ("timestamp", x => x.Timestamp))
-                    .PaginateAndSelect(args.Page, args.PageSize, x => new RouteResult(x));
+                    .PaginateAndSelect(args.Page, args.PageSize, x => new RouteResult(x)
+                    {
+                        Timestamp = _referencesIndex.LastModificationCascading(ResourceType.Route, x.Id)
+                    });
 
                 return Ok(routes);
             }
@@ -84,8 +92,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            var status = _entityIndex.Status(ResourceType.Route, id) ?? ContentStatus.Published;
+            if (!UserPermissions.IsAllowedToGet(User.Identity, status, _entityIndex.Owner(ResourceType.Route, id)))
+                return Forbid();
+
             var route = _db.Database.GetCollection<Route>(ResourceType.Route.Name)
                 .AsQueryable()
+                .Where(x => x.UserId == User.Identity.GetUserIdentity())
                 .FirstOrDefault(x => x.Id == id);
 
             if (route == null)
@@ -95,12 +108,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (timestamp != null && route.Timestamp <= timestamp.Value)
                 return StatusCode(304);
 
-            var result = new RouteResult(route);
+            var result = new RouteResult(route)
+            {
+                Timestamp = _referencesIndex.LastModificationCascading(ResourceType.Route, id)
+            };
+
             return Ok(result);
         }
 
         [HttpPost]
         [ProducesResponseType(typeof(int), 201)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(400)]
         public async Task<IActionResult> PostAsync([FromBody]RouteArgs args)
         {
@@ -109,22 +127,26 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            // validation passed, emit events (create route, add references to image, audio, exhibits and tags)
+            if (!UserPermissions.IsAllowedToCreate(User.Identity, args.Status))
+                return Forbid();
+
+            // validation passed, emit event
             var ev = new RouteCreated
             {
                 Id = _entityIndex.NextId(ResourceType.Route),
+                UserId = User.Identity.GetUserIdentity(),
                 Properties = args,
                 Timestamp = DateTimeOffset.Now
             };
 
             await _eventStore.AppendEventAsync(ev);
-            await AddRouteReferencesAsync(args, ev.Id);
             return Created($"{Request.Scheme}://{Request.Host}/api/Routes/{ev.Id}", ev.Id);
         }
 
         [HttpPut("{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public async Task<IActionResult> PutAsync(int id, [FromBody]RouteArgs args)
         {
@@ -135,24 +157,27 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (!_entityIndex.Exists(ResourceType.Route, id))
                 return NotFound();
+            
+            if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, _entityIndex.Owner(ResourceType.Route, id)))
+                return Forbid();
 
-            // validation passed, emit events (remove old references, update route, add new references)
+            // validation passed, emit event
             var ev = new RouteUpdated
             {
                 Id = id,
+                UserId = User.Identity.GetUserIdentity(),
                 Properties = args,
                 Timestamp = DateTimeOffset.Now,
             };
 
-            await RemoveRouteReferencesAsync(ev.Id);
             await _eventStore.AppendEventAsync(ev);
-            await AddRouteReferencesAsync(args, ev.Id);
             return StatusCode(204);
         }
 
         [HttpDelete("{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public async Task<IActionResult> DeleteAsync(int id)
         {
@@ -162,14 +187,38 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.Route, id))
                 return NotFound();
 
+            var status = _entityIndex.Status(ResourceType.Route, id).GetValueOrDefault();
+            if (!UserPermissions.IsAllowedToDelete(User.Identity, status, _entityIndex.Owner(ResourceType.Route, id)))
+                return Forbid();
+
             if (_referencesIndex.IsUsed(ResourceType.Route, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
 
-            // validation passed, emit events (delete route, remove references to image, audio, exhibits and tags)
-            var ev = new RouteDeleted { Id = id };
+            // validation passed, emit event
+            var ev = new RouteDeleted
+            {
+                Id = id,
+                UserId = User.Identity.GetUserIdentity(),
+                Timestamp = DateTimeOffset.Now
+            };
+
             await _eventStore.AppendEventAsync(ev);
-            await RemoveRouteReferencesAsync(id);
             return NoContent();
+        }
+
+        [HttpGet("{id}/Refs")]
+        [ProducesResponseType(typeof(ReferenceInfoResult), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public IActionResult GetReferenceInfo(int id)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!UserPermissions.IsAllowedToGet(User.Identity, _entityIndex.Owner(ResourceType.Route, id)))
+                return Forbid();
+
+            return ReferenceInfoHelper.GetReferenceInfo(ResourceType.Route, id, _entityIndex, _referencesIndex);
         }
 
 
@@ -178,74 +227,38 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (args == null)
                 return;
 
-            // ensure referenced image exists and is published
-            if (args.Image != null && !_mediaIndex.IsPublishedImage(args.Image.Value))
+            // ensure referenced image exists
+            if (args.Image != null && !_mediaIndex.IsImage(args.Image.Value))
                 ModelState.AddModelError(nameof(args.Image),
-                    ErrorMessages.ImageNotFoundOrNotPublished(args.Image.Value));
+                    ErrorMessages.ImageNotFound(args.Image.Value));
 
-            // ensure referenced audio exists and is published
-            if (args.Audio != null && !_mediaIndex.IsPublishedAudio(args.Audio.Value))
+            // ensure referenced audio exists
+            if (args.Audio != null && !_mediaIndex.IsAudio(args.Audio.Value))
                 ModelState.AddModelError(nameof(args.Audio),
-                    ErrorMessages.AudioNotFoundOrNotPublished(args.Audio.Value));
+                    ErrorMessages.AudioNotFound(args.Audio.Value));
 
-            // ensure referenced exhibits exist and are published
+            // ensure referenced exhibits exist
             if (args.Exhibits != null)
             {
                 var invalidIds = args.Exhibits
-                    .Where(id => _entityIndex.Status(ResourceType.Exhibit, id) != ContentStatus.Published)
+                    .Where(id => !_entityIndex.Exists(ResourceType.Exhibit, id))
                     .ToList();
 
                 foreach (var id in invalidIds)
                     ModelState.AddModelError(nameof(args.Exhibits),
-                        ErrorMessages.ExhibitNotFoundOrNotPublished(id));
+                        ErrorMessages.ExhibitNotFound(id));
             }
 
-            // ensure referenced tags exist and are published
+            // ensure referenced tags exist
             if (args.Tags != null)
             {
                 var invalidIds = args.Tags
-                    .Where(id => _entityIndex.Status(ResourceType.Tag, id) != ContentStatus.Published)
+                    .Where(id => !_entityIndex.Exists(ResourceType.Tag, id))
                     .ToList();
 
                 foreach (var id in invalidIds)
                     ModelState.AddModelError(nameof(args.Tags),
-                        ErrorMessages.TagNotFoundOrNotPublished(id));
-            }
-        }
-
-        private async Task AddRouteReferencesAsync(RouteArgs args, int routeId)
-        {
-            if (args.Image != null)
-            {
-                var imageRef = new ReferenceAdded(ResourceType.Route, routeId, ResourceType.Media, args.Image.Value);
-                await _eventStore.AppendEventAsync(imageRef);
-            }
-
-            if (args.Audio != null)
-            {
-                var audioRef = new ReferenceAdded(ResourceType.Route, routeId, ResourceType.Media, args.Audio.Value);
-                await _eventStore.AppendEventAsync(audioRef);
-            }
-
-            foreach (var exhibitId in args.Exhibits ?? Enumerable.Empty<int>())
-            {
-                var exhibitRef = new ReferenceAdded(ResourceType.Route, routeId, ResourceType.Exhibit, exhibitId);
-                await _eventStore.AppendEventAsync(exhibitRef);
-            }
-
-            foreach (var tagId in args.Tags ?? Enumerable.Empty<int>())
-            {
-                var tagRef = new ReferenceAdded(ResourceType.Route, routeId, ResourceType.Tag, tagId);
-                await _eventStore.AppendEventAsync(tagRef);
-            }
-        }
-
-        private async Task RemoveRouteReferencesAsync(int routeId)
-        {
-            foreach (var reference in _referencesIndex.ReferencesOf(ResourceType.Route, routeId))
-            {
-                var refRemoved = new ReferenceRemoved(ResourceType.Route, routeId, reference.Type, reference.Id);
-                await _eventStore.AppendEventAsync(refRemoved);
+                        ErrorMessages.TagNotFound(id));
             }
         }
     }

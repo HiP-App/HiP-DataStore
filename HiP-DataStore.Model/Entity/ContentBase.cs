@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
+using System;
 using System.Collections.Generic;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
@@ -8,7 +9,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
     /// </summary>
     public abstract class ContentBase : IEntity<int>
     {
+        /// <summary>
+        /// Owner of the content
+        /// </summary>
+        public string UserId { get; set; }
+
         public ContentStatus Status { get; set; }
+
+        /// <summary>
+        /// Other entities that are referenced by this entity.
+        /// </summary>
+        public List<DocRef<ContentBase>> References { get; private set; } = new List<DocRef<ContentBase>>();
 
         /// <summary>
         /// Other entities referencing this entity.
@@ -21,7 +32,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
         /// - A media file is in use if it is referenced by a route, an exhibit, an exhibit page or a tag.
         /// - A tag is is use if it is referenced by a route or an exhibit.
         /// </remarks>
-        public List<DocRef<ContentBase>> Referencees { get; private set; } = new List<DocRef<ContentBase>>();
+        public List<DocRef<ContentBase>> Referencers { get; private set; } = new List<DocRef<ContentBase>>();
 
         /// <summary>
         /// The date and time of the last modification.
