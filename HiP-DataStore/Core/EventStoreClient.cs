@@ -58,7 +58,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
             logger.LogInformation($"Connected to Event Store on '{uri.Host}', using stream '{_streamName}'");
 
             // Update stream to the latest version
-            var migrationResult = StreamMigrator.MigrateAsync(_store, _streamName).Result;
+            var thisAssembly = typeof(Startup).Assembly;
+            var migrationResult = StreamMigrator.MigrateAsync(_store, _streamName, thisAssembly).Result;
             if (migrationResult.fromVersion != migrationResult.toVersion)
                 logger.LogInformation($"Migrated stream '{_streamName}' from version '{migrationResult.fromVersion}' to version '{migrationResult.toVersion}'");
 
