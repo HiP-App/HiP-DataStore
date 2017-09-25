@@ -37,6 +37,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
                         });
 
                         var exhibit = exhibits[pageCreated.ExhibitId];
+                        if (exhibit.Pages == null)
+                            exhibit.Pages = new List<int>();
                         exhibit.Pages.Add(pageCreated.Id);
 
                         e.AppendEvent(new ExhibitUpdated
