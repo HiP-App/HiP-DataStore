@@ -7,6 +7,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using PaderbornUniversity.SILab.Hip.EventSourcing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -139,7 +140,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 Properties = args,
                 Timestamp = DateTimeOffset.Now
             };
-            
+
             await _eventStore.AppendEventAsync(ev);
             return Created($"{Request.Scheme}://{Request.Host}/api/Routes/{ev.Id}", ev.Id);
         }
@@ -202,6 +203,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 UserId = User.Identity.GetUserIdentity(),
                 Timestamp = DateTimeOffset.Now
             };
+
             await _eventStore.AppendEventAsync(ev);
             return NoContent();
         }

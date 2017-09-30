@@ -8,6 +8,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using PaderbornUniversity.SILab.Hip.EventSourcing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,14 +29,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly ReferencesIndex _referencesIndex;
         private readonly RatingIndex _ratingIndex;
 
-        public ExhibitsController(EventStoreClient eventStore, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices)
+        public ExhibitsController(EventStoreClient eventStore, CacheDatabaseManager db, InMemoryCache cache)
         {
             _eventStore = eventStore;
             _db = db;
-            _mediaIndex = indices.OfType<MediaIndex>().First();
-            _entityIndex = indices.OfType<EntityIndex>().First();
-            _referencesIndex = indices.OfType<ReferencesIndex>().First();
-            _ratingIndex = indices.OfType<RatingIndex>().First();
+            _mediaIndex = cache.Index<MediaIndex>();
+            _entityIndex = cache.Index<EntityIndex>();
+            _referencesIndex = cache.Index<ReferencesIndex>();
+            _ratingIndex = cache.Index<RatingIndex>();
         }
 
         [HttpGet("ids")]
@@ -174,7 +175,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 Properties = args,
                 Timestamp = DateTimeOffset.Now
             };
-            
+
             await _eventStore.AppendEventAsync(ev);
             return StatusCode(204);
         }
@@ -207,6 +208,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 UserId = User.Identity.GetUserIdentity(),
                 Timestamp = DateTimeOffset.Now
             };
+
             await _eventStore.AppendEventAsync(ev);
             return NoContent();
         }
@@ -230,7 +232,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(typeof(RatingResult), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public IActionResult GetRating(int id) {
+        public IActionResult GetRating(int id)
+        {
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -249,10 +252,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         }
 
         [HttpPost("Rating/{id}")]
-        [ProducesResponseType(typeof(int),201)]
+        [ProducesResponseType(typeof(int), 201)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> PostRatingAsync(int id,RatingArgs args)
+        public async Task<IActionResult> PostRatingAsync(int id, RatingArgs args)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -294,6 +297,18 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 foreach (var id in invalidIds)
                     ModelState.AddModelError(nameof(args.Tags),
                         ErrorMessages.ContentNotFound(ResourceType.Tag,id));
+            }
+
+            // ensure referenced pages exist
+            if (args.Pages != null)
+            {
+                var invalidIds = args.Pages
+                    .Where(id => !_entityIndex.Exists(ResourceType.ExhibitPage, id))
+                    .ToList();
+
+                foreach (var id in invalidIds)
+                    ModelState.AddModelError(nameof(args.Pages),
+                        ErrorMessages.ExhibitPageNotFound(id));
             }
         }
     }
