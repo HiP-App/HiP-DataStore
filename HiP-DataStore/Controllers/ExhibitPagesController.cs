@@ -9,6 +9,8 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
+using PaderbornUniversity.SILab.Hip.EventSourcing;
+using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,15 +35,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             IOptions<ExhibitPagesConfig> exhibitPagesConfig,
             EventStoreClient eventStore,
             CacheDatabaseManager db,
-            IEnumerable<IDomainIndex> indices)
+            InMemoryCache cache)
         {
             _exhibitPagesConfig = exhibitPagesConfig;
             _eventStore = eventStore;
             _db = db;
-            _mediaIndex = indices.OfType<MediaIndex>().First();
-            _entityIndex = indices.OfType<EntityIndex>().First();
-            _referencesIndex = indices.OfType<ReferencesIndex>().First();
-            _exhibitPageIndex = indices.OfType<ExhibitPageIndex>().First();
+            _mediaIndex = cache.Index<MediaIndex>();
+            _entityIndex = cache.Index<EntityIndex>();
+            _referencesIndex = cache.Index<ReferencesIndex>();
+            _exhibitPageIndex = cache.Index<ExhibitPageIndex>();
         }
 
         [HttpGet("Pages/ids")]
@@ -137,7 +139,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (exhibit == null)
                 return NotFound();
-            
+
             var query = exhibit.Pages.LoadAll(_db.Database).AsQueryable();
 
             return QueryExhibitPages(query, args);
@@ -198,7 +200,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             // validation passed, emit event
             var newPageId = _entityIndex.NextId(ResourceType.ExhibitPage);
 
-
             var ev = new ExhibitPageCreated3
             {
                 Id = newPageId,
@@ -227,7 +228,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            
+
             if (!_entityIndex.Exists(ResourceType.ExhibitPage, id))
                 return NotFound();
 
@@ -280,8 +281,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 UserId = User.Identity.GetUserIdentity(),
                 Timestamp = DateTimeOffset.Now
             };
-            await _eventStore.AppendEventAsync(ev);
 
+            await _eventStore.AppendEventAsync(ev);
             return NoContent();
         }
 
@@ -360,6 +361,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (args.Image != null && !_mediaIndex.IsImage(args.Image.Value))
                 ModelState.AddModelError(nameof(args.Image),
                     ErrorMessages.ImageNotFound(args.Image.Value));
+
+            // ensure referenced audio exists
+            if (args.Audio != null && !_mediaIndex.IsAudio(args.Audio.Value))
+                ModelState.AddModelError(nameof(args.Audio),
+                    ErrorMessages.AudioNotFound(args.Audio.Value));
 
             // ensure referenced slider page images exist
             if (args.Images != null)
