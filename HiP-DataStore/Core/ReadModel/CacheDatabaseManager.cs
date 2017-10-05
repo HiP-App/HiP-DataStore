@@ -115,10 +115,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     break;
 
                 case ExhibitDeleted e:
-                    var deleteExhibit = _db.GetCollection<Exhibit>(ResourceType.Exhibit.Name).AsQueryable().First(x => x.Id == e.Id);
-                    deleteExhibit.Status = ContentStatus.Deleted;
-
-                    _db.GetCollection<Exhibit>(ResourceType.Exhibit.Name).ReplaceOne(x => x.Id == e.Id, deleteExhibit);
+                    MarkDeleted<Exhibit>(ResourceType.Exhibit, e.Id);
                     break;
 
                 case ExhibitPageCreated3 e:
@@ -146,12 +143,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     break;
 
                 case ExhibitPageDeleted2 e:
-                    var deleteExhibitPage = _db.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name)
-                                                .AsQueryable()
-                                                .First(x => x.Id == e.Id);
-                    deleteExhibitPage.Status = ContentStatus.Deleted;
-
-                    _db.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name).ReplaceOne(x => x.Id == e.Id, deleteExhibitPage);
+                    MarkDeleted<ExhibitPage>(ResourceType.ExhibitPage, e.Id);
                     break;
 
                 case RouteCreated e:
@@ -179,12 +171,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     break;
 
                 case RouteDeleted e:
-                    var deleteRoute = _db.GetCollection<Route>(ResourceType.Route.Name)
-                                                              .AsQueryable()
-                                                              .First(x => x.Id == e.Id);
-                    deleteRoute.Status = ContentStatus.Deleted;
-
-                    _db.GetCollection<Route>(ResourceType.Route.Name).ReplaceOne(x => x.Id == e.Id, deleteRoute);
+                    MarkDeleted<Exhibit>(ResourceType.Exhibit, e.Id);
                     break;
 
                 case MediaCreated e:
@@ -213,12 +200,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     break;
 
                 case MediaDeleted e:
-                    var deleteMedia = _db.GetCollection<MediaElement>(ResourceType.Media.Name)
-                                                              .AsQueryable()
-                                                              .First(x => x.Id == e.Id);
-                    deleteMedia.Status = ContentStatus.Deleted;
-
-                    _db.GetCollection<MediaElement>(ResourceType.Media.Name).ReplaceOne(x => x.Id == e.Id, deleteMedia);
+                    MarkDeleted<MediaElement>(ResourceType.Media, e.Id);
                     break;
 
                 case MediaFileUpdated e:
@@ -253,12 +235,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     break;
 
                 case TagDeleted e:
-                    var deleteTag = _db.GetCollection<Tag>(ResourceType.Tag.Name)
-                                                              .AsQueryable()
-                                                              .First(x => x.Id == e.Id);
-                    deleteTag.Status = ContentStatus.Deleted;
-
-                    _db.GetCollection<Tag>(ResourceType.Tag.Name).ReplaceOne(x => x.Id == e.Id, deleteTag);
+                    MarkDeleted<Tag>(ResourceType.Tag, e.Id);
                     break;
 
                 case ScoreAdded e:
@@ -354,6 +331,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                 Builders<dynamic>.Filter.Eq("_id", target.Id), update2);
 
             Debug.Assert(result2.ModifiedCount == 1);
+        }
+
+        private void MarkDeleted<T>(ResourceType resourceType, int entityId) where T : ContentBase
+        {
+            var collection = _db.GetCollection<T>(resourceType.Name);
+            var entity = collection.AsQueryable().First(x => x.Id == entityId);
+            entity.Status = ContentStatus.Deleted;
+            collection.ReplaceOne(x => x.Id == entityId, entity);
         }
     }
 }
