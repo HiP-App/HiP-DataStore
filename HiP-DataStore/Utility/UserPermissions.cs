@@ -25,7 +25,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Utility
             if (status == ContentStatus.Deleted)
                 return false;
 
-            bool isOwner = OwnerId == identity.GetUserIdentity();
+            bool isOwner = ownerId == identity.GetUserIdentity();
 
             if (status != ContentStatus.Published && isOwner)
                 return true;
@@ -47,7 +47,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Utility
             if (status == ContentStatus.Deleted)
                 return CheckRoles(identity, AllowedToGetDeletedContent);
 
-            bool isOwner = OwnerId == identity.GetUserIdentity();
+            bool isOwner = ownerId == identity.GetUserIdentity();
             if (status == ContentStatus.Published || isOwner)
                 return true;
 

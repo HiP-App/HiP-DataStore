@@ -149,7 +149,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     break;
 
                 case RouteDeleted e:
-                    MarkDeleted<Exhibit>(ResourceType.Exhibit, e.Id);
+                    MarkDeleted<Route>(ResourceType.Route, e.Id);
                     break;
 
                 case MediaCreated e:
