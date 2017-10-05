@@ -26,25 +26,19 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             _entityIndex = cache.Index<EntityIndex>();
         }
 
+        // APIs to get a summary of creation/deletion/updates
+
         [HttpGet("/api/Exhibits/{id}/History")]
         [ProducesResponseType(typeof(HistorySummary), 200)]
         [ProducesResponseType(403)]
         public Task<IActionResult> GetExhibitSummary(int id) =>
             GetSummaryAsync(ResourceType.Exhibit, id);
-
-        [HttpGet("/api/Exhibits/{id}/History/{timestamp}")]
-        public Task<IActionResult> GetExhibitVersion(int id, DateTimeOffset timestamp) =>
-            GetVersionAsync<Exhibit>(ResourceType.Exhibit, id, timestamp);
-
+        
         [HttpGet("/api/Exhibits/Pages/{id}/History")]
         [ProducesResponseType(typeof(HistorySummary), 200)]
         [ProducesResponseType(403)]
         public Task<IActionResult> GetExhibitPageSummary(int id) =>
             GetSummaryAsync(ResourceType.ExhibitPage, id);
-
-        [HttpGet("/api/Exhibits/Pages/{id}/History/{timestamp}")]
-        public Task<IActionResult> GetExhibitPageVersion(int id, DateTimeOffset timestamp) =>
-            GetVersionAsync<ExhibitPage>(ResourceType.ExhibitPage, id, timestamp);
 
         [HttpGet("/api/Media/{id}/History")]
         [ProducesResponseType(typeof(HistorySummary), 200)]
@@ -52,19 +46,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         public Task<IActionResult> GetMediaSummary(int id) =>
             GetSummaryAsync(ResourceType.Media, id);
 
-        [HttpGet("/api/Media/{id}/History/{timestamp}")]
-        public Task<IActionResult> GetMediaVersion(int id, DateTimeOffset timestamp) =>
-            GetVersionAsync<MediaElement>(ResourceType.Media, id, timestamp);
-
         [HttpGet("/api/Routes/{id}/History")]
         [ProducesResponseType(typeof(HistorySummary), 200)]
         [ProducesResponseType(403)]
         public Task<IActionResult> GetRouteSummary(int id) =>
-            GetSummaryAsync(ResourceType.Route, id);
-
-        [HttpGet("/api/Routes/{id}/History/{timestamp}")]
-        public Task<IActionResult> GetRouteVersion(int id, DateTimeOffset timestamp) =>
-            GetVersionAsync<Route>(ResourceType.Route, id, timestamp);
+           GetSummaryAsync(ResourceType.Route, id);
 
         [HttpGet("/api/Tags/{id}/History")]
         [ProducesResponseType(typeof(HistorySummary), 200)]
@@ -72,10 +58,31 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         public Task<IActionResult> GetTagSummary(int id) =>
             GetSummaryAsync(ResourceType.Tag, id);
 
+
+        // APIs to get the state of an entity at a specific point in time
+
+        [HttpGet("/api/Exhibits/{id}/History/{timestamp}")]
+        public Task<IActionResult> GetExhibitVersion(int id, DateTimeOffset timestamp) =>
+            GetVersionAsync<Exhibit>(ResourceType.Exhibit, id, timestamp);
+
+        [HttpGet("/api/Exhibits/Pages/{id}/History/{timestamp}")]
+        public Task<IActionResult> GetExhibitPageVersion(int id, DateTimeOffset timestamp) =>
+            GetVersionAsync<ExhibitPage>(ResourceType.ExhibitPage, id, timestamp);
+
+        [HttpGet("/api/Media/{id}/History/{timestamp}")]
+        public Task<IActionResult> GetMediaVersion(int id, DateTimeOffset timestamp) =>
+            GetVersionAsync<MediaElement>(ResourceType.Media, id, timestamp);
+
+        [HttpGet("/api/Routes/{id}/History/{timestamp}")]
+        public Task<IActionResult> GetRouteVersion(int id, DateTimeOffset timestamp) =>
+            GetVersionAsync<Route>(ResourceType.Route, id, timestamp);
+
         [HttpGet("/api/Tags/{id}/History/{timestamp}")]
         public Task<IActionResult> GetTagVersion(int id, DateTimeOffset timestamp) =>
             GetVersionAsync<Route>(ResourceType.Tag, id, timestamp);
 
+
+        // Private helper methods
 
         private async Task<IActionResult> GetSummaryAsync(ResourceType type, int id)
         {
