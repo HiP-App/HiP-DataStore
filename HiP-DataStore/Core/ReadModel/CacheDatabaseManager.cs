@@ -1,5 +1,4 @@
-﻿using EventStore.ClientAPI;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -7,6 +6,8 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
+using PaderbornUniversity.SILab.Hip.EventSourcing;
+using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -22,7 +23,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
     {
         private readonly EventStoreClient _eventStore;
         private readonly IMongoDatabase _db;
-        private readonly ILogger<CacheDatabaseManager> _logger;
 
         public IMongoDatabase Database => _db;
 
@@ -35,8 +35,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
             // This also implies that, for now, the cache database always contains the entire data (not a subset).
             // In order to receive all the events, a Catch-Up Subscription is created.
 
-            _logger = logger;
-
             // 1) Open MongoDB connection and clear existing database
             var mongo = new MongoClient(config.Value.MongoDbHost);
             mongo.DropDatabase(config.Value.MongoDbName);
@@ -47,30 +45,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
             // 2) Subscribe to EventStore to receive all past and future events
             _eventStore = eventStore;
 
-            _eventStore.Connection.SubscribeToStreamFrom(
-                config.Value.EventStoreStream,
-                null, // don't use StreamPosition.Start (see https://groups.google.com/forum/#!topic/event-store/8tpXJMNEMqI),
-                CatchUpSubscriptionSettings.Default,
-                OnEventAppeared);
+            var subscription = _eventStore.EventStream.SubscribeCatchUp();
+            subscription.EventAppeared.Subscribe(ApplyEvent);
         }
-
-        private void OnEventAppeared(EventStoreCatchUpSubscription subscription, ResolvedEvent resolvedEvent)
-        {
-            try
-            {
-                // Note regarding migration:
-                // Event types may change over time (properties get added/removed etc.)
-                // Whenever an event has multiple versions, an event of an obsolete type should be transformed to an event
-                // of the latest version, so that ApplyEvent(...) only has to deal with events of the current version.
-                var ev = resolvedEvent.Event.ToIEvent().MigrateToLatestVersion();
-                ApplyEvent(ev);
-            }
-            catch (Exception e)
-            {
-                _logger.LogWarning($"{nameof(CacheDatabaseManager)} could not process an event: {e}");
-            }
-        }
-
+        
         private void ApplyEvent(IEvent ev)
         {
             if (ev is ICrudEvent crudEvent)
@@ -171,7 +149,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     break;
 
                 case RouteDeleted e:
-                    MarkDeleted<Route>(ResourceType.Route, e.Id);
+                    MarkDeleted<Exhibit>(ResourceType.Exhibit, e.Id);
                     break;
 
                 case MediaCreated e:
