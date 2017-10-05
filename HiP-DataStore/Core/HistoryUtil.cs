@@ -54,18 +54,18 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
                             summary.Owner = user;
                             summary.Created = timestamp;
                             summary.LastModified = timestamp;
-                            summary.Changes.Add(new Change(timestamp, "Created", user));
+                            summary.Changes.Add(new HistorySummary.Change(timestamp, "Created", user));
                             break;
 
                         case IUpdateEvent updateEvent:
                             summary.LastModified = timestamp;
-                            summary.Changes.Add(new Change(timestamp, "Updated", user));
+                            summary.Changes.Add(new HistorySummary.Change(timestamp, "Updated", user));
                             break;
 
                         case IDeleteEvent deleteEvent:
                             summary.LastModified = timestamp;
                             summary.Deleted = timestamp;
-                            summary.Changes.Add(new Change(timestamp, "Deleted", user));
+                            summary.Changes.Add(new HistorySummary.Change(timestamp, "Deleted", user));
                             break;
                     }
                 }
@@ -116,19 +116,19 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
         /// A list of individual modifications (including creation and deletion).
         /// </summary>
         public IList<Change> Changes { get; set; } = new List<Change>();
-    }
 
-    public class Change
-    {
-        public DateTimeOffset Timestamp { get; set; }
-        public string Description { get; set; }
-        public string UserId { get; set; }
-
-        public Change(DateTimeOffset timestamp, string description, string userId)
+        public class Change
         {
-            Timestamp = timestamp;
-            Description = description;
-            UserId = userId;
+            public DateTimeOffset Timestamp { get; set; }
+            public string Description { get; set; }
+            public string UserId { get; set; }
+
+            public Change(DateTimeOffset timestamp, string description, string userId)
+            {
+                Timestamp = timestamp;
+                Description = description;
+                UserId = userId;
+            }
         }
     }
 }

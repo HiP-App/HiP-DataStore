@@ -228,28 +228,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return ReferenceInfoHelper.GetReferenceInfo(ResourceType.Exhibit, id, _entityIndex, _referencesIndex);
         }
 
-        [HttpGet("{id}/History")]
-        public async Task<IActionResult> GetHistorySummary(int id)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            // TODO: Validate user permissions
-            var summary = await HistoryUtil.GetSummaryAsync(_eventStore.EventStream, (ResourceType.Exhibit, id));
-            return Ok(summary);
-        }
-
-        [HttpGet("{id}/History/{timestamp}")]
-        public async Task<IActionResult> GetHistoryVersion(int id, DateTimeOffset timestamp)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            // TODO: Validate user permissions
-            var version = await HistoryUtil.GetVersionAsync<Exhibit>(_eventStore.EventStream, (ResourceType.Exhibit, id), timestamp);
-            return Ok(version);
-        }
-
         [HttpGet("Rating/{id}")]
         [ProducesResponseType(typeof(RatingResult), 200)]
         [ProducesResponseType(400)]
