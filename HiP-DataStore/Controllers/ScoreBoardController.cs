@@ -1,18 +1,18 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
-using System.Linq;
-using System.Threading.Tasks;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Core;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
-using Microsoft.AspNetCore.Authorization;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
+using PaderbornUniversity.SILab.Hip.EventSourcing;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
@@ -24,11 +24,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly CacheDatabaseManager _db;
         private readonly ScoreBoardIndex _board;
 
-        public ScoreBoardController(EventStoreClient ev, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices)
+        public ScoreBoardController(EventStoreClient ev, CacheDatabaseManager db, InMemoryCache cache)
         {
             _eventStore = ev;
             _db = db;
-            _board = indices.OfType<ScoreBoardIndex>().First();
+            _board = cache.Index<ScoreBoardIndex>();
         }
 
         [HttpGet]

@@ -10,14 +10,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         public static string AudioNotFound(int id) =>
             $"No audio with ID '{id}' exists";
 
-        public static string ExhibitNotFound(int id) =>
-            $"No exhibit with ID '{id}' exists";
+        public static string ContentNotFound(ResourceType type, int id) =>
+            $"No {type.Name.ToLower()} with ID '{id}' exists";
 
         public static string ExhibitPageNotFound(int id) =>
             $"No page with ID '{id}' exists";
-
-        public static string TagNotFound(int id) =>
-            $"No tag with ID '{id}' exists";
 
         public static string FieldNotAllowedForPageType(string fieldName, PageType pageType) =>
             $"Field '{fieldName}' not allowed for page type '{pageType}'";
