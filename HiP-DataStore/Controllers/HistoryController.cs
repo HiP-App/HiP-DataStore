@@ -61,6 +61,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         // APIs to get the state of an entity at a specific point in time
 
+        /*
         [HttpGet("/api/Exhibits/{id}/History/{timestamp}")]
         public Task<IActionResult> GetExhibitVersion(int id, DateTimeOffset timestamp) =>
             GetVersionAsync<Exhibit>(ResourceType.Exhibit, id, timestamp);
@@ -80,6 +81,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet("/api/Tags/{id}/History/{timestamp}")]
         public Task<IActionResult> GetTagVersion(int id, DateTimeOffset timestamp) =>
             GetVersionAsync<Route>(ResourceType.Tag, id, timestamp);
+        */
 
 
         // Private helper methods
