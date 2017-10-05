@@ -55,6 +55,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Utility
             return CheckRoles(identity);
         }
 
+        public static bool IsAllowedToGetHistory(IIdentity identity, string ownerId)
+        {
+            // The entity owner as well as supervisors and administrators are allowed
+            return (ownerId == identity.GetUserIdentity()) || CheckRoles(identity);
+        }
+
         //Check if the user has the nessesary roles
         static bool CheckRoles(IIdentity identity, UserRoles allowedToProceed = UserRoles.Administrator | UserRoles.Supervisor)
         {

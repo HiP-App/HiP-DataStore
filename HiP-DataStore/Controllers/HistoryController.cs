@@ -1,8 +1,11 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PaderbornUniversity.SILab.Hip.DataStore.Core;
+using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
+using PaderbornUniversity.SILab.Hip.DataStore.Utility;
+using PaderbornUniversity.SILab.Hip.EventSourcing;
 using System;
 using System.Threading.Tasks;
 
@@ -15,10 +18,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
     public class HistoryController : Controller
     {
         private readonly EventStoreClient _eventStore;
+        private readonly EntityIndex _entityIndex;
 
-        public HistoryController(EventStoreClient eventStore) => _eventStore = eventStore;
+        public HistoryController(EventStoreClient eventStore, InMemoryCache cache)
+        {
+            _eventStore = eventStore;
+            _entityIndex = cache.Index<EntityIndex>();
+        }
 
         [HttpGet("/api/Exhibits/{id}/History")]
+        [ProducesResponseType(typeof(HistorySummary), 200)]
+        [ProducesResponseType(403)]
         public Task<IActionResult> GetExhibitSummary(int id) =>
             GetSummaryAsync(ResourceType.Exhibit, id);
 
@@ -27,6 +37,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             GetVersionAsync<Exhibit>(ResourceType.Exhibit, id, timestamp);
 
         [HttpGet("/api/Exhibits/Pages/{id}/History")]
+        [ProducesResponseType(typeof(HistorySummary), 200)]
+        [ProducesResponseType(403)]
         public Task<IActionResult> GetExhibitPageSummary(int id) =>
             GetSummaryAsync(ResourceType.ExhibitPage, id);
 
@@ -35,6 +47,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             GetVersionAsync<ExhibitPage>(ResourceType.ExhibitPage, id, timestamp);
 
         [HttpGet("/api/Media/{id}/History")]
+        [ProducesResponseType(typeof(HistorySummary), 200)]
+        [ProducesResponseType(403)]
         public Task<IActionResult> GetMediaSummary(int id) =>
             GetSummaryAsync(ResourceType.Media, id);
 
@@ -43,6 +57,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             GetVersionAsync<MediaElement>(ResourceType.Media, id, timestamp);
 
         [HttpGet("/api/Routes/{id}/History")]
+        [ProducesResponseType(typeof(HistorySummary), 200)]
+        [ProducesResponseType(403)]
         public Task<IActionResult> GetRouteSummary(int id) =>
             GetSummaryAsync(ResourceType.Route, id);
 
@@ -51,6 +67,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             GetVersionAsync<Route>(ResourceType.Route, id, timestamp);
 
         [HttpGet("/api/Tags/{id}/History")]
+        [ProducesResponseType(typeof(HistorySummary), 200)]
+        [ProducesResponseType(403)]
         public Task<IActionResult> GetTagSummary(int id) =>
             GetSummaryAsync(ResourceType.Tag, id);
 
@@ -64,7 +82,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            // TODO: Validate user permissions
+            if (!UserPermissions.IsAllowedToGetHistory(User.Identity, _entityIndex.Owner(type, id)))
+                return Forbid();
+
             var summary = await HistoryUtil.GetSummaryAsync(_eventStore.EventStream, (type, id));
             return Ok(summary);
         }
