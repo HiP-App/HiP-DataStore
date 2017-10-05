@@ -73,15 +73,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 var exhibits = query
                     .FilterByIds(args.Exclude, args.IncludeOnly)
                     .FilterByUser(args.Status,User.Identity)
-                    .FilterByStatus(args.Status)
+                    .FilterByStatus(args.Status, User.Identity)
                     .FilterByTimestamp(args.Timestamp)
                     .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
                         x.Name.ToLower().Contains(args.Query.ToLower()) ||
                         x.Description.ToLower().Contains(args.Query.ToLower()))
                     .FilterIf(args.OnlyRoutes != null, x => x.Referencers
                         .Any(r => r.Collection == ResourceType.Route.Name && routeIds.Contains(r.Id)))
-                    .FilterIf(args.Status == ContentStatus.All && !UserPermissions.IsAllowedToGetDeleted(User.Identity), 
-                                                                  x => x.Status != ContentStatus.Deleted)
                     .Sort(args.OrderBy,
                         ("id", x => x.Id),
                         ("name", x => x.Name),

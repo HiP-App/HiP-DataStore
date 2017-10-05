@@ -68,13 +68,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 var routes = query
                     .FilterByIds(args.Exclude, args.IncludeOnly)
                     .FilterByUser(args.Status, User.Identity)
-                    .FilterByStatus(args.Status)
+                    .FilterByStatus(args.Status, User.Identity)
                     .FilterByTimestamp(args.Timestamp)
                     .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
                         x.Title.ToLower().Contains(args.Query.ToLower()) ||
                         x.Description.ToLower().Contains(args.Query.ToLower()))
-                    .FilterIf(args.Status == ContentStatus.All && !UserPermissions.IsAllowedToGetDeleted(User.Identity),
-                                                                  x => x.Status != ContentStatus.Deleted)
                     .Sort(args.OrderBy,
                         ("id", x => x.Id),
                         ("title", x => x.Title),
