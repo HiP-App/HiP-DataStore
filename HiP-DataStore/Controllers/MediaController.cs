@@ -43,6 +43,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         }
 
         [HttpGet("ids")]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(typeof(IReadOnlyCollection<int>), 200)]
         public IActionResult GetIds(ContentStatus status = ContentStatus.Published)
         {
@@ -57,8 +59,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         [HttpPost]
         [ProducesResponseType(typeof(int), 201)]
-        [ProducesResponseType(403)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         public async Task<IActionResult> PostAsync([FromBody]MediaArgs args)
         {
             if (!ModelState.IsValid)
@@ -82,6 +84,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet]
         [ProducesResponseType(typeof(AllItemsResult<MediaResult>), 200)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         public IActionResult Get(MediaQueryArgs args)
         {
             if (!ModelState.IsValid)
@@ -126,13 +129,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(typeof(MediaResult), 200)]
         [ProducesResponseType(304)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public IActionResult GetById(int id, DateTimeOffset? timestamp = null)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var status = _entityIndex.Status(ResourceType.Media, id) ?? ContentStatus.Deleted;
+            var status = _entityIndex.Status(ResourceType.Media, id) ?? ContentStatus.Published;
             if (!UserPermissions.IsAllowedToGet(User.Identity, status, _entityIndex.Owner(ResourceType.Media, id)))
                 return Forbid();
 
@@ -223,6 +227,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         [HttpGet("{id}/File")]
         [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public IActionResult GetFileById(int id)
         {
@@ -307,6 +313,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet("{id}/Refs")]
         [ProducesResponseType(typeof(ReferenceInfoResult), 200)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public IActionResult GetReferenceInfo(int id)
         {

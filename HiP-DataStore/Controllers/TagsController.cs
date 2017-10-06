@@ -39,6 +39,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         }
 
         [HttpGet("ids")]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(typeof(IReadOnlyCollection<int>), 200)]
         public IActionResult GetIds(ContentStatus status = ContentStatus.Published)
         {
@@ -54,6 +56,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet]
         [ProducesResponseType(typeof(AllItemsResult<TagResult>), 200)]
         [ProducesResponseType(304)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         public IActionResult GetAll(TagQueryArgs args)
         {
             if (!ModelState.IsValid)
@@ -98,13 +102,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(typeof(TagResult), 200)]
         [ProducesResponseType(304)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public IActionResult GetById(int id, DateTimeOffset? timestamp = null)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var status = _entityIndex.Status(ResourceType.Tag, id) ?? ContentStatus.Deleted;
+            var status = _entityIndex.Status(ResourceType.Tag, id) ?? ContentStatus.Published;
             if (!UserPermissions.IsAllowedToGet(User.Identity, status, _entityIndex.Owner(ResourceType.Tag, id)))
                 return Forbid();
 
@@ -231,6 +236,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet("{id}/Refs")]
         [ProducesResponseType(typeof(ReferenceInfoResult), 200)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public IActionResult GetReferenceInfo(int id)
         {

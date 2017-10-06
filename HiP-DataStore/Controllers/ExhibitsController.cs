@@ -40,6 +40,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         }
 
         [HttpGet("ids")]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(typeof(IReadOnlyCollection<int>), 200)]
         public IActionResult GetIds(ContentStatus status = ContentStatus.Published)
         {
@@ -55,6 +57,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet]
         [ProducesResponseType(typeof(AllItemsResult<ExhibitResult>), 200)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         public IActionResult Get(ExhibitQueryArgs args)
         {
             if (!ModelState.IsValid)
@@ -102,13 +105,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(ExhibitResult), 200)]
         [ProducesResponseType(304)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public IActionResult GetById(int id, DateTimeOffset? timestamp = null)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var status = _entityIndex.Status(ResourceType.Exhibit, id) ?? ContentStatus.Deleted;
+            var status = _entityIndex.Status(ResourceType.Exhibit, id) ?? ContentStatus.Published;
             if (!UserPermissions.IsAllowedToGet(User.Identity, status, _entityIndex.Owner(ResourceType.Exhibit, id)))
                 return Forbid();
 
@@ -133,8 +138,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         [HttpPost]
         [ProducesResponseType(typeof(int), 201)]
-        [ProducesResponseType(403)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         public async Task<IActionResult> PostAsync([FromBody]ExhibitArgs args)
         {
             ValidateExhibitArgs(args);
@@ -225,6 +230,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet("{id}/Refs")]
         [ProducesResponseType(typeof(ReferenceInfoResult), 200)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public IActionResult GetReferenceInfo(int id)
         {
@@ -240,6 +246,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet("Rating/{id}")]
         [ProducesResponseType(typeof(RatingResult), 200)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public IActionResult GetRating(int id)
         {

@@ -47,6 +47,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         }
 
         [HttpGet("Pages/ids")]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(typeof(IReadOnlyCollection<int>), 200)]
         public IActionResult GetAllIds(ContentStatus status = ContentStatus.Published)
         {
@@ -67,6 +69,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet("Pages")]
         [ProducesResponseType(typeof(AllItemsResult<ExhibitPageResult>), 200)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(422)]
         public IActionResult GetAllPages(ExhibitPageQueryArgs args)
         {
@@ -85,6 +88,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet("{exhibitId:int}/Pages/ids")]
         [ProducesResponseType(typeof(IReadOnlyCollection<int>), 200)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public IActionResult GetIdsForExhibit(int exhibitId, ContentStatus status = ContentStatus.Published)
         {
@@ -121,6 +125,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet("{exhibitId}/Pages")]
         [ProducesResponseType(typeof(AllItemsResult<ExhibitPageResult>), 200)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [ProducesResponseType(422)]
         public IActionResult GetPagesForExhibit(int exhibitId, ExhibitPageQueryArgs args)
@@ -149,13 +154,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(typeof(ExhibitPageResult), 200)]
         [ProducesResponseType(304)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public IActionResult GetById(int id, DateTimeOffset? timestamp = null)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var status = _entityIndex.Status(ResourceType.ExhibitPage, id) ?? ContentStatus.Deleted;
+            var status = _entityIndex.Status(ResourceType.ExhibitPage, id) ?? ContentStatus.Published;
             if (!UserPermissions.IsAllowedToGet(User.Identity, status, _entityIndex.Owner(ResourceType.ExhibitPage, id)))
                 return Forbid();
 
@@ -180,8 +186,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         [HttpPost("Pages")]
         [ProducesResponseType(typeof(int), 201)]
-        [ProducesResponseType(403)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         public async Task<IActionResult> PostAsync([FromBody]ExhibitPageArgs2 args)
         {
             // if font family is not specified, fallback to the configured default font family
@@ -289,6 +295,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet("Pages/{id}/Refs")]
         [ProducesResponseType(typeof(ReferenceInfoResult), 200)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public IActionResult GetReferenceInfo(int id)
         {
