@@ -78,7 +78,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                     .AsQueryable()
                     .FilterIf(!isAllowedGetAll, x =>
                         ((status == ContentStatus.All) && (x.Value.Status == ContentStatus.Published)) || (x.Value.UserId == userId))
-                    .Where(x => status == ContentStatus.All || x.Value.Status == status)
+                    .FilterIf(status == ContentStatus.All && !UserPermissions.IsAllowedToGetDeleted(User),
+                                                                  x => x.Value.Status != ContentStatus.Deleted)
+                     .Where(x => status == ContentStatus.All || x.Value.Status == status)
                     .Select(x => x.Key)
                     .ToList();
             }
@@ -92,7 +94,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
             lock (_lockObject)
             {
                 var info = GetOrCreateEntityTypeInfo(entityType);
-                return info.Entities.ContainsKey(id);
+                return info.Entities.TryGetValue(id, out var entity) && entity.Status != ContentStatus.Deleted;
             }
         }
         
@@ -123,7 +125,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                     lock (_lockObject)
                     {
                         var info3 = GetOrCreateEntityTypeInfo(ev.GetEntityType());
-                        info3.Entities.Remove(ev.Id);
+                        if (info3.Entities.TryGetValue(ev.Id, out var entity))
+                            entity.Status = ContentStatus.Deleted;
                     }
                     break;
             }
