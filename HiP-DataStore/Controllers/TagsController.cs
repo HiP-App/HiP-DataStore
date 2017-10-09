@@ -39,19 +39,32 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         }
 
         [HttpGet("ids")]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(typeof(IReadOnlyCollection<int>), 200)]
-        public IActionResult GetIds(ContentStatus? status)
+        public IActionResult GetIds(ContentStatus status = ContentStatus.Published)
         {
-            return Ok(_entityIndex.AllIds(ResourceType.Tag, status ?? ContentStatus.Published, User.Identity));
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
+                return Forbid();
+
+            return Ok(_entityIndex.AllIds(ResourceType.Tag, status, User.Identity));
         }
 
         [HttpGet]
         [ProducesResponseType(typeof(AllItemsResult<TagResult>), 200)]
         [ProducesResponseType(304)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         public IActionResult GetAll(TagQueryArgs args)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
+            if (args.Status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
+                return Forbid();
 
             var query = _db.Database.GetCollection<Tag>(ResourceType.Tag.Name).AsQueryable();
 
@@ -60,7 +73,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 var tags = query
                     .FilterByIds(args.Exclude, args.IncludeOnly)
                     .FilterByUser(args.Status, User.Identity)
-                    .FilterByStatus(args.Status)
+                    .FilterByStatus(args.Status, User.Identity)
                     .FilterByTimestamp(args.Timestamp)
                     .FilterByUsage(args.Used)
                     .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
@@ -89,6 +102,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(typeof(TagResult), 200)]
         [ProducesResponseType(304)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public IActionResult GetById(int id, DateTimeOffset? timestamp = null)
         {
@@ -222,6 +236,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet("{id}/Refs")]
         [ProducesResponseType(typeof(ReferenceInfoResult), 200)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public IActionResult GetReferenceInfo(int id)
         {

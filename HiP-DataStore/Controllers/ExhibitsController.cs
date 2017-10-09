@@ -40,19 +40,31 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         }
 
         [HttpGet("ids")]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(typeof(IReadOnlyCollection<int>), 200)]
-        public IActionResult GetIds(ContentStatus? status)
+        public IActionResult GetIds(ContentStatus status = ContentStatus.Published)
         {
-            return Ok(_entityIndex.AllIds(ResourceType.Exhibit, status ?? ContentStatus.Published, User.Identity));
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
+                return Forbid();
+
+            return Ok(_entityIndex.AllIds(ResourceType.Exhibit, status , User.Identity));
         }
 
         [HttpGet]
         [ProducesResponseType(typeof(AllItemsResult<ExhibitResult>), 200)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         public IActionResult Get(ExhibitQueryArgs args)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
+            if (args.Status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
+                return Forbid();
 
             args = args ?? new ExhibitQueryArgs();
 
@@ -65,7 +77,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 var exhibits = query
                     .FilterByIds(args.Exclude, args.IncludeOnly)
                     .FilterByUser(args.Status,User.Identity)
-                    .FilterByStatus(args.Status)
+                    .FilterByStatus(args.Status, User.Identity)
                     .FilterByTimestamp(args.Timestamp)
                     .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
                         x.Name.ToLower().Contains(args.Query.ToLower()) ||
@@ -93,6 +105,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(ExhibitResult), 200)]
         [ProducesResponseType(304)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public IActionResult GetById(int id, DateTimeOffset? timestamp = null)
         {
@@ -124,8 +138,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         [HttpPost]
         [ProducesResponseType(typeof(int), 201)]
-        [ProducesResponseType(403)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         public async Task<IActionResult> PostAsync([FromBody]ExhibitArgs args)
         {
             ValidateExhibitArgs(args);
@@ -216,6 +230,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet("{id}/Refs")]
         [ProducesResponseType(typeof(ReferenceInfoResult), 200)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public IActionResult GetReferenceInfo(int id)
         {
@@ -231,6 +246,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet("Rating/{id}")]
         [ProducesResponseType(typeof(RatingResult), 200)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public IActionResult GetRating(int id)
         {
@@ -281,7 +297,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         {
             if (args == null)
                 return;
-
             // ensure referenced image exists
             if (args.Image != null && !_mediaIndex.IsImage(args.Image.Value))
                 ModelState.AddModelError(nameof(args.Image),

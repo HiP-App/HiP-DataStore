@@ -27,9 +27,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 .FilterIf(includedIds != null, x => includedIds.Contains(x.Id));
         }
 
-        public static IQueryable<T> FilterByStatus<T>(this IQueryable<T> query, ContentStatus status) where T : ContentBase
+        public static IQueryable<T> FilterByStatus<T>(this IQueryable<T> query, ContentStatus status, IIdentity User) where T : ContentBase
         {
-            return query.FilterIf(status != ContentStatus.All, x => x.Status == status);
+            return query.FilterIf(status != ContentStatus.All, x => x.Status == status)
+                        .FilterIf(status == ContentStatus.All && !UserPermissions.IsAllowedToGetDeleted(User),
+                                                                  x => x.Status != ContentStatus.Deleted);
         }
 
         public static IQueryable<T> FilterByUsage<T>(this IQueryable<T> query, bool? used) where T : ContentBase
