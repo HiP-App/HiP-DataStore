@@ -1,4 +1,5 @@
-﻿using PaderbornUniversity.SILab.Hip.EventSourcing.Migrations;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Utility;
+using PaderbornUniversity.SILab.Hip.EventSourcing.Migrations;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -30,6 +31,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 
         public IReadOnlyCollection<int> AdditionalInformationPages { get; set; }
 
+        [AllowedStatuses]
         public ContentStatus Status { get; set; }
 
         public IEnumerable<EntityId> GetReferences()

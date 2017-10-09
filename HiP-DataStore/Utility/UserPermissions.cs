@@ -7,8 +7,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Utility
 {
     public class UserPermissions
     {
-        public static bool IsAllowedToCreate(IIdentity identity, ContentStatus status)
+        private static UserRoles AllowedToGetDeletedContent = UserRoles.Supervisor;
+
+        public static bool IsAllowedToCreate(IIdentity identity,ContentStatus status)
         {
+            if (status == ContentStatus.Deleted)
+                return false;
+
             if (status != ContentStatus.Published && CheckRoles(identity, UserRoles.Student))
                 return true;
 
@@ -17,7 +22,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Utility
 
         public static bool IsAllowedToEdit(IIdentity identity, ContentStatus status, string ownerId)
         {
+            if (status == ContentStatus.Deleted)
+                return false;
+
             bool isOwner = ownerId == identity.GetUserIdentity();
+
             if (status != ContentStatus.Published && isOwner)
                 return true;
 
@@ -35,6 +44,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Utility
 
         public static bool IsAllowedToGet(IIdentity identity, ContentStatus status, string ownerId)
         {
+            if (status == ContentStatus.Deleted)
+                return CheckRoles(identity, AllowedToGetDeletedContent);
+
             bool isOwner = ownerId == identity.GetUserIdentity();
             if (status == ContentStatus.Published || isOwner)
                 return true;
@@ -49,10 +61,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Utility
 
         public static bool IsAllowedToGetAll(IIdentity identity, ContentStatus status)
         {
-            if (status == ContentStatus.Published)
+             if (status == ContentStatus.Published)
                 return true;
-
             return CheckRoles(identity);
+        }
+        
+        public static bool IsAllowedToGetDeleted(IIdentity identity)
+        {
+               return CheckRoles(identity, AllowedToGetDeletedContent);
         }
 
         //Check if the user has the nessesary roles

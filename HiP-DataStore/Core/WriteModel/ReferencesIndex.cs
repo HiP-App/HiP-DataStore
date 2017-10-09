@@ -91,11 +91,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                     // set timestamp & propagate to entities referencing the created/updated/deleted entity
                     SetTimestampRecursively(crudEvent.Timestamp, crudEvent.GetEntityType(), crudEvent.Id);
                 }
-
-                if (ev is IDeleteEvent)
-                {
-                    _lastModificationCascading.Remove((crudEvent.GetEntityType(), crudEvent.Id));
-                }
             }
         }
 
