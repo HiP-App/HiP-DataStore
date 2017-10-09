@@ -33,7 +33,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
         /// <summary>
         /// A list of individual modifications (including creation and deletion).
         /// </summary>
-        public IList<Change> Changes { get; set; } = new List<Change>();
+        public IList<Change> Changes { get; } = new List<Change>();
 
         public class Change
         {

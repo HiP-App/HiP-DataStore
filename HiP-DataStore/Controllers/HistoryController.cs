@@ -30,30 +30,35 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         [HttpGet("/api/Exhibits/{id}/History")]
         [ProducesResponseType(typeof(HistorySummary), 200)]
+        [ProducesResponseType(400)]
         [ProducesResponseType(403)]
         public Task<IActionResult> GetExhibitSummary(int id) =>
             GetSummaryAsync(ResourceType.Exhibit, id);
         
         [HttpGet("/api/Exhibits/Pages/{id}/History")]
         [ProducesResponseType(typeof(HistorySummary), 200)]
+        [ProducesResponseType(400)]
         [ProducesResponseType(403)]
         public Task<IActionResult> GetExhibitPageSummary(int id) =>
             GetSummaryAsync(ResourceType.ExhibitPage, id);
 
         [HttpGet("/api/Media/{id}/History")]
         [ProducesResponseType(typeof(HistorySummary), 200)]
+        [ProducesResponseType(400)]
         [ProducesResponseType(403)]
         public Task<IActionResult> GetMediaSummary(int id) =>
             GetSummaryAsync(ResourceType.Media, id);
 
         [HttpGet("/api/Routes/{id}/History")]
         [ProducesResponseType(typeof(HistorySummary), 200)]
+        [ProducesResponseType(400)]
         [ProducesResponseType(403)]
         public Task<IActionResult> GetRouteSummary(int id) =>
            GetSummaryAsync(ResourceType.Route, id);
 
         [HttpGet("/api/Tags/{id}/History")]
         [ProducesResponseType(typeof(HistorySummary), 200)]
+        [ProducesResponseType(400)]
         [ProducesResponseType(403)]
         public Task<IActionResult> GetTagSummary(int id) =>
             GetSummaryAsync(ResourceType.Tag, id);
