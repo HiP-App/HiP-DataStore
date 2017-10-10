@@ -1,16 +1,16 @@
-﻿using System;
-using EventStore.ClientAPI;
+﻿using EventStore.ClientAPI;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using PaderbornUniversity.SILab.Hip.DataStore.Core;
+using Microsoft.Extensions.Options;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
-using Microsoft.Extensions.Options;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
+using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
+using System;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Tests
 {
@@ -33,6 +33,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests
         {
             services
                 .Configure<EndpointConfig>(Configuration.GetSection("Endpoints"))
+                .Configure<EventStoreConfig>(Configuration.GetSection("EventStore"))
                 .Configure<UploadFilesConfig>(Configuration.GetSection("UploadingFiles"))
                 .Configure<ExhibitPagesConfig>(Configuration.GetSection("ExhibitPages"))
                 .Configure<CorsConfig>(Configuration);
@@ -41,7 +42,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests
             services.AddMvc();
 
             services
-                .AddSingleton<EventStoreClient>()
+                .AddSingleton<EventStoreService>()
                 .AddSingleton<CacheDatabaseManager>()
                 .AddSingleton<InMemoryCache>()
                 .AddSingleton<IDomainIndex, MediaIndex>()
@@ -52,7 +53,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, ILoggerFactory loggerFactory, IOptions<EndpointConfig> config)
+        public void Configure(IApplicationBuilder app, ILoggerFactory loggerFactory, IOptions<EventStoreConfig> config)
         {
             app.UseMvc();
             MvcTestContext.Services = app.ApplicationServices;
@@ -61,9 +62,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests
             // (ideally we should not depend on running instances of Event Store and MongoDB. Instead we should
             // mock these connections by creating "fake" connections that just store events/data in memory)
             var settings = ConnectionSettings.Create().EnableVerboseLogging().Build();
-            var connection = EventStoreConnection.Create(settings, new Uri(config.Value.EventStoreHost));
+            var connection = EventStoreConnection.Create(settings, new Uri(config.Value.Host));
             connection.ConnectAsync().Wait();
-            connection.DeleteStreamAsync(config.Value.EventStoreStream, ExpectedVersion.Any).Wait();
+            connection.DeleteStreamAsync(config.Value.Stream, ExpectedVersion.Any).Wait();
         }
     }
 }

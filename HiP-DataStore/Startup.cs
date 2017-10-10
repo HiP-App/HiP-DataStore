@@ -5,11 +5,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using PaderbornUniversity.SILab.Hip.DataStore.Core;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
+using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
 using PaderbornUniversity.SILab.Hip.Webservice;
 using Swashbuckle.AspNetCore.Swagger;
 
@@ -45,11 +45,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
                 c.DescribeAllEnumsAsStrings();
             });
 
-            services.Configure<EndpointConfig>(Configuration.GetSection("Endpoints"))
-                    .Configure<UploadFilesConfig>(Configuration.GetSection("UploadingFiles"))
-                    .Configure<ExhibitPagesConfig>(Configuration.GetSection("ExhibitPages"))
-                    .Configure<AuthConfig>(Configuration.GetSection("Auth"))
-                    .Configure<CorsConfig>(Configuration);
+            services
+                .Configure<EndpointConfig>(Configuration.GetSection("Endpoints"))
+                .Configure<EventStoreConfig>(Configuration.GetSection("EventStore"))
+                .Configure<UploadFilesConfig>(Configuration.GetSection("UploadingFiles"))
+                .Configure<ExhibitPagesConfig>(Configuration.GetSection("ExhibitPages"))
+                .Configure<AuthConfig>(Configuration.GetSection("Auth"))
+                .Configure<CorsConfig>(Configuration);
 
             var serviceProvider = services.BuildServiceProvider(); // allows us to actually get the configured services
             var authConfig = serviceProvider.GetService<IOptions<AuthConfig>>();
@@ -79,7 +81,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             services.AddMvc();
 
             services
-                .AddSingleton<EventStoreClient>()
+                .AddSingleton<EventStoreService>()
                 .AddSingleton<CacheDatabaseManager>()
                 .AddSingleton<InMemoryCache>()
                 .AddSingleton<IDomainIndex, MediaIndex>()
