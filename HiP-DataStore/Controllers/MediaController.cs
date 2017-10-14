@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using PaderbornUniversity.SILab.Hip.DataStore.Core;
@@ -17,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using System.Web;
 
@@ -26,6 +28,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
     [Route("api/[controller]")]
     public class MediaController : Controller
     {
+        private readonly ILogger<MediaController> _logger;
         private readonly EventStoreClient _eventStore;
         private readonly CacheDatabaseManager _db;
         private readonly UploadFilesConfig _uploadConfig;
@@ -35,8 +38,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly ReferencesIndex _referencesIndex;
 
         public MediaController(EventStoreClient eventStore, CacheDatabaseManager db, InMemoryCache cache,
-            IOptions<UploadFilesConfig> uploadConfig, IOptions<EndpointConfig> endpointConfig)
+            IOptions<UploadFilesConfig> uploadConfig, IOptions<EndpointConfig> endpointConfig,
+            ILogger<MediaController> logger)
         {
+            _logger = logger;
             _eventStore = eventStore;
             _db = db;
             _entityIndex = cache.Index<EntityIndex>();
@@ -180,7 +185,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return NotFound();
 
             var status = _entityIndex.Status(ResourceType.Media, id).GetValueOrDefault();
-            if (!UserPermissions.IsAllowedToDelete(User.Identity, status, _entityIndex.Owner(ResourceType.Media,id)))
+            if (!UserPermissions.IsAllowedToDelete(User.Identity, status, _entityIndex.Owner(ResourceType.Media, id)))
                 return Forbid();
 
             if (_referencesIndex.IsUsed(ResourceType.Media, id))
@@ -199,6 +204,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             };
 
             await _eventStore.AppendEventAsync(ev);
+            await InvalidateThumbnailCacheAsync(id);
             return StatusCode(204);
         }
 
@@ -215,7 +221,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.Media, id))
                 return NotFound();
 
-            
+
             if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, _entityIndex.Owner(ResourceType.Media, id)))
                 return Forbid();
 
@@ -279,19 +285,19 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return Forbid();
 
             var extension = file.FileName.Split('.').Last();
-            var fileType = Enum.GetName(typeof(MediaType), _mediaIndex.GetMediaType(id));
+            var fileType = _mediaIndex.GetMediaType(id);
 
             /* Checking supported extensions
              * Configuration catalogue has to have same key name as on of MediaType constant names */
-            if (!_uploadConfig.SupportedFormats[fileType].Contains(extension.ToLower()))
+            if (!_uploadConfig.SupportedFormats[fileType.ToString()].Contains(extension.ToLower()))
                 return BadRequest(new { Message = $"Extension '{extension}' is not supported for type '{fileType}'" });
 
             // Remove old file
-            string oldFilePath = _mediaIndex.GetFilePath(id);
+            var oldFilePath = _mediaIndex.GetFilePath(id);
             if (oldFilePath != null && System.IO.File.Exists(oldFilePath))
                 System.IO.File.Delete(oldFilePath);
 
-            var fileDirectory = Path.Combine(_uploadConfig.Path, fileType, id.ToString());
+            var fileDirectory = Path.Combine(_uploadConfig.Path, fileType.ToString(), id.ToString());
             Directory.CreateDirectory(fileDirectory);
 
             var filePath = Path.Combine(fileDirectory, Path.GetFileName(file.FileName));
@@ -313,6 +319,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             };
 
             await _eventStore.AppendEventAsync(ev);
+
+            if (fileType == MediaType.Image)
+                await InvalidateThumbnailCacheAsync(id);
+
             return StatusCode(204);
         }
 
@@ -336,9 +346,41 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         private string GenerateFileUrl(MediaElement mediaElement)
         {
-            return mediaElement.Type == MediaType.Image
-                ? string.Format(_endpointConfig.ThumbnailUrlPattern, mediaElement.Id)
-                : $"{Request.Scheme}://{Request.Host}/api/Media/{mediaElement.Id}/File";
+            if (mediaElement.Type == MediaType.Image &&
+                !string.IsNullOrWhiteSpace(_endpointConfig.ThumbnailUrlPattern))
+            {
+                // Generate thumbnail URL (if a thumbnail URL pattern is configured)
+                return string.Format(_endpointConfig.ThumbnailUrlPattern, mediaElement.Id);
+            }
+            else
+            {
+                // Return direct URL
+                return $"{Request.Scheme}://{Request.Host}/api/Media/{mediaElement.Id}/File";
+            }
+        }
+
+        private async Task InvalidateThumbnailCacheAsync(int id)
+        {
+            if (!string.IsNullOrWhiteSpace(_endpointConfig.ThumbnailUrlPattern))
+            {
+                var url = string.Format(_endpointConfig.ThumbnailUrlPattern, id);
+
+                try
+                {
+                    using (var http = new HttpClient())
+                    {
+                        http.DefaultRequestHeaders.Add("Authorization", Request.Headers["Authorization"].ToString());
+                        var response = await http.DeleteAsync(url);
+                        response.EnsureSuccessStatusCode();
+                    }
+                }
+                catch (HttpRequestException e)
+                {
+                    _logger.LogWarning(e,
+                        $"Request to clear thumbnail cache failed for media '{id}'; " +
+                        $"thumbnail service might return outdated images (request URL was '{url}').");
+                }
+            }
         }
     }
 }
