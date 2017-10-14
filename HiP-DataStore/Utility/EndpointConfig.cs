@@ -38,5 +38,12 @@
         /// automatically which might result in an invalid URL.
         /// </summary>
         public string SwaggerEndpoint { get; set; }
+
+        /// <summary>
+        /// URL pattern for generating thumbnail URLs. Should contain a placeholder "{0}" that is replaced with the
+        /// ID of the requested media at runtime. Example:
+        /// "https://docker-hip.cs.upb.de/develop/thumbnailservice/api/Thumbnails?Url=datastore/api/Media/{0}/File"
+        /// </summary>
+        public string ThumbnailUrlPattern { get; set; }
     }
 }

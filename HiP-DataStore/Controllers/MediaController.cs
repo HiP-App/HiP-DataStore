@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
@@ -28,11 +29,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly EventStoreClient _eventStore;
         private readonly CacheDatabaseManager _db;
         private readonly UploadFilesConfig _uploadConfig;
+        private readonly EndpointConfig _endpointConfig;
         private readonly EntityIndex _entityIndex;
         private readonly MediaIndex _mediaIndex;
         private readonly ReferencesIndex _referencesIndex;
 
-        public MediaController(EventStoreClient eventStore, CacheDatabaseManager db, InMemoryCache cache, IOptions<UploadFilesConfig> uploadConfig)
+        public MediaController(EventStoreClient eventStore, CacheDatabaseManager db, InMemoryCache cache,
+            IOptions<UploadFilesConfig> uploadConfig, IOptions<EndpointConfig> endpointConfig)
         {
             _eventStore = eventStore;
             _db = db;
@@ -40,6 +43,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             _mediaIndex = cache.Index<MediaIndex>();
             _referencesIndex = cache.Index<ReferencesIndex>();
             _uploadConfig = uploadConfig.Value;
+            _endpointConfig = endpointConfig.Value;
         }
 
         [HttpGet("ids")]
@@ -113,6 +117,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                         ("timestamp", x => x.Timestamp))
                     .PaginateAndSelect(args.Page, args.PageSize, x => new MediaResult(x)
                     {
+                        File = GenerateFileUrl(x),
                         Timestamp = _referencesIndex.LastModificationCascading(ResourceType.Media, x.Id)
                     });
 
@@ -154,6 +159,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             var result = new MediaResult(media)
             {
+                File = GenerateFileUrl(media),
                 Timestamp = _referencesIndex.LastModificationCascading(ResourceType.Media, id)
             };
 
@@ -324,6 +330,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return Forbid();
 
             return ReferenceInfoHelper.GetReferenceInfo(ResourceType.Media, id, _entityIndex, _referencesIndex);
+        }
+
+
+
+        private string GenerateFileUrl(MediaElement mediaElement)
+        {
+            return mediaElement.Type == MediaType.Image
+                ? string.Format(_endpointConfig.ThumbnailUrlPattern, mediaElement.Id)
+                : $"{Request.Scheme}://{Request.Host}/api/Media/{mediaElement.Id}/File";
         }
     }
 }

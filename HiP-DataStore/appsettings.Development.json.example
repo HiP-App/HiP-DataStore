@@ -10,6 +10,7 @@
   "Endpoints": {
     "MongoDbHost": "mongodb://localhost:27017",
     "MongoDbName": "main",
+    "ThumbnailUrlPattern": "https://docker-hip.cs.upb.de/develop/thumbnailservice/api/Thumbnails?Url=datastore/api/Media/{0}/File",
 
     "EventStoreHost": "tcp://localhost:1113",
 
