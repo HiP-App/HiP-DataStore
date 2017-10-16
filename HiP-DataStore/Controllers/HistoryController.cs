@@ -6,6 +6,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
+using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
 using System;
 using System.Threading.Tasks;
 
@@ -17,10 +18,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
     [Authorize]
     public class HistoryController : Controller
     {
-        private readonly EventStoreClient _eventStore;
+        private readonly EventStoreService _eventStore;
         private readonly EntityIndex _entityIndex;
 
-        public HistoryController(EventStoreClient eventStore, InMemoryCache cache)
+        public HistoryController(EventStoreService eventStore, InMemoryCache cache)
         {
             _eventStore = eventStore;
             _entityIndex = cache.Index<EntityIndex>();
