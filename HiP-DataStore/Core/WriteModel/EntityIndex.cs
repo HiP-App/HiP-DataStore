@@ -48,9 +48,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
         /// <summary>
         /// Get UserId of an entity owner
         /// </summary>
-        /// <param name="entityType"></param>
-        /// <param name="id"></param>
-        /// <returns></returns>
         public string Owner(ResourceType entityType, int id)
         {
             var info = GetOrCreateEntityTypeInfo(entityType);
@@ -64,9 +61,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
         /// <summary>
         /// Gets the IDs of all entities of the given type and status.
         /// </summary>
-        /// <param name="entityType"></param>
-        /// <param name="status"></param>
-        /// <returns></returns>
         public IReadOnlyCollection<int> AllIds(ResourceType entityType, ContentStatus status, IIdentity User)
         {
             lock (_lockObject)
