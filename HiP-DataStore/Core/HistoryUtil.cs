@@ -38,11 +38,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
                     crudEvent.GetEntityType() == entityId.Type && crudEvent.Id == entityId.Id)
                 {
                     var timestamp = crudEvent.Timestamp;
-                    var user = (crudEvent as IUserActivityEvent).UserId;
+                    var user = (crudEvent as IUserActivityEvent)?.UserId;
 
                     switch (crudEvent)
                     {
-                        case ICreateEvent createEvent:
+                        case ICreateEvent _:
                             if (summary.Created.HasValue)
                             {
                                 // assumption: entity was deleted before and is now recreated (we don't check if there
@@ -56,12 +56,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
                             summary.Changes.Add(new HistorySummary.Change(timestamp, "Created", user));
                             break;
 
-                        case IUpdateEvent updateEvent:
+                        case IUpdateEvent _:
                             summary.LastModified = timestamp;
                             summary.Changes.Add(new HistorySummary.Change(timestamp, "Updated", user));
                             break;
 
-                        case IDeleteEvent deleteEvent:
+                        case IDeleteEvent _:
                             summary.LastModified = timestamp;
                             summary.Deleted = timestamp;
                             summary.Changes.Add(new HistorySummary.Change(timestamp, "Deleted", user));

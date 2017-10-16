@@ -103,15 +103,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return Ok(summary);
         }
 
-        private async Task<IActionResult> GetVersionAsync<T>(ResourceType type, int id, DateTimeOffset timestamp)
-            where T : ContentBase
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+        //private async Task<IActionResult> GetVersionAsync<T>(ResourceType type, int id, DateTimeOffset timestamp)
+        //    where T : ContentBase
+        //{
+        //    if (!ModelState.IsValid)
+        //        return BadRequest(ModelState);
 
-            // TODO: Validate user permissions
-            var version = await HistoryUtil.GetVersionAsync<T>(_eventStore.EventStream, (type, id), timestamp);
-            return Ok(version);
-        }
+        //    // TODO: Validate user permissions
+        //    var version = await HistoryUtil.GetVersionAsync<T>(_eventStore.EventStream, (type, id), timestamp);
+        //    return Ok(version);
+        //}
     }
 }
