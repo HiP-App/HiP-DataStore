@@ -48,9 +48,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
         /// <summary>
         /// Get UserId of an entity owner
         /// </summary>
-        /// <param name="entityType"></param>
-        /// <param name="id"></param>
-        /// <returns></returns>
         public string Owner(ResourceType entityType, int id)
         {
             var info = GetOrCreateEntityTypeInfo(entityType);
@@ -64,21 +61,18 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
         /// <summary>
         /// Gets the IDs of all entities of the given type and status.
         /// </summary>
-        /// <param name="entityType"></param>
-        /// <param name="status"></param>
-        /// <returns></returns>
-        public IReadOnlyCollection<int> AllIds(ResourceType entityType, ContentStatus status, IIdentity User)
+        public IReadOnlyCollection<int> AllIds(ResourceType entityType, ContentStatus status, IIdentity user)
         {
             lock (_lockObject)
             {
-                bool isAllowedGetAll = UserPermissions.IsAllowedToGetAll(User, status);
-                string userId = User.GetUserIdentity();
+                bool isAllowedGetAll = UserPermissions.IsAllowedToGetAll(user, status);
+                string userId = user.GetUserIdentity();
                 var info = GetOrCreateEntityTypeInfo(entityType);
                 return info.Entities
                     .AsQueryable()
                     .FilterIf(!isAllowedGetAll, x =>
                         ((status == ContentStatus.All) && (x.Value.Status == ContentStatus.Published)) || (x.Value.UserId == userId))
-                    .FilterIf(status == ContentStatus.All && !UserPermissions.IsAllowedToGetDeleted(User),
+                    .FilterIf(status == ContentStatus.All && !UserPermissions.IsAllowedToGetDeleted(user),
                                                                   x => x.Value.Status != ContentStatus.Deleted)
                      .Where(x => status == ContentStatus.All || x.Value.Status == status)
                     .Select(x => x.Key)

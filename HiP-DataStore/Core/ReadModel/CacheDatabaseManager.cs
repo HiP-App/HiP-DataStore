@@ -44,8 +44,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 
             // 2) Subscribe to EventStore to receive all past and future events
             _eventStore = eventStore;
-
-            var subscription = _eventStore.EventStream.SubscribeCatchUp(ApplyEvent);
+            _eventStore.EventStream.SubscribeCatchUp(ApplyEvent);
         }
         
         private void ApplyEvent(IEvent ev)

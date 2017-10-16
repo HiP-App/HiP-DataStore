@@ -62,10 +62,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            args = args ?? new RouteQueryArgs();
+
             if (args.Status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
                 return Forbid();
-
-            args = args ?? new RouteQueryArgs();
 
             var query = _db.Database.GetCollection<Route>(ResourceType.Route.Name).AsQueryable();
 
