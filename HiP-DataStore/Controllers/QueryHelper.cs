@@ -27,10 +27,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 .FilterIf(includedIds != null, x => includedIds.Contains(x.Id));
         }
 
-        public static IQueryable<T> FilterByStatus<T>(this IQueryable<T> query, ContentStatus status, IIdentity user) where T : ContentBase
+        public static IQueryable<T> FilterByStatus<T>(this IQueryable<T> query, ContentStatus status, IIdentity User) where T : ContentBase
         {
             return query.FilterIf(status != ContentStatus.All, x => x.Status == status)
-                        .FilterIf(status == ContentStatus.All && !UserPermissions.IsAllowedToGetDeleted(user),
+                        .FilterIf(status == ContentStatus.All && !UserPermissions.IsAllowedToGetDeleted(User),
                                                                   x => x.Status != ContentStatus.Deleted);
         }
 
@@ -51,12 +51,55 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 : query.Where(x => x.Timestamp > timestamp.Value);
         }
 
-        public static IQueryable<T> FilterByUser<T>(this IQueryable<T> query, ContentStatus status, IIdentity user) where T : ContentBase
+        public static IQueryable<T> FilterByUser<T>(this IQueryable<T> query, ContentStatus status, IIdentity User) where T : ContentBase
         {
-            bool isAllowedGetAll = UserPermissions.IsAllowedToGetAll(user, status);
+            bool isAllowedGetAll = UserPermissions.IsAllowedToGetAll(User, status);
             return query.FilterIf(!isAllowedGetAll, x =>
-                        ((status == ContentStatus.All) && (x.Status == ContentStatus.Published)) || (x.UserId == user.GetUserIdentity()));
+                        ((status == ContentStatus.All) && (x.Status == ContentStatus.Published)) || (x.UserId == User.GetUserIdentity()));
         }
+        /// <summary>
+        /// Returns all entries that are located within the radius, defined within the entry itself, around the given latitude and longitude.
+        /// If none or only one coordinate is given, all entries are returned.
+        /// </summary>
+        public static IQueryable<T> FilterByLocation<T>(this IQueryable<T> query, float? latitude, float? longitude) where T : ContentBase
+        {
+            List<int> excludedIds = new List<int>();
+
+            if (typeof(Exhibit) == typeof(T))
+            {
+                List<Exhibit> exhibits = query.ToList().Cast<Exhibit>().ToList();
+
+                if (latitude != null && longitude != null)
+                {
+                    foreach (var entry in exhibits)
+                    {
+
+                        if (GetDistanceFromLatLonInKm(entry.Latitude, entry.Longitude, latitude, longitude) > entry.AccessRadius)
+                        {
+                            excludedIds.Add(entry.Id);
+                        }
+                    }
+                    return FilterByIds(query, excludedIds, null);
+                }
+
+            }
+            return query;
+        }
+
+        /// <summary>
+        /// Calculates the distance between two points of latitude and longitude in km.
+        /// </summary>
+        private static double GetDistanceFromLatLonInKm(float? lat1, float? lon1, float? lat2, float? lon2)
+        {
+            float? dLat = (lat2 - lat1) * (float)Math.PI / 180;
+            float? dLon = (lon2 - lon1) * (float)Math.PI / 180;
+
+            double a = Math.Sin((double)dLat / 2) * Math.Sin((double)dLat / 2) 
+                + Math.Cos((double)lat1 * Math.PI / 180) * Math.Cos((double)lat2 * Math.PI / 180) 
+                * Math.Sin((double)dLon / 2) * Math.Sin((double)dLon / 2);
+            return 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1-a)) * 6378;
+        }
+
         /// <summary>
         /// Executes the query to determine the number of results, then retrieves a subset of the results
         /// (determined by <paramref name="page"/> and <paramref name="pageSize"/>) and projects them to objects of

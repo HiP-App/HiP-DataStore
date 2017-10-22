@@ -20,6 +20,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 
         public float Longitude { get; set; }
 
+        public float AccessRadius { get; set; }
+
         public bool Used { get; set; }
 
         public string UserId { get; set; }
@@ -46,6 +48,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
             Image = (int?)x.Image.Id;
             Latitude = x.Latitude;
             Longitude = x.Longitude;
+            AccessRadius = x.AccessRadius;
             Used = x.Referencers.Count > 0; // an exhibit is in use if it is contained in (i.e. referenced by) a route
             Pages = x.Pages.Ids.Select(id => (int)id).ToArray();
             Status = x.Status;

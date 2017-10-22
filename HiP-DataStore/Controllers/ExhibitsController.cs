@@ -63,10 +63,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            args = args ?? new ExhibitQueryArgs();
-
             if (args.Status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
                 return Forbid();
+
+            args = args ?? new ExhibitQueryArgs();
 
             var query = _db.Database.GetCollection<Exhibit>(ResourceType.Exhibit.Name).AsQueryable();
 
@@ -76,6 +76,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
                 var exhibits = query
                     .FilterByIds(args.Exclude, args.IncludeOnly)
+                    .FilterByLocation(args.Latitude, args.Longitude)
                     .FilterByUser(args.Status,User.Identity)
                     .FilterByStatus(args.Status, User.Identity)
                     .FilterByTimestamp(args.Timestamp)

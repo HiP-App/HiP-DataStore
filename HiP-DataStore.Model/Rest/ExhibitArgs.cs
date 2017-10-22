@@ -30,6 +30,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 
         public List<int> Pages { get; set; }
 
+        public float AccessRadius { get; set; }
+
         public IEnumerable<EntityId> GetReferences()
         {
             if (Image != null)
