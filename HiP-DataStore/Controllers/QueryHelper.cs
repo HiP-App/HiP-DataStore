@@ -28,10 +28,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 .FilterIf(includedIds != null, x => includedIds.Contains(x.Id));
         }
 
-        public static IQueryable<T> FilterByStatus<T>(this IQueryable<T> query, ContentStatus status, IIdentity User) where T : ContentBase
+        public static IQueryable<T> FilterByStatus<T>(this IQueryable<T> query, ContentStatus status, IIdentity user) where T : ContentBase
         {
             return query.FilterIf(status != ContentStatus.All, x => x.Status == status)
-                        .FilterIf(status == ContentStatus.All && !UserPermissions.IsAllowedToGetDeleted(User),
+                        .FilterIf(status == ContentStatus.All && !UserPermissions.IsAllowedToGetDeleted(user),
                                                                   x => x.Status != ContentStatus.Deleted);
         }
 
@@ -52,12 +52,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 : query.Where(x => x.Timestamp > timestamp.Value);
         }
 
-        public static IQueryable<T> FilterByUser<T>(this IQueryable<T> query, ContentStatus status, IIdentity User) where T : ContentBase
+        public static IQueryable<T> FilterByUser<T>(this IQueryable<T> query, ContentStatus status, IIdentity user) where T : ContentBase
         {
-            bool isAllowedGetAll = UserPermissions.IsAllowedToGetAll(User, status);
+            bool isAllowedGetAll = UserPermissions.IsAllowedToGetAll(user, status);
             return query.FilterIf(!isAllowedGetAll, x =>
-                        ((status == ContentStatus.All) && (x.Status == ContentStatus.Published)) || (x.UserId == User.GetUserIdentity()));
+                        ((status == ContentStatus.All) && (x.Status == ContentStatus.Published)) || (x.UserId == user.GetUserIdentity()));
         }
+
         /// <summary>
         /// Returns all entries that are located within the radius, defined within the entry itself, around the given latitude and longitude.
         /// If none or only one coordinate is given, all entries are returned.
