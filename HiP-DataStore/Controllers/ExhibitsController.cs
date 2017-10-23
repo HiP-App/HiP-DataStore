@@ -181,6 +181,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, _entityIndex.Owner(ResourceType.Exhibit, id)))
                 return Forbid();
 
+            var oldStatus = _entityIndex.Status(ResourceType.Exhibit, id).GetValueOrDefault();
+            if (args.Status == ContentStatus.Unpublished && oldStatus != ContentStatus.Published)
+                return BadRequest(ErrorMessages.CannotBeUnpublished(ResourceType.Exhibit));
+
             // validation passed, emit event
             var ev = new ExhibitUpdated
             {
@@ -209,7 +213,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             var status = _entityIndex.Status(ResourceType.Exhibit, id).GetValueOrDefault();
             if (!UserPermissions.IsAllowedToDelete(User.Identity, status, _entityIndex.Owner(ResourceType.Exhibit, id)))
-                return Forbid();
+                return BadRequest(ErrorMessages.CannotBeDeleted(ResourceType.Exhibit,id));
+
+            if (status == ContentStatus.Published)
+                return BadRequest(ErrorMessages.CannotBeDeleted(ResourceType.Exhibit, id));
 
             // check if exhibit is in use and can't be deleted (it's in use if and only if it is contained in a route).
             if (_referencesIndex.IsUsed(ResourceType.Exhibit, id))
