@@ -1,0 +1,2997 @@
+﻿{
+  "x-generator": "NSwag v11.11.0.0 (NJsonSchema v9.9.0.0 (Newtonsoft.Json v9.0.0.0))",
+  "swagger": "2.0",
+  "info": {
+    "title": "",
+    "version": ""
+  },
+  "schemes": [],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/api/Exhibits/Pages/ids": {
+      "get": {
+        "tags": [
+          "ExhibitPages"
+        ],
+        "operationId": "ExhibitPages_GetAllIds",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "status",
+            "in": "query",
+            "x-schema": {
+              "$ref": "#/definitions/ContentStatus"
+            },
+            "x-nullable": false,
+            "default": 2,
+            "enum": [
+              0,
+              1,
+              2,
+              3,
+              4
+            ]
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              }
+            },
+            "x-nullable": true
+          }
+        }
+      }
+    },
+    "/api/Exhibits/Pages": {
+      "get": {
+        "tags": [
+          "ExhibitPages"
+        ],
+        "summary": "Gets all pages in no particular order, unless otherwise specified in the query arguments.",
+        "operationId": "ExhibitPages_GetAllPages",
+        "parameters": [
+          {
+            "name": "args",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/ExhibitPageQueryArgs"
+            },
+            "x-nullable": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/AllItemsResultOfExhibitPageResult"
+            },
+            "x-nullable": true
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "422": {
+            "description": ""
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ExhibitPages"
+        ],
+        "operationId": "ExhibitPages_Post",
+        "parameters": [
+          {
+            "name": "args",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/ExhibitPageArgs2"
+            },
+            "x-nullable": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-nullable": false
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Exhibits/{exhibitId}/Pages/ids": {
+      "get": {
+        "tags": [
+          "ExhibitPages"
+        ],
+        "operationId": "ExhibitPages_GetIdsForExhibit",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "exhibitId",
+            "in": "path",
+            "required": true,
+            "x-nullable": false,
+            "format": "int32"
+          },
+          {
+            "type": "integer",
+            "name": "status",
+            "in": "query",
+            "x-schema": {
+              "$ref": "#/definitions/ContentStatus"
+            },
+            "x-nullable": false,
+            "default": 2,
+            "enum": [
+              0,
+              1,
+              2,
+              3,
+              4
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              }
+            },
+            "x-nullable": true
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Exhibits/{exhibitId}/Pages": {
+      "get": {
+        "tags": [
+          "ExhibitPages"
+        ],
+        "summary": "Gets the pages of an exhibit in the correct order (as specified in the exhibit),\nunless otherwise specified in the query arguments.",
+        "operationId": "ExhibitPages_GetPagesForExhibit",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "exhibitId",
+            "in": "path",
+            "required": true,
+            "x-nullable": false,
+            "format": "int32"
+          },
+          {
+            "name": "args",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/ExhibitPageQueryArgs"
+            },
+            "x-nullable": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/AllItemsResultOfExhibitPageResult"
+            },
+            "x-nullable": true
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "422": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Exhibits/Pages/{id}": {
+      "get": {
+        "tags": [
+          "ExhibitPages"
+        ],
+        "operationId": "ExhibitPages_GetById",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "x-nullable": false,
+            "format": "int32"
+          },
+          {
+            "type": "string",
+            "name": "timestamp",
+            "in": "query",
+            "x-nullable": true,
+            "format": "date-time"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/ExhibitPageResult"
+            },
+            "x-nullable": true
+          },
+          "304": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ExhibitPages"
+        ],
+        "operationId": "ExhibitPages_Put",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "x-nullable": false,
+            "format": "int32"
+          },
+          {
+            "name": "args",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/ExhibitPageArgs2"
+            },
+            "x-nullable": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "422": {
+            "description": ""
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ExhibitPages"
+        ],
+        "operationId": "ExhibitPages_Delete",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "x-nullable": false,
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Exhibits/Pages/{id}/Refs": {
+      "get": {
+        "tags": [
+          "ExhibitPages"
+        ],
+        "operationId": "ExhibitPages_GetReferenceInfo",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "x-nullable": false,
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/ReferenceInfoResult"
+            },
+            "x-nullable": true
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Exhibits/ids": {
+      "get": {
+        "tags": [
+          "Exhibits"
+        ],
+        "operationId": "Exhibits_GetIds",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "status",
+            "in": "query",
+            "x-schema": {
+              "$ref": "#/definitions/ContentStatus"
+            },
+            "x-nullable": false,
+            "default": 2,
+            "enum": [
+              0,
+              1,
+              2,
+              3,
+              4
+            ]
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              }
+            },
+            "x-nullable": true
+          }
+        }
+      }
+    },
+    "/api/Exhibits": {
+      "get": {
+        "tags": [
+          "Exhibits"
+        ],
+        "operationId": "Exhibits_Get",
+        "parameters": [
+          {
+            "name": "args",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/ExhibitQueryArgs"
+            },
+            "x-nullable": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/AllItemsResultOfExhibitResult"
+            },
+            "x-nullable": true
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Exhibits"
+        ],
+        "operationId": "Exhibits_Post",
+        "parameters": [
+          {
+            "name": "args",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/ExhibitArgs"
+            },
+            "x-nullable": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-nullable": false
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Exhibits/{id}": {
+      "get": {
+        "tags": [
+          "Exhibits"
+        ],
+        "operationId": "Exhibits_GetById",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "x-nullable": false,
+            "format": "int32"
+          },
+          {
+            "type": "string",
+            "name": "timestamp",
+            "in": "query",
+            "x-nullable": true,
+            "format": "date-time"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/ExhibitResult"
+            },
+            "x-nullable": true
+          },
+          "304": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Exhibits"
+        ],
+        "operationId": "Exhibits_Put",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "x-nullable": false,
+            "format": "int32"
+          },
+          {
+            "name": "args",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/ExhibitArgs"
+            },
+            "x-nullable": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Exhibits"
+        ],
+        "operationId": "Exhibits_Delete",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "x-nullable": false,
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Exhibits/{id}/Refs": {
+      "get": {
+        "tags": [
+          "Exhibits"
+        ],
+        "operationId": "Exhibits_GetReferenceInfo",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "x-nullable": false,
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/ReferenceInfoResult"
+            },
+            "x-nullable": true
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Exhibits/Rating/{id}": {
+      "get": {
+        "tags": [
+          "Exhibits"
+        ],
+        "operationId": "Exhibits_GetRating",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "x-nullable": false,
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/RatingResult"
+            },
+            "x-nullable": true
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Exhibits"
+        ],
+        "operationId": "Exhibits_PostRating",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "x-nullable": false,
+            "format": "int32"
+          },
+          {
+            "name": "args",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/RatingArgs"
+            },
+            "x-nullable": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-nullable": false
+          },
+          "400": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Exhibits/{id}/History": {
+      "get": {
+        "tags": [
+          "History"
+        ],
+        "operationId": "History_GetExhibitSummary",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "x-nullable": false,
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/HistorySummary"
+            },
+            "x-nullable": true
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Exhibits/Pages/{id}/History": {
+      "get": {
+        "tags": [
+          "History"
+        ],
+        "operationId": "History_GetExhibitPageSummary",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "x-nullable": false,
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/HistorySummary"
+            },
+            "x-nullable": true
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Media/{id}/History": {
+      "get": {
+        "tags": [
+          "History"
+        ],
+        "operationId": "History_GetMediaSummary",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "x-nullable": false,
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/HistorySummary"
+            },
+            "x-nullable": true
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Routes/{id}/History": {
+      "get": {
+        "tags": [
+          "History"
+        ],
+        "operationId": "History_GetRouteSummary",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "x-nullable": false,
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/HistorySummary"
+            },
+            "x-nullable": true
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Tags/{id}/History": {
+      "get": {
+        "tags": [
+          "History"
+        ],
+        "operationId": "History_GetTagSummary",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "x-nullable": false,
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/HistorySummary"
+            },
+            "x-nullable": true
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Media/ids": {
+      "get": {
+        "tags": [
+          "Media"
+        ],
+        "operationId": "Media_GetIds",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "status",
+            "in": "query",
+            "x-schema": {
+              "$ref": "#/definitions/ContentStatus"
+            },
+            "x-nullable": false,
+            "default": 2,
+            "enum": [
+              0,
+              1,
+              2,
+              3,
+              4
+            ]
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              }
+            },
+            "x-nullable": true
+          }
+        }
+      }
+    },
+    "/api/Media": {
+      "post": {
+        "tags": [
+          "Media"
+        ],
+        "operationId": "Media_Post",
+        "parameters": [
+          {
+            "name": "args",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/MediaArgs"
+            },
+            "x-nullable": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-nullable": false
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Media"
+        ],
+        "operationId": "Media_Get",
+        "parameters": [
+          {
+            "name": "args",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/MediaQueryArgs"
+            },
+            "x-nullable": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/AllItemsResultOfMediaResult"
+            },
+            "x-nullable": true
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Media/{id}": {
+      "get": {
+        "tags": [
+          "Media"
+        ],
+        "operationId": "Media_GetById",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "x-nullable": false,
+            "format": "int32"
+          },
+          {
+            "type": "string",
+            "name": "timestamp",
+            "in": "query",
+            "x-nullable": true,
+            "format": "date-time"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/MediaResult"
+            },
+            "x-nullable": true
+          },
+          "304": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Media"
+        ],
+        "operationId": "Media_DeleteById",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "x-nullable": false,
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Media"
+        ],
+        "operationId": "Media_PutById",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "x-nullable": false,
+            "format": "int32"
+          },
+          {
+            "name": "args",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/MediaArgs"
+            },
+            "x-nullable": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Media/{id}/File": {
+      "get": {
+        "tags": [
+          "Media"
+        ],
+        "operationId": "Media_GetFileById",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "x-nullable": false,
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Media"
+        ],
+        "operationId": "Media_PutFileById",
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "x-nullable": false,
+            "format": "int32"
+          },
+          {
+            "type": "file",
+            "name": "file",
+            "in": "formData",
+            "x-nullable": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Media/{id}/Refs": {
+      "get": {
+        "tags": [
+          "Media"
+        ],
+        "operationId": "Media_GetReferenceInfo",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "x-nullable": false,
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/ReferenceInfoResult"
+            },
+            "x-nullable": true
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Routes/ids": {
+      "get": {
+        "tags": [
+          "Routes"
+        ],
+        "operationId": "Routes_GetIds",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "status",
+            "in": "query",
+            "x-schema": {
+              "$ref": "#/definitions/ContentStatus"
+            },
+            "x-nullable": false,
+            "default": 2,
+            "enum": [
+              0,
+              1,
+              2,
+              3,
+              4
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              }
+            },
+            "x-nullable": true
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Routes": {
+      "get": {
+        "tags": [
+          "Routes"
+        ],
+        "operationId": "Routes_Get",
+        "parameters": [
+          {
+            "name": "args",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/RouteQueryArgs"
+            },
+            "x-nullable": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/AllItemsResultOfRouteResult"
+            },
+            "x-nullable": true
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Routes"
+        ],
+        "operationId": "Routes_Post",
+        "parameters": [
+          {
+            "name": "args",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/RouteArgs"
+            },
+            "x-nullable": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-nullable": false
+          },
+          "403": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Routes/{id}": {
+      "get": {
+        "tags": [
+          "Routes"
+        ],
+        "operationId": "Routes_GetById",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "x-nullable": false,
+            "format": "int32"
+          },
+          {
+            "type": "string",
+            "name": "timestamp",
+            "in": "query",
+            "x-nullable": true,
+            "format": "date-time"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/RouteResult"
+            },
+            "x-nullable": true
+          },
+          "304": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Routes"
+        ],
+        "operationId": "Routes_Put",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "x-nullable": false,
+            "format": "int32"
+          },
+          {
+            "name": "args",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/RouteArgs"
+            },
+            "x-nullable": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Routes"
+        ],
+        "operationId": "Routes_Delete",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "x-nullable": false,
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Routes/{id}/Refs": {
+      "get": {
+        "tags": [
+          "Routes"
+        ],
+        "operationId": "Routes_GetReferenceInfo",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "x-nullable": false,
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/ReferenceInfoResult"
+            },
+            "x-nullable": true
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Routes/Rating/{id}": {
+      "get": {
+        "tags": [
+          "Routes"
+        ],
+        "operationId": "Routes_GetRating",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "x-nullable": false,
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/RatingResult"
+            },
+            "x-nullable": true
+          },
+          "400": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Routes"
+        ],
+        "operationId": "Routes_PostRating",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "x-nullable": false,
+            "format": "int32"
+          },
+          {
+            "name": "args",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/RatingArgs"
+            },
+            "x-nullable": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-nullable": false
+          },
+          "400": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/ScoreBoard": {
+      "get": {
+        "tags": [
+          "ScoreBoard"
+        ],
+        "operationId": "ScoreBoard_GetAll",
+        "parameters": [
+          {
+            "name": "args",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/ScoreBoardArgs"
+            },
+            "x-nullable": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/AllItemsResultOfScoreRecordResult"
+            },
+            "x-nullable": true
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ScoreBoard"
+        ],
+        "operationId": "ScoreBoard_Put",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "score",
+            "in": "query",
+            "required": true,
+            "x-nullable": false,
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/ScoreBoard/history": {
+      "get": {
+        "tags": [
+          "ScoreBoard"
+        ],
+        "operationId": "ScoreBoard_GetByUserId",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/ScoreResults"
+            },
+            "x-nullable": true
+          },
+          "400": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Statuses": {
+      "get": {
+        "tags": [
+          "Statuses"
+        ],
+        "operationId": "Statuses_Index",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "x-nullable": true
+          }
+        }
+      }
+    },
+    "/api/Tags/ids": {
+      "get": {
+        "tags": [
+          "Tags"
+        ],
+        "operationId": "Tags_GetIds",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "status",
+            "in": "query",
+            "x-schema": {
+              "$ref": "#/definitions/ContentStatus"
+            },
+            "x-nullable": false,
+            "default": 2,
+            "enum": [
+              0,
+              1,
+              2,
+              3,
+              4
+            ]
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              }
+            },
+            "x-nullable": true
+          }
+        }
+      }
+    },
+    "/api/Tags": {
+      "get": {
+        "tags": [
+          "Tags"
+        ],
+        "operationId": "Tags_GetAll",
+        "parameters": [
+          {
+            "name": "args",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/TagQueryArgs"
+            },
+            "x-nullable": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/AllItemsResultOfTagResult"
+            },
+            "x-nullable": true
+          },
+          "304": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Tags"
+        ],
+        "operationId": "Tags_Post",
+        "parameters": [
+          {
+            "name": "args",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/TagArgs"
+            },
+            "x-nullable": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-nullable": false
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "409": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Tags/{id}": {
+      "get": {
+        "tags": [
+          "Tags"
+        ],
+        "operationId": "Tags_GetById",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "x-nullable": false,
+            "format": "int32"
+          },
+          {
+            "type": "string",
+            "name": "timestamp",
+            "in": "query",
+            "x-nullable": true,
+            "format": "date-time"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/TagResult"
+            },
+            "x-nullable": true
+          },
+          "304": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Tags"
+        ],
+        "operationId": "Tags_UpdateById",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "x-nullable": false,
+            "format": "int32"
+          },
+          {
+            "name": "args",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/TagArgs"
+            },
+            "x-nullable": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "409": {
+            "description": ""
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Tags"
+        ],
+        "operationId": "Tags_DeleteById",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "x-nullable": false,
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Tags/{id}/Refs": {
+      "get": {
+        "tags": [
+          "Tags"
+        ],
+        "operationId": "Tags_GetReferenceInfo",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "x-nullable": false,
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/ReferenceInfoResult"
+            },
+            "x-nullable": true
+          },
+          "400": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "ContentStatus": {
+      "type": "integer",
+      "description": "",
+      "x-enumNames": [
+        "Draft",
+        "In_Review",
+        "Published",
+        "All",
+        "Deleted"
+      ],
+      "enum": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    "ExhibitPageQueryArgs": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Type": {
+          "description": "If not null, only pages of the specified type are returned.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/PageType"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "$ref": "#/definitions/QueryArgs"
+        }
+      ]
+    },
+    "PageType": {
+      "type": "integer",
+      "description": "",
+      "x-enumNames": [
+        "Appetizer_Page",
+        "Image_Page",
+        "Slider_Page",
+        "Text_Page"
+      ],
+      "enum": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "QueryArgs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "Status"
+      ],
+      "properties": {
+        "Exclude": {
+          "type": "array",
+          "description": "IDs excluded from the response.",
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "IncludeOnly": {
+          "type": "array",
+          "description": "If set, only these IDs are included in the response.\nIf null, all IDs are included in the response.\nIn both cases, the filter  still applies.",
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "Page": {
+          "type": "integer",
+          "description": "The page number. Defaults to one, which is the first page.",
+          "format": "int32",
+          "maximum": 2147483647.0,
+          "minimum": 1.0
+        },
+        "PageSize": {
+          "type": "integer",
+          "description": "Maximum number of entities in the response. The last page may have less entities,\nall other pages have exactly  entities.",
+          "format": "int32",
+          "maximum": 2147483647.0,
+          "minimum": 1.0
+        },
+        "OrderBy": {
+          "type": "string",
+          "description": "The field to order the response data by."
+        },
+        "Query": {
+          "type": "string",
+          "description": "Restricts the reponse results to the objects containing the queried string in a text field\n(title/name, description)."
+        },
+        "Status": {
+          "description": "Restricts the reponse to objects with the given status or specifies that all objects irrespective\nof their status shall be returned. Defaults to .",
+          "default": 2,
+          "allOf": [
+            {
+              "$ref": "#/definitions/ContentStatus"
+            }
+          ]
+        },
+        "Timestamp": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "AllItemsResultOfExhibitPageResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "Total"
+      ],
+      "properties": {
+        "Total": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "Items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ExhibitPageResult"
+          }
+        }
+      }
+    },
+    "ExhibitPageResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "Id",
+        "Type",
+        "Status",
+        "Timestamp",
+        "Used"
+      ],
+      "properties": {
+        "Id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "Type": {
+          "$ref": "#/definitions/PageType2"
+        },
+        "Title": {
+          "type": "string"
+        },
+        "Text": {
+          "type": "string"
+        },
+        "Description": {
+          "type": "string"
+        },
+        "FontFamily": {
+          "type": "string"
+        },
+        "UserId": {
+          "type": "string"
+        },
+        "Audio": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "Image": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "Images": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SliderPageImageResult"
+          }
+        },
+        "HideYearNumbers": {
+          "type": "boolean"
+        },
+        "AdditionalInformationPages": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "Status": {
+          "$ref": "#/definitions/ContentStatus2"
+        },
+        "Timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "Used": {
+          "type": "boolean"
+        }
+      }
+    },
+    "PageType2": {
+      "type": "string",
+      "description": "",
+      "x-enumNames": [
+        "Appetizer_Page",
+        "Image_Page",
+        "Slider_Page",
+        "Text_Page"
+      ],
+      "enum": [
+        "Appetizer_Page",
+        "Image_Page",
+        "Slider_Page",
+        "Text_Page"
+      ]
+    },
+    "SliderPageImageResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "Image"
+      ],
+      "properties": {
+        "Date": {
+          "type": "string"
+        },
+        "Image": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "ContentStatus2": {
+      "type": "string",
+      "description": "",
+      "x-enumNames": [
+        "Draft",
+        "In_Review",
+        "Published",
+        "All",
+        "Deleted"
+      ],
+      "enum": [
+        "DRAFT",
+        "IN_REVIEW",
+        "PUBLISHED",
+        "ALL",
+        "DELETED"
+      ]
+    },
+    "ExhibitPageArgs2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "Type",
+        "Text",
+        "Status"
+      ],
+      "properties": {
+        "Type": {
+          "$ref": "#/definitions/PageType"
+        },
+        "Title": {
+          "type": "string"
+        },
+        "Text": {
+          "type": "string"
+        },
+        "Description": {
+          "type": "string"
+        },
+        "FontFamily": {
+          "type": "string"
+        },
+        "Audio": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "Image": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "Images": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SliderPageImageArgs"
+          }
+        },
+        "HideYearNumbers": {
+          "type": "boolean"
+        },
+        "AdditionalInformationPages": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "Status": {
+          "$ref": "#/definitions/ContentStatus"
+        }
+      }
+    },
+    "SliderPageImageArgs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "Image"
+      ],
+      "properties": {
+        "Date": {
+          "type": "string"
+        },
+        "Image": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "ReferenceInfoResult": {
+      "type": "object",
+      "description": "For a particular resource, a  provides information about\n(1) which other resources it references (or \"uses\"), and\n(2) which other resources are referencing (or \"using\") it",
+      "additionalProperties": false,
+      "properties": {
+        "OutgoingReferences": {
+          "type": "array",
+          "description": "The resources referenced by the current resource.",
+          "items": {
+            "$ref": "#/definitions/ReferenceInfo"
+          }
+        },
+        "IncomingReferences": {
+          "type": "array",
+          "description": "The resources referencing the current resource.",
+          "items": {
+            "$ref": "#/definitions/ReferenceInfo"
+          }
+        }
+      }
+    },
+    "ReferenceInfo": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Type": {
+          "type": "string"
+        },
+        "Ids": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      }
+    },
+    "ExhibitQueryArgs": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "OnlyRoutes": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "$ref": "#/definitions/QueryArgs"
+        }
+      ]
+    },
+    "AllItemsResultOfExhibitResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "Total"
+      ],
+      "properties": {
+        "Total": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "Items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ExhibitResult"
+          }
+        }
+      }
+    },
+    "ExhibitResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "Id",
+        "Latitude",
+        "Longitude",
+        "Used",
+        "Status",
+        "Timestamp"
+      ],
+      "properties": {
+        "Id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "Name": {
+          "type": "string"
+        },
+        "Description": {
+          "type": "string"
+        },
+        "Image": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "Latitude": {
+          "type": "number",
+          "format": "double"
+        },
+        "Longitude": {
+          "type": "number",
+          "format": "double"
+        },
+        "Used": {
+          "type": "boolean"
+        },
+        "UserId": {
+          "type": "string"
+        },
+        "Pages": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "Status": {
+          "$ref": "#/definitions/ContentStatus2"
+        },
+        "Tags": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "Timestamp": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "ExhibitArgs": {
+      "type": "object",
+      "description": "Model for creating new exhibits.",
+      "additionalProperties": false,
+      "required": [
+        "Name",
+        "Latitude",
+        "Longitude",
+        "Status"
+      ],
+      "properties": {
+        "Name": {
+          "type": "string"
+        },
+        "Description": {
+          "type": "string"
+        },
+        "Image": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "Latitude": {
+          "type": "number",
+          "format": "double",
+          "maximum": 90.0,
+          "minimum": -90.0
+        },
+        "Longitude": {
+          "type": "number",
+          "format": "double",
+          "maximum": 180.0,
+          "minimum": -180.0
+        },
+        "Status": {
+          "$ref": "#/definitions/ContentStatus"
+        },
+        "Tags": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "Pages": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      }
+    },
+    "RatingResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "Id",
+        "Average",
+        "Count"
+      ],
+      "properties": {
+        "Id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "Average": {
+          "type": "number",
+          "format": "double"
+        },
+        "Count": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "RatingArgs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "Rating"
+      ],
+      "properties": {
+        "Rating": {
+          "type": "integer",
+          "format": "byte",
+          "maximum": 5.0,
+          "minimum": 1.0
+        }
+      }
+    },
+    "HistorySummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Created": {
+          "type": "string",
+          "description": "The time and date when the entity was created.\nIf the entity is effectively non-existent (i.e. has never been created or has been deleted),\nno value is set.",
+          "format": "date-time"
+        },
+        "LastModified": {
+          "type": "string",
+          "description": "The time and date of the last creation, update or deletion.\nIf the entity is effectively non-existent (i.e. has never been created or has been deleted),\nno value is set.",
+          "format": "date-time"
+        },
+        "Deleted": {
+          "type": "string",
+          "description": "The time and date when the entity was deleted.\nA value is only set if the entity has been created and deleted before, but not (yet) recreated.",
+          "format": "date-time"
+        },
+        "Owner": {
+          "type": "string",
+          "description": "The ID of the user who created the entity."
+        },
+        "Changes": {
+          "type": "array",
+          "description": "A list of individual modifications (including creation and deletion).",
+          "items": {
+            "$ref": "#/definitions/Change"
+          }
+        }
+      }
+    },
+    "Change": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "Timestamp"
+      ],
+      "properties": {
+        "Timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "Description": {
+          "type": "string"
+        },
+        "UserId": {
+          "type": "string"
+        }
+      }
+    },
+    "MediaArgs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "Title",
+        "Type",
+        "Status"
+      ],
+      "properties": {
+        "Title": {
+          "type": "string"
+        },
+        "Description": {
+          "type": "string"
+        },
+        "Type": {
+          "$ref": "#/definitions/MediaType"
+        },
+        "Status": {
+          "$ref": "#/definitions/ContentStatus"
+        }
+      }
+    },
+    "MediaType": {
+      "type": "integer",
+      "description": "",
+      "x-enumNames": [
+        "Image",
+        "Audio"
+      ],
+      "enum": [
+        0,
+        1
+      ]
+    },
+    "MediaQueryArgs": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Used": {
+          "type": "boolean",
+          "description": "If null, all objects are returned. If set to true (resp. false), only the objects referenced\n(resp. not referenced) by another object are returned."
+        },
+        "Type": {
+          "$ref": "#/definitions/MediaType"
+        }
+      },
+      "allOf": [
+        {
+          "$ref": "#/definitions/QueryArgs"
+        }
+      ]
+    },
+    "AllItemsResultOfMediaResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "Total"
+      ],
+      "properties": {
+        "Total": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "Items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MediaResult"
+          }
+        }
+      }
+    },
+    "MediaResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "Id",
+        "Used",
+        "Type",
+        "Status",
+        "Timestamp"
+      ],
+      "properties": {
+        "Id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "Title": {
+          "type": "string"
+        },
+        "Description": {
+          "type": "string"
+        },
+        "Used": {
+          "type": "boolean"
+        },
+        "File": {
+          "type": "string",
+          "description": "The URL from which the file can be downloaded.\nFor images, a URL pointing to the thumbnail service.\nFor audio, a URL pointing to \"GET /api/Media/{id}/File\"."
+        },
+        "UserId": {
+          "type": "string"
+        },
+        "Type": {
+          "$ref": "#/definitions/MediaType2"
+        },
+        "Status": {
+          "$ref": "#/definitions/ContentStatus2"
+        },
+        "Timestamp": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "MediaType2": {
+      "type": "string",
+      "description": "",
+      "x-enumNames": [
+        "Image",
+        "Audio"
+      ],
+      "enum": [
+        "Image",
+        "Audio"
+      ]
+    },
+    "RouteQueryArgs": {
+      "type": "object",
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "$ref": "#/definitions/QueryArgs"
+        }
+      ]
+    },
+    "AllItemsResultOfRouteResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "Total"
+      ],
+      "properties": {
+        "Total": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "Items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RouteResult"
+          }
+        }
+      }
+    },
+    "RouteResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "Id",
+        "Duration",
+        "Distance",
+        "Status",
+        "Timestamp"
+      ],
+      "properties": {
+        "Id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "Title": {
+          "type": "string"
+        },
+        "Description": {
+          "type": "string"
+        },
+        "Duration": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "Distance": {
+          "type": "number",
+          "format": "double"
+        },
+        "UserId": {
+          "type": "string"
+        },
+        "Image": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "Audio": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "Exhibits": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "Status": {
+          "$ref": "#/definitions/ContentStatus2"
+        },
+        "Tags": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "Timestamp": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "RouteArgs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "Title",
+        "Duration",
+        "Distance",
+        "Status"
+      ],
+      "properties": {
+        "Title": {
+          "type": "string"
+        },
+        "Description": {
+          "type": "string"
+        },
+        "Duration": {
+          "type": "integer",
+          "format": "int32",
+          "maximum": 2147483647.0,
+          "minimum": 0.0
+        },
+        "Distance": {
+          "type": "number",
+          "format": "double",
+          "minimum": 0.0
+        },
+        "Image": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "Audio": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "Exhibits": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "Status": {
+          "$ref": "#/definitions/ContentStatus"
+        },
+        "Tags": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      }
+    },
+    "ScoreBoardArgs": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Length": {
+          "type": "integer",
+          "format": "int32",
+          "maximum": 2147483647.0,
+          "minimum": 1.0
+        }
+      }
+    },
+    "AllItemsResultOfScoreRecordResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "Total"
+      ],
+      "properties": {
+        "Total": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "Items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ScoreRecordResult"
+          }
+        }
+      }
+    },
+    "ScoreRecordResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "UserId": {
+          "type": "string"
+        }
+      },
+      "allOf": [
+        {
+          "$ref": "#/definitions/ScoreResult"
+        }
+      ]
+    },
+    "ScoreResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "Score",
+        "Timestamp"
+      ],
+      "properties": {
+        "Score": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "Timestamp": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "ScoreResults": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "Rank"
+      ],
+      "properties": {
+        "Rank": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "allOf": [
+        {
+          "$ref": "#/definitions/AllItemsResultOfScoreResult"
+        }
+      ]
+    },
+    "AllItemsResultOfScoreResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "Total"
+      ],
+      "properties": {
+        "Total": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "Items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ScoreResult"
+          }
+        }
+      }
+    },
+    "TagQueryArgs": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Used": {
+          "type": "boolean"
+        }
+      },
+      "allOf": [
+        {
+          "$ref": "#/definitions/QueryArgs"
+        }
+      ]
+    },
+    "AllItemsResultOfTagResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "Total"
+      ],
+      "properties": {
+        "Total": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "Items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TagResult"
+          }
+        }
+      }
+    },
+    "TagResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "Id",
+        "Used",
+        "Timestamp",
+        "Status"
+      ],
+      "properties": {
+        "Id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "Title": {
+          "type": "string"
+        },
+        "Description": {
+          "type": "string"
+        },
+        "UserId": {
+          "type": "string"
+        },
+        "Image": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "Used": {
+          "type": "boolean"
+        },
+        "Timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "Status": {
+          "$ref": "#/definitions/ContentStatus2"
+        }
+      }
+    },
+    "TagArgs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "Title",
+        "Status"
+      ],
+      "properties": {
+        "Title": {
+          "type": "string"
+        },
+        "Description": {
+          "type": "string"
+        },
+        "Image": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "Status": {
+          "$ref": "#/definitions/ContentStatus"
+        }
+      }
+    }
+  },
+  "parameters": {},
+  "responses": {},
+  "securityDefinitions": {}
+}
