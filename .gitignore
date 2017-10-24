@@ -4,6 +4,10 @@
 # App settings for development
 appsettings.Development.json
 
+# Generated files (NSwag)
+HiP-UserStore.Sdk/swagger.json
+HiP-UserStore.Sdk/*.g.cs
+
 # User-specific files
 *.suo
 *.user
