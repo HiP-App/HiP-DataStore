@@ -14,10 +14,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
 
         protected Task<HttpClient> CreateHttpClientAsync(CancellationToken cancellationToken)
         {
-            return Task.FromResult(new HttpClient
-            {
-                DefaultRequestHeaders = { { "Authorization", Authorization } }
-            });
+            var http = new HttpClient();
+            if (!string.IsNullOrEmpty(Authorization))
+                http.DefaultRequestHeaders.Add("Authorization", Authorization);
+            return Task.FromResult(http);
         }
     }
 }
