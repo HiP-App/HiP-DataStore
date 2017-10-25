@@ -11,6 +11,6 @@ WORKDIR /dotnetapp/HiP-DataStore
 
 EXPOSE 5000
 
-RUN dotnet restore --no-cache
+RUN dotnet build
 
 CMD /dotnetapp/HiP-DataStore/run.sh
