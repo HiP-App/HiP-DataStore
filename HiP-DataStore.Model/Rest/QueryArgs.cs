@@ -61,6 +61,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 #pragma warning restore 0618
         }
 
+        /// <summary>
+        /// Restricts the reponse to objects with the given status or specifies that all objects irrespective
+        /// of their status shall be returned. Defaults to <see cref="ContentStatus.Published"/>.
+        /// </summary>
         /// <remarks>
         /// Property 'InternalStatus' is listed by NSwag, but not by Swashbuckle (due to 'internal').
         /// Property 'Status' is listed by Swashbuckle, but not by NSwag (due to [JsonIgnore]).
