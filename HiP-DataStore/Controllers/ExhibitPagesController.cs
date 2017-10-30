@@ -71,15 +71,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(403)]
         [ProducesResponseType(422)]
-        public IActionResult GetAllPages(ExhibitPageQueryArgs args)
+        public IActionResult GetAllPages([FromQuery]ExhibitPageQueryArgs args)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            args = args ?? new ExhibitPageQueryArgs();
+
             if (args.Status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
                 return Forbid();
-
-            args = args ?? new ExhibitPageQueryArgs();
 
             var query = _db.Database.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name).AsQueryable();
             return QueryExhibitPages(query, args);
@@ -133,10 +133,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            args = args ?? new ExhibitPageQueryArgs();
+
             if (args.Status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
                 return Forbid();
-
-            args = args ?? new ExhibitPageQueryArgs();
 
             var exhibit = _db.Database.GetCollection<Exhibit>(ResourceType.Exhibit.Name)
                 .AsQueryable()

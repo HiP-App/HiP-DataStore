@@ -57,15 +57,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(typeof(AllItemsResult<RouteResult>), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(403)]
-        public IActionResult Get(RouteQueryArgs args)
+        public IActionResult Get([FromQuery]RouteQueryArgs args)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            args = args ?? new RouteQueryArgs();
+
             if (args.Status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
                 return Forbid();
-
-            args = args ?? new RouteQueryArgs();
 
             var query = _db.Database.GetCollection<Route>(ResourceType.Route.Name).AsQueryable();
 

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
@@ -17,7 +18,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
@@ -26,20 +29,26 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
     public class MediaController : Controller
     {
         private readonly EventStoreService _eventStore;
+        private readonly ILogger<MediaController> _logger;
         private readonly CacheDatabaseManager _db;
         private readonly UploadFilesConfig _uploadConfig;
+        private readonly EndpointConfig _endpointConfig;
         private readonly EntityIndex _entityIndex;
         private readonly MediaIndex _mediaIndex;
         private readonly ReferencesIndex _referencesIndex;
 
-        public MediaController(EventStoreService eventStore, CacheDatabaseManager db, InMemoryCache cache, IOptions<UploadFilesConfig> uploadConfig)
+        public MediaController(EventStoreService eventStore, CacheDatabaseManager db, InMemoryCache cache,
+            IOptions<UploadFilesConfig> uploadConfig, IOptions<EndpointConfig> endpointConfig,
+            ILogger<MediaController> logger)
         {
+            _logger = logger;
             _eventStore = eventStore;
             _db = db;
             _entityIndex = cache.Index<EntityIndex>();
             _mediaIndex = cache.Index<MediaIndex>();
             _referencesIndex = cache.Index<ReferencesIndex>();
             _uploadConfig = uploadConfig.Value;
+            _endpointConfig = endpointConfig.Value;
         }
 
         [HttpGet("ids")]
@@ -85,7 +94,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(typeof(AllItemsResult<MediaResult>), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(403)]
-        public IActionResult Get(MediaQueryArgs args)
+        public IActionResult Get([FromQuery]MediaQueryArgs args)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -113,6 +122,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                         ("timestamp", x => x.Timestamp))
                     .PaginateAndSelect(args.Page, args.PageSize, x => new MediaResult(x)
                     {
+                        File = GenerateFileUrl(x),
                         Timestamp = _referencesIndex.LastModificationCascading(ResourceType.Media, x.Id)
                     });
 
@@ -154,6 +164,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             var result = new MediaResult(media)
             {
+                File = GenerateFileUrl(media),
                 Timestamp = _referencesIndex.LastModificationCascading(ResourceType.Media, id)
             };
 
@@ -174,7 +185,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return NotFound();
 
             var status = _entityIndex.Status(ResourceType.Media, id).GetValueOrDefault();
-            if (!UserPermissions.IsAllowedToDelete(User.Identity, status, _entityIndex.Owner(ResourceType.Media,id)))
+            if (!UserPermissions.IsAllowedToDelete(User.Identity, status, _entityIndex.Owner(ResourceType.Media, id)))
                 return Forbid();
 
             if (_referencesIndex.IsUsed(ResourceType.Media, id))
@@ -193,6 +204,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             };
 
             await _eventStore.AppendEventAsync(ev);
+            await InvalidateThumbnailCacheAsync(id);
             return StatusCode(204);
         }
 
@@ -209,7 +221,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.Media, id))
                 return NotFound();
 
-            
+
             if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, _entityIndex.Owner(ResourceType.Media, id)))
                 return Forbid();
 
@@ -226,7 +238,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         }
 
         [HttpGet("{id}/File")]
-        [ProducesResponseType(200)]
+        [ProducesResponseType(typeof(FileResult), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
@@ -273,19 +285,19 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return Forbid();
 
             var extension = file.FileName.Split('.').Last();
-            var fileType = Enum.GetName(typeof(MediaType), _mediaIndex.GetMediaType(id));
+            var fileType = _mediaIndex.GetMediaType(id);
 
             /* Checking supported extensions
              * Configuration catalogue has to have same key name as on of MediaType constant names */
-            if (!_uploadConfig.SupportedFormats[fileType].Contains(extension.ToLower()))
+            if (!_uploadConfig.SupportedFormats[fileType.ToString()].Contains(extension.ToLower()))
                 return BadRequest(new { Message = $"Extension '{extension}' is not supported for type '{fileType}'" });
 
             // Remove old file
-            string oldFilePath = _mediaIndex.GetFilePath(id);
+            var oldFilePath = _mediaIndex.GetFilePath(id);
             if (oldFilePath != null && System.IO.File.Exists(oldFilePath))
                 System.IO.File.Delete(oldFilePath);
 
-            var fileDirectory = Path.Combine(_uploadConfig.Path, fileType, id.ToString());
+            var fileDirectory = Path.Combine(_uploadConfig.Path, fileType.ToString(), id.ToString());
             Directory.CreateDirectory(fileDirectory);
 
             var filePath = Path.Combine(fileDirectory, Path.GetFileName(file.FileName));
@@ -307,6 +319,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             };
 
             await _eventStore.AppendEventAsync(ev);
+
+            if (fileType == MediaType.Image)
+                await InvalidateThumbnailCacheAsync(id);
+
             return StatusCode(204);
         }
 
@@ -324,6 +340,47 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return Forbid();
 
             return ReferenceInfoHelper.GetReferenceInfo(ResourceType.Media, id, _entityIndex, _referencesIndex);
+        }
+
+
+
+        private string GenerateFileUrl(MediaElement mediaElement)
+        {
+            if (mediaElement.Type == MediaType.Image &&
+                !string.IsNullOrWhiteSpace(_endpointConfig.ThumbnailUrlPattern))
+            {
+                // Generate thumbnail URL (if a thumbnail URL pattern is configured)
+                return string.Format(_endpointConfig.ThumbnailUrlPattern, mediaElement.Id);
+            }
+            else
+            {
+                // Return direct URL
+                return $"{Request.Scheme}://{Request.Host}/api/Media/{mediaElement.Id}/File";
+            }
+        }
+
+        private async Task InvalidateThumbnailCacheAsync(int id)
+        {
+            if (!string.IsNullOrWhiteSpace(_endpointConfig.ThumbnailUrlPattern))
+            {
+                var url = string.Format(_endpointConfig.ThumbnailUrlPattern, id);
+
+                try
+                {
+                    using (var http = new HttpClient())
+                    {
+                        http.DefaultRequestHeaders.Add("Authorization", Request.Headers["Authorization"].ToString());
+                        var response = await http.DeleteAsync(url);
+                        response.EnsureSuccessStatusCode();
+                    }
+                }
+                catch (HttpRequestException e)
+                {
+                    _logger.LogWarning(e,
+                        $"Request to clear thumbnail cache failed for media '{id}'; " +
+                        $"thumbnail service might return outdated images (request URL was '{url}').");
+                }
+            }
         }
     }
 }

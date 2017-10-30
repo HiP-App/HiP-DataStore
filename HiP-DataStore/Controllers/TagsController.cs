@@ -58,7 +58,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(304)]
         [ProducesResponseType(400)]
         [ProducesResponseType(403)]
-        public IActionResult GetAll(TagQueryArgs args)
+        public IActionResult GetAll([FromQuery]TagQueryArgs args)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
