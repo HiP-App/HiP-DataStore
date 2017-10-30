@@ -8,10 +8,12 @@ using Microsoft.Extensions.Options;
 using PaderbornUniversity.SILab.Hip.DataStore.Core;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.Webservice;
 using Swashbuckle.AspNetCore.Swagger;
+using System.IO;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore
 {
@@ -43,6 +45,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
                 c.OperationFilter<SwaggerOperationFilter>();
                 c.OperationFilter<SwaggerFileUploadOperationFilter>();
                 c.DescribeAllEnumsAsStrings();
+                c.IncludeXmlComments(Path.ChangeExtension(typeof(Startup).Assembly.Location, ".xml"));
+                c.IncludeXmlComments(Path.ChangeExtension(typeof(QueryArgs).Assembly.Location, ".xml"));
             });
 
             services.Configure<EndpointConfig>(Configuration.GetSection("Endpoints"))
