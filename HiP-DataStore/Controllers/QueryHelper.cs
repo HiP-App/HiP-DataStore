@@ -30,8 +30,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         public static IQueryable<T> FilterByStatus<T>(this IQueryable<T> query, ContentStatus status, IIdentity user) where T : ContentBase
         {
             return query.FilterIf(status != ContentStatus.All, x => x.Status == status)
-                        .FilterIf(status == ContentStatus.All && !UserPermissions.IsAllowedToGetDeleted(user),
-                                                                  x => x.Status != ContentStatus.Deleted);
+                        .FilterIf(status == ContentStatus.All, x => x.Status != ContentStatus.Deleted);
         }
 
         public static IQueryable<T> FilterByUsage<T>(this IQueryable<T> query, bool? used) where T : ContentBase
