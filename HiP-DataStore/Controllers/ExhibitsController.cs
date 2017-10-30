@@ -58,7 +58,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(typeof(AllItemsResult<ExhibitResult>), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(403)]
-        public IActionResult Get(ExhibitQueryArgs args)
+        public IActionResult Get([FromQuery]ExhibitQueryArgs args)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);

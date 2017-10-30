@@ -71,7 +71,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(403)]
         [ProducesResponseType(422)]
-        public IActionResult GetAllPages(ExhibitPageQueryArgs args)
+        public IActionResult GetAllPages([FromQuery]ExhibitPageQueryArgs args)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);

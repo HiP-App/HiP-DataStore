@@ -34,7 +34,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet]
         [ProducesResponseType(typeof(AllItemsResult<ScoreRecordResult>), 200)]
         [ProducesResponseType(400)]
-        public IActionResult GetAll(ScoreBoardArgs args)
+        public IActionResult GetAll([FromQuery]ScoreBoardArgs args)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);

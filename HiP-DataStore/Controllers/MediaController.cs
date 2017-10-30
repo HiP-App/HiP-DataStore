@@ -94,7 +94,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(typeof(AllItemsResult<MediaResult>), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(403)]
-        public IActionResult Get(MediaQueryArgs args)
+        public IActionResult Get([FromQuery]MediaQueryArgs args)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -247,7 +247,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         }
 
         [HttpGet("{id}/File")]
-        [ProducesResponseType(200)]
+        [ProducesResponseType(typeof(FileResult), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]

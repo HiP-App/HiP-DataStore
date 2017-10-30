@@ -57,7 +57,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(typeof(AllItemsResult<RouteResult>), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(403)]
-        public IActionResult Get(RouteQueryArgs args)
+        public IActionResult Get([FromQuery]RouteQueryArgs args)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
