@@ -6,7 +6,6 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
-using System;
 using System.Threading.Tasks;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
