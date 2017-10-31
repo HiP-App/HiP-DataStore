@@ -76,6 +76,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
                 var exhibits = query
                     .FilterByIds(args.Exclude, args.IncludeOnly)
+                    .FilterByLocation(args.Latitude, args.Longitude)
                     .FilterByUser(args.Status,User.Identity)
                     .FilterByStatus(args.Status, User.Identity)
                     .FilterByTimestamp(args.Timestamp)
