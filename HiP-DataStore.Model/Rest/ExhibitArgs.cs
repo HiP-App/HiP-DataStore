@@ -30,6 +30,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 
         public List<int> Pages { get; set; }
 
+        /// <summary>
+        /// The radius (in km) in which the exhibit can be accessed.
+        /// </summary>
+        [Range(0.001, 1000)]
+        public float AccessRadius { get; set; }
+
         public IEnumerable<EntityId> GetReferences()
         {
             if (Image != null)

@@ -7,6 +7,7 @@ using System.Linq.Expressions;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using System.Security.Principal;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
+using static System.Math;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
@@ -57,6 +58,36 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return query.FilterIf(!isAllowedGetAll, x =>
                         ((status == ContentStatus.All) && (x.Status == ContentStatus.Published)) || (x.UserId == user.GetUserIdentity()));
         }
+
+        /// <summary>
+        /// Returns all entries that are located within the radius, defined within the entry itself, around the given latitude and longitude.
+        /// If none or only one coordinate is given, all entries are returned.
+        /// </summary>
+        public static IQueryable<Exhibit> FilterByLocation(this IQueryable<Exhibit> query, float? latitude, float? longitude)
+        {
+            if (latitude != null && longitude != null)
+            {
+                return query.ToList()
+                    .Where(o => GetDistanceFromLatLonInKm(o.Latitude, o.Longitude, latitude.Value, longitude.Value) <= o.AccessRadius)
+                    .AsQueryable();
+            }
+            return query;
+        }
+
+        /// <summary>
+        /// Calculates the distance between two points of latitude and longitude in km.
+        /// </summary>
+        private static double GetDistanceFromLatLonInKm(float lat1, float lon1, float lat2, float lon2)
+        {
+            float dLat = (lat2 - lat1) * (float)PI / 180;
+            float dLon = (lon2 - lon1) * (float)PI / 180;
+
+            double a = Sin(dLat / 2) * Sin(dLat / 2) 
+                + Cos(lat1 * PI / 180) * Cos(lat2 * PI / 180) 
+                * Sin(dLon / 2) * Sin(dLon / 2);
+            return 2 * Atan2(Sqrt(a), Sqrt(1-a)) * 6378;
+        }
+
         /// <summary>
         /// Executes the query to determine the number of results, then retrieves a subset of the results
         /// (determined by <paramref name="page"/> and <paramref name="pageSize"/>) and projects them to objects of
