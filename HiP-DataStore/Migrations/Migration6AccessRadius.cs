@@ -17,7 +17,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
 
             while (await events.MoveNextAsync())
             {
-                // ReSharper disable once
+                // ReSharper disable once CompareOfFloatsByEqualityOperator
                 if (events.Current is ExhibitCreated exhibitCreated && exhibitCreated.Properties.AccessRadius == 0)
                 {
                     // If AccessRadius is still 0, we assume that this exhibit was created in an earlier version
