@@ -1,0 +1,21 @@
+{
+  "name": "hip-datastore_module",
+  "version": "1.0.0",
+  "description": "",  
+  "keywords": [],
+  "author": "",
+  "main": "./dist/HiP-DataStoreModule.js",
+  "types": "./dist/HiP-DataStoreModule.d.ts",
+  "license": "ISC",
+  "outDir": "./dist",
+  "dependencies": {    
+    "@angular/core": "4.3.6",
+    "@angular/http": "4.3.6",    
+    "rxjs": "5.4.3"
+  },
+  "scripts": {
+    "build":"tsc",
+    "prepublish": "npm run build"    
+  }
+}
+
