@@ -38,7 +38,7 @@
     
     <!--Typescript clients-->
     <Exec Command="$(NSwagExe_Core20) webapi2swagger /assembly:$(TargetPath) /output:../$(ProjectName).Typescript/swaggerts.json /defaultPropertyNameHandling:camelCase" />
-    <Exec Command="$(NSwagExe_Core20) swagger2tsclient /input:../$(ProjectName).Typescript/swaggerts.json /output:../$(ProjectName).Typescript/package/lib/$(ProjectName)Module.ts /baseUrlTokenName:$(ProjectName.Replace('-','_'))_URL /template:angular /clientBaseClass:ClientBase /extensionCode:../$(ProjectName).Typescript/clientBase.ts /generateOptionalParameters:true /useTransformOptionsMethod:true" />
+    <Exec Command="$(NSwagExe_Core20) swagger2tsclient /input:../$(ProjectName).Typescript/swaggerts.json /output:../$(ProjectName).Typescript/package/lib/$(ProjectName).ts /baseUrlTokenName:$(ProjectName.Replace('-','_'))_URL /template:angular /clientBaseClass:ClientBase /extensionCode:../$(ProjectName).Typescript/clientBase.ts /generateOptionalParameters:true /useTransformOptionsMethod:true" />
   </Target>
 
 </Project>

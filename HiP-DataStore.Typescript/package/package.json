@@ -1,11 +1,11 @@
 {
-  "name": "hip-datastore_module",
+  "name": "hip-datastore",
   "version": "1.0.0",
   "description": "",  
   "keywords": [],
   "author": "",
-  "main": "./dist/HiP-DataStoreModule.js",
-  "types": "./dist/HiP-DataStoreModule.d.ts",
+  "main": "./dist/HiP-DataStore.js",
+  "types": "./dist/HiP-DataStore.d.ts",
   "license": "ISC",
   "outDir": "./dist",
   "dependencies": {    
