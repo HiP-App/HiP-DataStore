@@ -2,7 +2,7 @@
   "name": "hip-datastore",
   "version": "1.0.0",
   "description": "Typescript client for HiP-DataStore",
-  "repository":{
+  "repository": {
     "type": "git",
     "url": "https://github.com/HiP-App/HiP-DataStore/"
   },  
