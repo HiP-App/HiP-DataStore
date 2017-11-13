@@ -1,7 +1,7 @@
 {
   "name": "hip-datastore",
   "version": "1.0.0",
-  "description": "",  
+  "description": "Typescript client for HiP-DataStore",  
   "keywords": [],
   "author": "",
   "main": "./dist/HiP-DataStore.js",
