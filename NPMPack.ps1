@@ -1,5 +1,5 @@
 $tag = "master" 
-Switch ("$(Build.SourceBranchName)")
+Switch ("$env:Build_SourceBranchName")
 {
     "master" { $tag = "master"  }
     "develop" { $tag = "develop" }
@@ -8,12 +8,13 @@ Switch ("$(Build.SourceBranchName)")
 }
 
 cd *.Typescript/package
-Set-Content -Value "//www.myget.org/F/hipapp/npm/:_authToken=$MyGetKey" -Path ./.npmrc
+Set-Content -Value "//www.myget.org/F/hipapp/npm/:_authToken=$env:MyGetKey" -Path ./.npmrc
 npm install
 
-Switch ("$(Build.SourceBranchName)") {
-    "develop"{	
-		npm publish  --registry=https://www.myget.org/F/hipapp/npm/ --tag $tag	
+Switch ("$env:Build_SourceBranchName)") {
+    "develop"{
+		
+		npm --% publish  --registry=%MyGetFeed% --tag $tag	
 	}
 	"master" {
 		$json = Get-Content -Path package.json | ConvertFrom-Json
