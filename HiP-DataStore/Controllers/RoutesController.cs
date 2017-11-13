@@ -114,7 +114,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             var route = _db.Database.GetCollection<Route>(ResourceType.Route.Name)
                 .AsQueryable()
-                .Where(x => x.UserId == User.Identity.GetUserIdentity())
                 .FirstOrDefault(x => x.Id == id);
 
             if (route == null)

@@ -152,7 +152,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             var media = _db.Database.GetCollection<MediaElement>(ResourceType.Media.Name)
                 .AsQueryable()
-                .Where(x => x.UserId == User.Identity.GetUserIdentity())
                 .FirstOrDefault(x => x.Id == id);
 
             if (media == null)
