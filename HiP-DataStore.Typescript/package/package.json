@@ -1,7 +1,12 @@
 {
   "name": "hip-datastore",
   "version": "1.0.0",
-  "description": "Typescript client for HiP-DataStore",  
+  "description": "Typescript client for HiP-DataStore",
+  "repository":{
+    "type": "git",
+    "url": "https://github.com/HiP-App/HiP-DataStore/"
+
+  },  
   "keywords": [],
   "author": "",
   "main": "./dist/HiP-DataStore.js",
