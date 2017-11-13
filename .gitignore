@@ -12,6 +12,7 @@ HiP-DataStore.Typescript/package/dist/
 HiP-DataStore.Typescript/package/lib/
 HiP-DataStore.Typescript/package/node_modules/
 HiP-DataStore.Typescript/package/*.tgz
+/HiP-DataStore.Typescript/package/.npmrc
 
 # User-specific files
 *.suo
@@ -276,4 +277,5 @@ HiP-DataStore/Media/Audio/
 HiP-DataStore/Media/Image/
 
 .vscode
+
 
