@@ -40,6 +40,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
         /// The content is deleted
         /// </summary>
         [EnumMember(Value = "DELETED")]
-        Deleted
+        Deleted,
+
+        /// <summary>
+        /// The content is was published and then deleted (e.g. exhibit event has been finished)
+        /// </summary>
+        [EnumMember(Value = "UNPUBLISHED")]
+        Unpublished
     }
 }

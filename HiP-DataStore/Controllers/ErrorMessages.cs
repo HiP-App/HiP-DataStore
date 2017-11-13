@@ -27,5 +27,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         public static string CannotChangeExhibitPageType(PageType currentType, PageType newType) =>
             $"The type of an exhibit page cannot be changed (current type is '{currentType}', attempted to change to '{newType}')";
+
+        public static string CannotBeUnpublished(ResourceType type) => $"Only published {type.Name.ToLower()} can be set to unpublished";
+
+        public static string CannotBeDeleted(ResourceType res, int id) => 
+            $"{res.Name.ToLower()} with id {id} has status Published. It can not be deleted";
     }
 }
