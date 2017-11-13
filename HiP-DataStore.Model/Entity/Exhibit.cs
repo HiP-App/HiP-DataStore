@@ -16,6 +16,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         public float Longitude { get; set; }
 
+        public float AccessRadius { get; set; }
+
         [BsonElement]
         public DocRef<MediaElement> Image { get; private set; } =
             new DocRef<MediaElement>(ResourceType.Media.Name);
@@ -42,6 +44,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
             Status = args.Status;
             Tags.Add(args.Tags?.Select(id => (BsonValue)id));
             Pages.Add(args.Pages?.Select(id => (BsonValue)id));
+            AccessRadius = args.AccessRadius;
         }
     }
 }

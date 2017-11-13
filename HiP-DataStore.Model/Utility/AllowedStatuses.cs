@@ -14,6 +14,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Utility
     {
         private ContentStatus[] Default = new ContentStatus[] { ContentStatus.Draft,
                                                                 ContentStatus.In_Review,
+                                                                ContentStatus.Unpublished,
                                                                 ContentStatus.Published };
 
         public ContentStatus[] Allowed { get; set; }
