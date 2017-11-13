@@ -110,8 +110,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 .AsQueryable()
                 .Where(x => x.UserId == User.Identity.GetUserIdentity())
                 .Where(p => status == ContentStatus.All || p.Status == status)
-                .FilterIf(status == ContentStatus.All && !UserPermissions.IsAllowedToGetDeleted(User.Identity),
-                                                                  x => x.Status != ContentStatus.Deleted)
+                .FilterIf(status == ContentStatus.All, x => x.Status != ContentStatus.Deleted)
                 .Select(p => p.Id)
                 .ToList();
 
