@@ -3,7 +3,6 @@ Switch ("$env:Build_SourceBranchName")
 {
     "master" { $env:tag = "master"  }
     "develop" { $env:tag = "develop" }
-    "TypescriptClientGeneration" { $env:tag = "test"}
     default { exit }
 }
 
@@ -13,7 +12,7 @@ npm install
 
 Switch ("$env:Build_SourceBranchName") 
 {
-    "TypescriptClientGeneration"{		
+    "develop"{		
 		npm --% publish  --registry=%MyGetFeed% --tag %tag%	
 	}
 
