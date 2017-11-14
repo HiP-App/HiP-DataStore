@@ -15,7 +15,6 @@ using PaderbornUniversity.SILab.Hip.Webservice;
 using Swashbuckle.AspNetCore.Swagger;
 using System.IO;
 
-
 namespace PaderbornUniversity.SILab.Hip.DataStore
 {
     public class Startup
