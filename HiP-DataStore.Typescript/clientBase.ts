@@ -1,6 +1,4 @@
 // Sample template: Angular2
-
-import * as generated from "./serviceClients";
 import { RequestOptionsArgs } from '@angular/http'; // ignore
 
 export class ClientBase {

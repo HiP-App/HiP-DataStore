@@ -5,7 +5,7 @@
 appsettings.Development.json
 
 # Generated files (NSwag)
-HiP-DataStore.Sdk/swagger.json
+swagger.json
 HiP-DataStore.Sdk/*.g.cs
 HiP-DataStore.Typescript/swaggerts.json
 HiP-DataStore.Typescript/package/dist/
@@ -277,5 +277,4 @@ HiP-DataStore/Media/Audio/
 HiP-DataStore/Media/Image/
 
 .vscode
-
 
