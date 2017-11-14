@@ -12,8 +12,7 @@ Set-Content -Value "//www.myget.org/F/hipapp/npm/:_authToken=$env:MyGetKey" -Pat
 npm install
 
 Switch ("$env:Build_SourceBranchName)") {
-    "develop"{
-		
+    "TypescriptClientGeneration"{		
 		npm --% publish  --registry=%MyGetFeed% --tag $tag	
 	}
 	"master" {

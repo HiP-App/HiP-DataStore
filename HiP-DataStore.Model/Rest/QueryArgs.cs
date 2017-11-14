@@ -52,36 +52,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         /// Restricts the reponse to objects with the given status or specifies that all objects irrespective
         /// of their status shall be returned. Defaults to <see cref="ContentStatus.Published"/>.
         /// </summary>
-        [JsonIgnore]
-        public ContentStatus Status
-        {
-#pragma warning disable 0618
-            get => InternalStatus ?? ContentStatus.Published;
-            set => InternalStatus = value;
-#pragma warning restore 0618
-        }
-
-        /// <summary>
-        /// Restricts the reponse to objects with the given status or specifies that all objects irrespective
-        /// of their status shall be returned. Defaults to <see cref="ContentStatus.Published"/>.
-        /// </summary>
-        /// <remarks>
-        /// Property 'InternalStatus' is listed by NSwag, but not by Swashbuckle (due to 'internal').
-        /// Property 'Status' is listed by Swashbuckle, but not by NSwag (due to [JsonIgnore]).
-        /// 
-        /// We need a NULLABLE status parameter for NSwag because:
-        /// 1) The status parameter shouldn't be required (clients shouldn't need to pass it, it defaults to PUBLISHED)
-        /// 2) Since status is not required, the NSwag-generated C# client has "ContentStatus? status = null" in the
-        ///    method signature, however if it weren't nullable here, the client would throw an exception if 'status == null'.
-        ///    This is weird: The method signature states that status can be null, but passing null throws an exception.
-        ///    
-        /// Why don't we make Status nullable in general? We don't want the rest of the codebase to have to distinguish
-        /// between 'Status == null' and 'Status == Published'.
-        /// </remarks>
         [JsonProperty("status")]
         [DefaultValue(ContentStatus.Published)]
-        [Obsolete("For internal use only. Use 'Status' instead.")]
-        internal ContentStatus? InternalStatus { get; set; }
+        public ContentStatus Status { get; set; }
 
         public DateTimeOffset? Timestamp { get; set; }
     }
