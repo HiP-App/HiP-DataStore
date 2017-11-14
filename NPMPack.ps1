@@ -1,4 +1,4 @@
-$tag = "master" 
+$tag = ""
 Switch ("$env:Build_SourceBranchName")
 {
     "master" { $tag = "master"  }
@@ -11,10 +11,12 @@ cd *.Typescript/package
 Set-Content -Value "//www.myget.org/F/hipapp/npm/:_authToken=$env:MyGetKey" -Path ./.npmrc
 npm install
 
-Switch ("$env:Build_SourceBranchName)") {
+Switch ("$env:Build_SourceBranchName") 
+{
     "TypescriptClientGeneration"{		
 		npm --% publish  --registry=%MyGetFeed% --tag $tag	
 	}
+
 	"master" {
 		$json = Get-Content -Path package.json | ConvertFrom-Json
 		$env:version = $json.version
