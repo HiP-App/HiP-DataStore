@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
-using PaderbornUniversity.SILab.Hip.DataStore.Core;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
@@ -10,12 +10,12 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
+using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
@@ -24,7 +24,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
     public class ExhibitPagesController : Controller
     {
         private readonly IOptions<ExhibitPagesConfig> _exhibitPagesConfig;
-        private readonly EventStoreClient _eventStore;
+        private readonly EventStoreService _eventStore;
         private readonly CacheDatabaseManager _db;
         private readonly MediaIndex _mediaIndex;
         private readonly EntityIndex _entityIndex;
@@ -33,7 +33,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         public ExhibitPagesController(
             IOptions<ExhibitPagesConfig> exhibitPagesConfig,
-            EventStoreClient eventStore,
+            EventStoreService eventStore,
             CacheDatabaseManager db,
             InMemoryCache cache)
         {
@@ -108,7 +108,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             var pageIds = exhibit.Pages
                 .LoadAll(_db.Database)
                 .AsQueryable()
-                .Where(x => x.UserId == User.Identity.GetUserIdentity())
                 .Where(p => status == ContentStatus.All || p.Status == status)
                 .FilterIf(status == ContentStatus.All, x => x.Status != ContentStatus.Deleted)
                 .Select(p => p.Id)
@@ -166,7 +165,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             var page = _db.Database.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name)
                 .AsQueryable()
-                .Where(x => x.UserId == User.Identity.GetUserIdentity())
                 .FirstOrDefault(x => x.Id == id);
 
             if (page == null)

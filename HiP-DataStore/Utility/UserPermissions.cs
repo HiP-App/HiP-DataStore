@@ -42,6 +42,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Utility
             return CheckRoles(identity);
         }
 
+        /// <summary>
+        /// Checks whether a certain user is allowed to get entities of a certain status and owner.
+        /// </summary>
+        /// <param name="identity">User identity</param>
+        /// <param name="status">Current status of the queried entity</param>
+        /// <param name="ownerId">Owner of the queried entity</param>
         public static bool IsAllowedToGet(IIdentity identity, ContentStatus status, string ownerId)
         {
             if (status == ContentStatus.Deleted)
