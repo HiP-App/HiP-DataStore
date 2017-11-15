@@ -115,7 +115,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             var tag = _db.Database.GetCollection<Tag>(ResourceType.Tag.Name)
                 .AsQueryable()
-                .Where(x => x.UserId == User.Identity.GetUserIdentity())
                 .FirstOrDefault(x => x.Id == id);
 
             if (tag == null)

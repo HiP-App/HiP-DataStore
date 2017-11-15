@@ -108,7 +108,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             var pageIds = exhibit.Pages
                 .LoadAll(_db.Database)
                 .AsQueryable()
-                .Where(x => x.UserId == User.Identity.GetUserIdentity())
                 .Where(p => status == ContentStatus.All || p.Status == status)
                 .FilterIf(status == ContentStatus.All, x => x.Status != ContentStatus.Deleted)
                 .Select(p => p.Id)
@@ -166,7 +165,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             var page = _db.Database.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name)
                 .AsQueryable()
-                .Where(x => x.UserId == User.Identity.GetUserIdentity())
                 .FirstOrDefault(x => x.Id == id);
 
             if (page == null)

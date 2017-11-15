@@ -120,7 +120,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             var exhibit = _db.Database.GetCollection<Exhibit>(ResourceType.Exhibit.Name)
                 .AsQueryable()
-                .Where(x => x.UserId == User.Identity.GetUserIdentity())
                 .FirstOrDefault(x => x.Id == id);
 
             if (exhibit == null)
