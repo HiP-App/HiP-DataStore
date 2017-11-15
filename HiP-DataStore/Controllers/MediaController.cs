@@ -188,6 +188,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!UserPermissions.IsAllowedToDelete(User.Identity, status, _entityIndex.Owner(ResourceType.Media, id)))
                 return Forbid();
 
+            if (!UserPermissions.IsAllowedToDelete(User.Identity, status, _entityIndex.Owner(ResourceType.Media, id)))
+                return BadRequest(ErrorMessages.CannotBeDeleted(ResourceType.Media, id));
+
+            if (status == ContentStatus.Published)
+                return BadRequest(ErrorMessages.CannotBeDeleted(ResourceType.Media, id));
+
             if (_referencesIndex.IsUsed(ResourceType.Media, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
 
@@ -220,10 +226,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (!_entityIndex.Exists(ResourceType.Media, id))
                 return NotFound();
-
-
+            
             if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, _entityIndex.Owner(ResourceType.Media, id)))
                 return Forbid();
+
+            var oldStatus = _entityIndex.Status(ResourceType.Media, id).GetValueOrDefault();
+            if (args.Status == ContentStatus.Unpublished && oldStatus != ContentStatus.Published)
+                return BadRequest(ErrorMessages.CannotBeUnpublished(ResourceType.Media));
 
             var ev = new MediaUpdate
             {

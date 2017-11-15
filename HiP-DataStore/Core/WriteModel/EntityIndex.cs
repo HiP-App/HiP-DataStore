@@ -72,8 +72,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                     .AsQueryable()
                     .FilterIf(!isAllowedGetAll, x =>
                         ((status == ContentStatus.All) && (x.Value.Status == ContentStatus.Published)) || (x.Value.UserId == userId))
-                    .FilterIf(status == ContentStatus.All && !UserPermissions.IsAllowedToGetDeleted(user),
-                                                                  x => x.Value.Status != ContentStatus.Deleted)
+                    .FilterIf(status == ContentStatus.All,x => x.Value.Status != ContentStatus.Deleted)
                      .Where(x => status == ContentStatus.All || x.Value.Status == status)
                     .Select(x => x.Key)
                     .ToList();

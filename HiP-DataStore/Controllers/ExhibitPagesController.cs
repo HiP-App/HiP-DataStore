@@ -110,8 +110,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 .AsQueryable()
                 .Where(x => x.UserId == User.Identity.GetUserIdentity())
                 .Where(p => status == ContentStatus.All || p.Status == status)
-                .FilterIf(status == ContentStatus.All && !UserPermissions.IsAllowedToGetDeleted(User.Identity),
-                                                                  x => x.Status != ContentStatus.Deleted)
+                .FilterIf(status == ContentStatus.All, x => x.Status != ContentStatus.Deleted)
                 .Select(p => p.Id)
                 .ToList();
 
@@ -242,6 +241,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, _entityIndex.Owner(ResourceType.ExhibitPage, id)))
                 return Forbid();
 
+            var oldStatus = _entityIndex.Status(ResourceType.ExhibitPage, id).GetValueOrDefault();
+            if (args.Status == ContentStatus.Unpublished && oldStatus != ContentStatus.Published)
+                return BadRequest(ErrorMessages.CannotBeUnpublished(ResourceType.ExhibitPage));
+
             // ReSharper disable once PossibleInvalidOperationException (.Value is safe here since we know the entity exists)
             var currentPageType = _exhibitPageIndex.PageType(id).Value;
             // ReSharper disable once PossibleNullReferenceException (args == null is handled through ModelState.IsValid)
@@ -277,6 +280,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             var status = _entityIndex.Status(ResourceType.ExhibitPage, id).GetValueOrDefault();
             if (!UserPermissions.IsAllowedToDelete(User.Identity, status, _entityIndex.Owner(ResourceType.ExhibitPage, id)))
                 return Forbid();
+
+            if (status == ContentStatus.Published)
+                return BadRequest(ErrorMessages.CannotBeDeleted(ResourceType.ExhibitPage, id));
 
             if (_referencesIndex.IsUsed(ResourceType.ExhibitPage, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
