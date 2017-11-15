@@ -7,6 +7,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
+using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
 using System;
 using System.Collections.Generic;
@@ -21,13 +22,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
     /// </summary>
     public class CacheDatabaseManager
     {
-        private readonly EventStoreClient _eventStore;
+        private readonly EventStoreService _eventStore;
         private readonly IMongoDatabase _db;
 
         public IMongoDatabase Database => _db;
 
         public CacheDatabaseManager(
-            EventStoreClient eventStore,
+            EventStoreService eventStore,
             IOptions<EndpointConfig> config,
             ILogger<CacheDatabaseManager> logger)
         {
