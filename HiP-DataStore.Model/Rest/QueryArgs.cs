@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
@@ -52,7 +51,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         /// Restricts the reponse to objects with the given status or specifies that all objects irrespective
         /// of their status shall be returned. Defaults to <see cref="ContentStatus.Published"/>.
         /// </summary>
-        [JsonProperty("status")]
         [DefaultValue(ContentStatus.Published)]
         public ContentStatus Status { get; set; }
 

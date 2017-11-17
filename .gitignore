@@ -7,12 +7,11 @@ appsettings.Development.json
 # Generated files (NSwag)
 swagger.json
 HiP-DataStore.Sdk/*.g.cs
-HiP-DataStore.Typescript/swaggerts.json
-HiP-DataStore.Typescript/package/dist/
-HiP-DataStore.Typescript/package/lib/
-HiP-DataStore.Typescript/package/node_modules/
-HiP-DataStore.Typescript/package/*.tgz
-/HiP-DataStore.Typescript/package/.npmrc
+HiP-DataStore.TypeScript/package/dist/
+HiP-DataStore.TypeScript/package/lib/
+HiP-DataStore.TypeScript/package/node_modules/
+HiP-DataStore.TypeScript/package/*.tgz
+/HiP-DataStore.TypeScript/package/.npmrc
 
 # User-specific files
 *.suo

@@ -1,11 +1,11 @@
 // Sample template: Angular2
 import { RequestOptionsArgs } from '@angular/http'; // ignore
 
-export class ClientBase {
+export class NSwagClientBase {
     
     /**
      * The value for the HTTP Authorization header,
-        e.g. "Bearer [Your JWT token here]".
+     *  e.g. "Bearer [Your JWT token here]".
      */
     public AuthorizationToken:string = "";
 

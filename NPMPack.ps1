@@ -1,4 +1,3 @@
-$tag = ""
 Switch ("$env:Build_SourceBranchName")
 {
     "master" { $env:tag = "master"  }
