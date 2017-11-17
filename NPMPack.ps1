@@ -6,7 +6,8 @@ Switch ("$env:Build_SourceBranchName")
 }
 
 cd *.Typescript/package
-Set-Content -Value "//www.myget.org/F/hipapp/npm/:_authToken=$env:MyGetKey" -Path ./.npmrc
+$regUrl = $env:NPMFeed.Replace("http:","").Replace("https:","")
+Set-Content -Value "$($regUrl):_authToken=$env:MyGetKey" -Path ./.npmrc
 npm install
 
 Switch ("$env:Build_SourceBranchName") 
