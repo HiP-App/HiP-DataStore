@@ -1,5 +1,5 @@
 $csproj = (ls *.Sdk\*.csproj).FullName
-Switch ("$(Build.SourceBranchName)")
+Switch ("$env:Build_SourceBranchName")
 {
     "master" { dotnet pack "$csproj" -o . }
     "develop" { dotnet pack "$csproj" -o . --version-suffix "develop" }
