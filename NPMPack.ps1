@@ -13,7 +13,7 @@ npm install
 Switch ("$env:Build_SourceBranchName") 
 {
     "develop"{		
-		npm --% publish  --registry=%MyGetFeed% --tag %tag%	
+		npm --% publish  --registry=%NPMFeed% --tag %tag%	
 	}
 
 	"master" {
