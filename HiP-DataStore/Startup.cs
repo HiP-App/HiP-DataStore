@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using NJsonSchema;
 using NSwag;
 using NSwag.AspNetCore;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
@@ -110,6 +111,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             app.UseSwaggerUi(typeof(Startup).Assembly, new SwaggerUiSettings
             {
                 Title = Assembly.GetEntryAssembly().GetName().Name,
+                DefaultEnumHandling = EnumHandling.String,
                 DocExpansion = "list",
                 PostProcess = doc =>
                 {
