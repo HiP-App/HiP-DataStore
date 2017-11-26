@@ -268,7 +268,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             {
                 Id = id,
                 Average = _ratingIndex.Average(ResourceType.Exhibit, id),
-                Count = _ratingIndex.Count(ResourceType.Exhibit, id)
+                Count = _ratingIndex.Count(ResourceType.Exhibit, id),
+                RatingTable = _ratingIndex.Table(ResourceType.Exhibit, id)
             };
 
             return Ok(result);
