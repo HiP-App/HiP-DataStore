@@ -5,23 +5,21 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using NJsonSchema;
+using NSwag;
+using NSwag.AspNetCore;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
 using PaderbornUniversity.SILab.Hip.Webservice;
-using Swashbuckle.AspNetCore.Swagger;
-using System.IO;
+using System.Reflection;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore
 {
     public class Startup
     {
-        private const string Version = "v1";
-        private const string Name = "HiP Data Store API";
-
         public Startup(IHostingEnvironment env)
         {
             var builder = new ConfigurationBuilder()
@@ -37,18 +35,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            // Register the Swagger generator
-            services.AddSwaggerGen(c =>
-            {
-                // Define a Swagger document
-                c.SwaggerDoc("v1", new Info { Title = Name, Version = Version });
-                c.OperationFilter<SwaggerOperationFilter>();
-                c.OperationFilter<SwaggerFileUploadOperationFilter>();
-                c.DescribeAllEnumsAsStrings();
-                c.IncludeXmlComments(Path.ChangeExtension(typeof(Startup).Assembly.Location, ".xml"));
-                c.IncludeXmlComments(Path.ChangeExtension(typeof(QueryArgs).Assembly.Location, ".xml"));
-            });
-
             services
                 .Configure<EndpointConfig>(Configuration.GetSection("Endpoints"))
                 .Configure<EventStoreConfig>(Configuration.GetSection("EventStore"))
@@ -122,21 +108,23 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             app.UseAuthentication();
             app.UseMvc();
 
-            // Swagger / Swashbuckle configuration:
-            // Enable middleware to serve generated Swagger as a JSON endpoint
-            app.UseSwagger(c =>
+            app.UseSwaggerUi(typeof(Startup).Assembly, new SwaggerUiSettings
             {
-                c.PreSerializeFilters.Add((swaggerDoc, httpReq) => swaggerDoc.Host = httpReq.Host.Value);
-            });
-
-            // Configure SwaggerUI endpoint
-            app.UseSwaggerUI(c =>
-            {
-                var swaggerJsonUrl = string.IsNullOrEmpty(endpointConfig.Value.SwaggerEndpoint)
-                    ? $"/swagger/{Version}/swagger.json"
-                    : endpointConfig.Value.SwaggerEndpoint;
-
-                c.SwaggerEndpoint(swaggerJsonUrl, $"{Name} {Version}");
+                Title = Assembly.GetEntryAssembly().GetName().Name,
+                DefaultEnumHandling = EnumHandling.String,
+                DocExpansion = "list",
+                PostProcess = doc =>
+                {
+                    foreach (var op in doc.Operations)
+                    {
+                        op.Operation.Parameters.Add(new SwaggerParameter
+                        {
+                            Name = "Authorization",
+                            Kind = SwaggerParameterKind.Header,
+                            IsRequired = true
+                        });
+                    }
+                }
             });
         }
     }
