@@ -261,7 +261,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             {
                 Id = id,
                 Average = _ratingIndex.Average(ResourceType.Route, id),
-                Count = _ratingIndex.Count(ResourceType.Route, id)
+                Count = _ratingIndex.Count(ResourceType.Route, id),
+                RatingTable = _ratingIndex.Table(ResourceType.Route, id)
             };
 
             return Ok(result);
