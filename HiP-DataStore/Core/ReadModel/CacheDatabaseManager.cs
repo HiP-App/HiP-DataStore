@@ -60,10 +60,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     ClearIncomingReferences(entity);
                     ClearOutgoingReferences(entity);
                 }
-                else if (crudEvent is PropertyChangedEvent)
-                {
-                    ClearOutgoingReferences(entity);
-                }
             }
 
             switch (ev)

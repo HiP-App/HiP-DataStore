@@ -69,8 +69,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                 switch (ev)
                 {
                     case PropertyChangedEvent e:
-                        ClearReferences(source);
-                        AddReferences(source, e.GetReferences());
+                        var references = e.GetReferences();
+                        if (references.Any())
+                        {
+                            var targetResourceType = references.First().Type;
+                            ClearReferences(source, targetResourceType);
+                            AddReferences(source, references);
+                        }
                         break;
 
                     case DeletedEvent _:
@@ -97,15 +102,23 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
             }
         }
 
-        private void ClearReferences(EntityId source)
+        private void ClearReferences(EntityId source, ResourceType targetResourceType = null)
         {
             var oldReferences = ReferencesOf(source.Type, source.Id);
-            _referencesOf.Remove(source);
+            if (targetResourceType == null)
+            {
+                _referencesOf.Remove(source);
+            }
+            else if(_referencesOf.TryGetValue(source, out var set))
+            {
+                set.RemoveWhere(e => e.Type == targetResourceType);
+            }
 
             foreach (var target in oldReferences)
             {
                 if (_referencesTo.TryGetValue(target, out var set))
                 {
+                    if (targetResourceType != null && target.Type != targetResourceType) continue;
                     set.Remove(source);
                     if (set.Count == 0)
                         _referencesTo.Remove(target);
