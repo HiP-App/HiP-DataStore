@@ -1,5 +1,8 @@
-﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
+﻿using PaderbornUniversity.SILab.Hip.DataStore.Model;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
+using PaderbornUniversity.SILab.Hip.EventSourcing.Events;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -31,22 +34,23 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 
         public void ApplyEvent(IEvent e)
         {
-            switch (e)
-            {
-                case TagCreated ev:
-                    lock (_lockObject)
-                        _tag.Add(ev.Id, new TagInfo() { Title = ev.Properties.Title });
-                    break;
-                case TagUpdated ev:
-                    lock (_lockObject)
-                        if (_tag.TryGetValue(ev.Id, out var tagInfo))
-                            tagInfo.Title = ev.Properties.Title;
-                    break;
-                case TagDeleted ev:
-                    lock (_lockObject)
-                        _tag.Remove(ev.Id);
-                    break;
-            }
+            if (e is EventBase baseEvent && baseEvent.GetEntityType() == ResourceTypes.Tag)
+                switch (e)
+                {
+                    case CreatedEvent ev:
+                        lock (_lockObject)
+                            _tag.Add(ev.Id, new TagInfo());
+                        break;
+                    case PropertyChangedEvent ev:
+                        lock (_lockObject)
+                            if (_tag.TryGetValue(ev.Id, out var tagInfo) && ev.PropertyName == nameof(TagArgs.Title))
+                                tagInfo.Title = ev.Value.ToString();
+                        break;
+                    case DeletedEvent ev:
+                        lock (_lockObject)
+                            _tag.Remove(ev.Id);
+                        break;
+                }
 
         }
     }

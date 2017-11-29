@@ -1,45 +1,32 @@
-﻿using MongoDB.Bson.Serialization.Attributes;
-using System;
+﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using PaderbornUniversity.SILab.Hip.EventSourcing;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model
 {
-    public class ResourceType : IEquatable<ResourceType>
+    public static class ResourceTypes
     {
-        public static readonly ResourceType Exhibit = new ResourceType("Exhibit");
-        public static readonly ResourceType ExhibitPage = new ResourceType("ExhibitPage");
-        public static readonly ResourceType Route = new ResourceType("Route");
-        public static readonly ResourceType Media = new ResourceType("Media");
-        public static readonly ResourceType Tag = new ResourceType("Tag");
-        public static readonly ResourceType ScoreRecord = new ResourceType("ScoreRecord");
-        public static readonly ResourceType Rating = new ResourceType("Rating");
+        public static ResourceType Rating { get; private set; }
+        public static ResourceType Exhibit { get; private set; }
+        public static ResourceType ExhibitPage { get; private set; }
+        public static ResourceType Route { get; private set; }
+        public static ResourceType Media { get; private set; }
+        public static ResourceType Tag { get; private set; }
+        public static ResourceType ScoreRecord { get; private set; }
+
 
         /// <summary>
-        /// This name is used in two ways:
-        /// 1) as a "type"/"kind of resource" identifier in events
-        /// 2) as the collection name in the MongoDB cache database
+        /// Initalizes the fields
         /// </summary>
-        [BsonElement]
-        public string Name { get; }
-
-        [BsonConstructor]
-        public ResourceType(string name)
+        public static void Initialize()
         {
-            if (string.IsNullOrEmpty(name))
-                throw new ArgumentException("Name was null or empty", nameof(name));
-
-            Name = name;
+            Exhibit = ResourceType.Register(nameof(Exhibit), typeof(ExhibitArgs));
+            ExhibitPage = ResourceType.Register(nameof(ExhibitPage), typeof(ExhibitPageArgs2));
+            Route = ResourceType.Register(nameof(Route), typeof(RouteArgs));
+            Media = ResourceType.Register(nameof(Media), typeof(MediaArgs));
+            Tag = ResourceType.Register(nameof(Tag), typeof(TagArgs));
+            ScoreRecord = ResourceType.Register(nameof(ScoreRecord), typeof(ScoreBoardArgs));
+            Rating = ResourceType.Register(nameof(Rating), typeof(RatingArgs));
         }
-
-        public override string ToString() => Name ?? "";
-
-        public override int GetHashCode() => Name.GetHashCode();
-
-        public override bool Equals(object obj) => obj is ResourceType other && Equals(other);
-
-        public bool Equals(ResourceType other) => Name == other.Name;
-
-        public static bool operator ==(ResourceType a, ResourceType b) => a?.Equals(b) ?? b == null;
-
-        public static bool operator !=(ResourceType a, ResourceType b) => !(a == b);
     }
 }

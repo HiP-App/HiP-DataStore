@@ -1,4 +1,5 @@
 ﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Migrations;
 using System;
 using System.Collections.Generic;
@@ -11,7 +12,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
     {
         public ExhibitPageArgs2 Properties { get; set; }
 
-        public override ResourceType GetEntityType() => ResourceType.ExhibitPage;
+        public override ResourceType GetEntityType() => ResourceTypes.ExhibitPage;
 
         public ContentStatus GetStatus() => Properties.Status;
 
@@ -29,7 +30,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 
         public DateTimeOffset Timestamp { get; set; }
 
-        public ResourceType GetEntityType() => ResourceType.ExhibitPage;
+        public ResourceType GetEntityType() => ResourceTypes.ExhibitPage;
 
         public ContentStatus GetStatus() => Properties.Status;
 
@@ -47,7 +48,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 
         public DateTimeOffset Timestamp { get; set; }
 
-        public ResourceType GetEntityType() => ResourceType.ExhibitPage;
+        public ResourceType GetEntityType() => ResourceTypes.ExhibitPage;
 
         public ContentStatus GetStatus() => Properties.Status;
 

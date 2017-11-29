@@ -1,4 +1,5 @@
 ﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using PaderbornUniversity.SILab.Hip.EventSourcing;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -8,7 +9,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
     {
         public RouteArgs Properties { get; set; }
 
-        public override ResourceType GetEntityType() => ResourceType.Route;
+        public override ResourceType GetEntityType() => ResourceTypes.Route;
 
         public ContentStatus GetStatus() => Properties.Status;
 

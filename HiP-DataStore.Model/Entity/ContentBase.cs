@@ -1,4 +1,5 @@
-﻿using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
+﻿using PaderbornUniversity.SILab.Hip.EventSourcing;
+using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
 using System;
 using System.Collections.Generic;
 

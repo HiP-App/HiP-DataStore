@@ -32,35 +32,35 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(403)]
         public Task<IActionResult> GetExhibitSummary(int id) =>
-            GetSummaryAsync(ResourceType.Exhibit, id);
+            GetSummaryAsync(ResourceTypes.Exhibit, id);
         
         [HttpGet("/api/Exhibits/Pages/{id}/History")]
         [ProducesResponseType(typeof(HistorySummary), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(403)]
         public Task<IActionResult> GetExhibitPageSummary(int id) =>
-            GetSummaryAsync(ResourceType.ExhibitPage, id);
+            GetSummaryAsync(ResourceTypes.ExhibitPage, id);
 
         [HttpGet("/api/Media/{id}/History")]
         [ProducesResponseType(typeof(HistorySummary), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(403)]
         public Task<IActionResult> GetMediaSummary(int id) =>
-            GetSummaryAsync(ResourceType.Media, id);
+            GetSummaryAsync(ResourceTypes.Media, id);
 
         [HttpGet("/api/Routes/{id}/History")]
         [ProducesResponseType(typeof(HistorySummary), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(403)]
         public Task<IActionResult> GetRouteSummary(int id) =>
-           GetSummaryAsync(ResourceType.Route, id);
+           GetSummaryAsync(ResourceTypes.Route, id);
 
         [HttpGet("/api/Tags/{id}/History")]
         [ProducesResponseType(typeof(HistorySummary), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(403)]
         public Task<IActionResult> GetTagSummary(int id) =>
-            GetSummaryAsync(ResourceType.Tag, id);
+            GetSummaryAsync(ResourceTypes.Tag, id);
 
 
         // APIs to get the state of an entity at a specific point in time

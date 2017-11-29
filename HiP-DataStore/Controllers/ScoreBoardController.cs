@@ -59,7 +59,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_board.AllRecords().Any(x => x.UserId == id))
                 return NotFound();
 
-            var query = _db.Database.GetCollection<ScoreRecord>(ResourceType.ScoreRecord.Name).AsQueryable();
+            var query = _db.Database.GetCollection<ScoreRecord>(ResourceTypes.ScoreRecord.Name).AsQueryable();
             var allRecords = new ScoreResults(query.Where(x => x.UserId == id)
                                                    .OrderByDescending(x => x.Timestamp)
                                                    .PaginateAndSelect(null, null, x => new ScoreResult(x))); 

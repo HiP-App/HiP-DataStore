@@ -15,6 +15,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 
         public string Description { get; set; }
 
+        [Reference(nameof(ResourceTypes.Media))]
         public int? Image { get; set; }
 
         [Range(-90, 90)]
@@ -26,8 +27,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         [AllowedStatuses]
         public ContentStatus Status { get; set; }
 
+        [Reference(nameof(ResourceTypes.Tag))]
         public List<int> Tags { get; set; }
 
+        [Reference(nameof(ResourceTypes.ExhibitPage))]
         public List<int> Pages { get; set; }
 
         /// <summary>
@@ -39,13 +42,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         public IEnumerable<EntityId> GetReferences()
         {
             if (Image != null)
-                yield return (ResourceType.Media, Image.Value);
+                yield return (ResourceTypes.Media, Image.Value);
 
             foreach (var pageId in Pages?.Distinct() ?? Enumerable.Empty<int>())
-                yield return (ResourceType.ExhibitPage, pageId);
+                yield return (ResourceTypes.ExhibitPage, pageId);
 
             foreach (var tagId in Tags?.Distinct() ?? Enumerable.Empty<int>())
-                yield return (ResourceType.Tag, tagId);
+                yield return (ResourceTypes.Tag, tagId);
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using PaderbornUniversity.SILab.Hip.EventSourcing;
+using System.ComponentModel.DataAnnotations;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 {
@@ -10,5 +11,5 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         [Required]
         [Range(MinRateValue, MaxRateValue, ErrorMessage = "Has to be in a range from 1 to 5")]
         public byte? Rating { get; set; }
-   }
+    }
 }

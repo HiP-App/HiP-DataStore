@@ -19,7 +19,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         public IEnumerable<EntityId> GetReferences()
         {
             if (Image != null)
-                yield return (ResourceType.Media, Image.Value);
+                yield return (ResourceTypes.Media, Image.Value);
         }
     }
 }

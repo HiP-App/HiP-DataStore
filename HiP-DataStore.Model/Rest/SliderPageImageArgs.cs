@@ -2,10 +2,12 @@
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 {
-    public class SliderPageImageArgs
+    public class SliderPageImageArgs : IReference
     {
         public string Date { get; set; }
         public int Image { get; set; }
+
+        public int ReferenceId => Image;
     }
 
     public class SliderPageImageResult

@@ -1,4 +1,5 @@
-﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+﻿using System;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 {
@@ -25,6 +26,16 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
             Description = args.Description;
             Type = args.Type;
             Status = args.Status;
+        }
+
+        public MediaArgs CreateMediaArgs()
+        {
+            var args = new MediaArgs();
+            args.Title = Title;
+            args.Description = Description;
+            args.Type = Type;
+            args.Status = Status;
+            return args;
         }
     }
 

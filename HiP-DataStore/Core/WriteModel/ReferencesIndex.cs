@@ -1,7 +1,11 @@
 ﻿using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
+using PaderbornUniversity.SILab.Hip.EventSourcing.Events;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -56,40 +60,39 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 
         public void ApplyEvent(IEvent ev)
         {
-            if (ev is ICrudEvent crudEvent)
+            if (ev is EventBase baseEvent)
             {
+                var resourceType = baseEvent.GetEntityType();
                 // 1) Update references
-                var source = (crudEvent.GetEntityType(), crudEvent.Id);
+                var source = (resourceType, baseEvent.Id);
 
                 switch (ev)
                 {
-                    case ICreateEvent e:
-                        AddReferences(source, e.GetReferences());
-                        break;
-
-                    case IUpdateEvent e:
+                    case PropertyChangedEvent e:
                         ClearReferences(source);
                         AddReferences(source, e.GetReferences());
                         break;
 
-                    case IDeleteEvent _:
+                    case DeletedEvent _:
                         ClearReferences(source);
                         break;
                 }
 
+
+
                 // 2) Handle propagation of timestamps
-                var hasDoNotPropagateAttribute = crudEvent.GetType().GetTypeInfo().CustomAttributes
+                var hasDoNotPropagateAttribute = baseEvent.GetType().GetTypeInfo().CustomAttributes
                     .Any(attr => attr.AttributeType == typeof(DoNotPropagateTimestampToReferencersAttribute));
 
                 if (hasDoNotPropagateAttribute)
                 {
                     // only set timestamp on the created/updated/deleted entity
-                    _lastModificationCascading[(crudEvent.GetEntityType(), crudEvent.Id)] = crudEvent.Timestamp;
+                    _lastModificationCascading[(resourceType, baseEvent.Id)] = baseEvent.Timestamp;
                 }
                 else
                 {
                     // set timestamp & propagate to entities referencing the created/updated/deleted entity
-                    SetTimestampRecursively(crudEvent.Timestamp, crudEvent.GetEntityType(), crudEvent.Id);
+                    SetTimestampRecursively(baseEvent.Timestamp, resourceType, baseEvent.Id);
                 }
             }
         }

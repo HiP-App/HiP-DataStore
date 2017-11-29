@@ -20,15 +20,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         [BsonElement]
         public DocRef<MediaElement> Image { get; private set; } =
-            new DocRef<MediaElement>(ResourceType.Media.Name);
+            new DocRef<MediaElement>(ResourceTypes.Media.Name);
 
         [BsonElement]
         public DocRefList<Tag> Tags { get; private set; } =
-            new DocRefList<Tag>(ResourceType.Tag.Name);
+            new DocRefList<Tag>(ResourceTypes.Tag.Name);
 
         [BsonElement]
         public DocRefList<ExhibitPage> Pages { get; private set; } =
-            new DocRefList<ExhibitPage>(ResourceType.ExhibitPage.Name);
+            new DocRefList<ExhibitPage>(ResourceTypes.ExhibitPage.Name);
 
         public Exhibit()
         {
@@ -45,6 +45,21 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
             Tags.Add(args.Tags?.Select(id => (BsonValue)id));
             Pages.Add(args.Pages?.Select(id => (BsonValue)id));
             AccessRadius = args.AccessRadius;
+        }
+
+        public ExhibitArgs CreateExhibitArgs()
+        {
+            var args = new ExhibitArgs();
+            args.Name = Name;
+            args.Description = Description;
+            args.Image = Image.Id.AsNullableInt32;
+            args.Latitude = Latitude;
+            args.Longitude = Longitude;
+            args.Status = Status;
+            args.Tags = Tags?.Ids.Select(id => id.AsInt32).ToList();
+            args.Pages = Pages?.Ids.Select(id => id.AsInt32).ToList();
+            args.AccessRadius = AccessRadius;
+            return args;
         }
     }
 }

@@ -51,7 +51,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
                 return Forbid();
 
-            return Ok(_entityIndex.AllIds(ResourceType.Exhibit, status , User.Identity));
+            return Ok(_entityIndex.AllIds(ResourceTypes.Exhibit, status, User.Identity));
         }
 
         [HttpGet]
@@ -68,7 +68,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (args.Status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
                 return Forbid();
 
-            var query = _db.Database.GetCollection<Exhibit>(ResourceType.Exhibit.Name).AsQueryable();
+            var query = _db.Database.GetCollection<Exhibit>(ResourceTypes.Exhibit.Name).AsQueryable();
 
             try
             {
@@ -77,21 +77,21 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 var exhibits = query
                     .FilterByIds(args.Exclude, args.IncludeOnly)
                     .FilterByLocation(args.Latitude, args.Longitude)
-                    .FilterByUser(args.Status,User.Identity)
+                    .FilterByUser(args.Status, User.Identity)
                     .FilterByStatus(args.Status, User.Identity)
                     .FilterByTimestamp(args.Timestamp)
                     .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
                         x.Name.ToLower().Contains(args.Query.ToLower()) ||
                         x.Description.ToLower().Contains(args.Query.ToLower()))
                     .FilterIf(args.OnlyRoutes != null, x => x.Referencers
-                        .Any(r => r.Collection == ResourceType.Route.Name && routeIds.Contains(r.Id)))
+                        .Any(r => r.Collection == ResourceTypes.Route.Name && routeIds.Contains(r.Id)))
                     .Sort(args.OrderBy,
                         ("id", x => x.Id),
                         ("name", x => x.Name),
                         ("timestamp", x => x.Timestamp))
                     .PaginateAndSelect(args.Page, args.PageSize, x => new ExhibitResult(x)
                     {
-                        Timestamp = _referencesIndex.LastModificationCascading(ResourceType.Exhibit, x.Id)
+                        Timestamp = _referencesIndex.LastModificationCascading(ResourceTypes.Exhibit, x.Id)
                     });
 
                 return Ok(exhibits);
@@ -114,11 +114,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var status = _entityIndex.Status(ResourceType.Exhibit, id) ?? ContentStatus.Published;
-            if (!UserPermissions.IsAllowedToGet(User.Identity, status, _entityIndex.Owner(ResourceType.Exhibit, id)))
+            var status = _entityIndex.Status(ResourceTypes.Exhibit, id) ?? ContentStatus.Published;
+            if (!UserPermissions.IsAllowedToGet(User.Identity, status, _entityIndex.Owner(ResourceTypes.Exhibit, id)))
                 return Forbid();
 
-            var exhibit = _db.Database.GetCollection<Exhibit>(ResourceType.Exhibit.Name)
+            var exhibit = _db.Database.GetCollection<Exhibit>(ResourceTypes.Exhibit.Name)
                 .AsQueryable()
                 .FirstOrDefault(x => x.Id == id);
 
@@ -130,7 +130,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             var result = new ExhibitResult(exhibit)
             {
-                Timestamp = _referencesIndex.LastModificationCascading(ResourceType.Exhibit, id)
+                Timestamp = _referencesIndex.LastModificationCascading(ResourceTypes.Exhibit, id)
             };
 
             return Ok(result);
@@ -150,17 +150,19 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!UserPermissions.IsAllowedToCreate(User.Identity, args.Status))
                 return Forbid();
 
-            // validation passed, emit event
-            var ev = new ExhibitCreated
-            {
-                Id = _entityIndex.NextId(ResourceType.Exhibit),
-                UserId = User.Identity.GetUserIdentity(),
-                Properties = args,
-                Timestamp = DateTimeOffset.Now
-            };
+            //// validation passed, emit event
+            //var ev = new ExhibitCreated
+            //{
+            //    Id = _entityIndex.NextId(ResourceTypes.Exhibit),
+            //    UserId = User.Identity.GetUserIdentity(),
+            //    Properties = args,
+            //    Timestamp = DateTimeOffset.Now
+            //};
 
-            await _eventStore.AppendEventAsync(ev);
-            return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/{ev.Id}", ev.Id);
+            //await _eventStore.AppendEventAsync(ev);
+            var id = _entityIndex.NextId(ResourceTypes.Exhibit);
+            await EntityManager.CreateEntity(_eventStore, args, ResourceTypes.Exhibit, id, User.Identity.GetUserIdentity());
+            return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/{id}", id);
         }
 
         [HttpPut("{id}")]
@@ -175,26 +177,29 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!_entityIndex.Exists(ResourceType.Exhibit, id))
+            if (!_entityIndex.Exists(ResourceTypes.Exhibit, id))
                 return NotFound();
 
-            if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, _entityIndex.Owner(ResourceType.Exhibit, id)))
+            if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, _entityIndex.Owner(ResourceTypes.Exhibit, id)))
                 return Forbid();
 
-            var oldStatus = _entityIndex.Status(ResourceType.Exhibit, id).GetValueOrDefault();
+            var oldStatus = _entityIndex.Status(ResourceTypes.Exhibit, id).GetValueOrDefault();
             if (args.Status == ContentStatus.Unpublished && oldStatus != ContentStatus.Published)
-                return BadRequest(ErrorMessages.CannotBeUnpublished(ResourceType.Exhibit));
+                return BadRequest(ErrorMessages.CannotBeUnpublished(ResourceTypes.Exhibit));
 
             // validation passed, emit event
-            var ev = new ExhibitUpdated
-            {
-                Id = id,
-                UserId = User.Identity.GetUserIdentity(),
-                Properties = args,
-                Timestamp = DateTimeOffset.Now
-            };
+            //var ev = new ExhibitUpdated
+            //{
+            //    Id = id,
+            //    UserId = User.Identity.GetUserIdentity(),
+            //    Properties = args,
+            //    Timestamp = DateTimeOffset.Now
+            //};
 
-            await _eventStore.AppendEventAsync(ev);
+            //await _eventStore.AppendEventAsync(ev);
+            var oldExhibitArgs = await EventStreamExtensions.GetCurrentObjectFromEventStream<ExhibitArgs>(_eventStore.EventStream, ResourceTypes.Exhibit, id);
+            await EntityManager.CompareAndAddEvents(_eventStore, oldExhibitArgs, args, ResourceTypes.Exhibit, id, User.Identity.GetUserIdentity());
+
             return StatusCode(204);
         }
 
@@ -208,29 +213,22 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!_entityIndex.Exists(ResourceType.Exhibit, id))
+            if (!_entityIndex.Exists(ResourceTypes.Exhibit, id))
                 return NotFound();
 
-            var status = _entityIndex.Status(ResourceType.Exhibit, id).GetValueOrDefault();
-            if (!UserPermissions.IsAllowedToDelete(User.Identity, status, _entityIndex.Owner(ResourceType.Exhibit, id)))
-                return BadRequest(ErrorMessages.CannotBeDeleted(ResourceType.Exhibit,id));
+            var status = _entityIndex.Status(ResourceTypes.Exhibit, id).GetValueOrDefault();
+            if (!UserPermissions.IsAllowedToDelete(User.Identity, status, _entityIndex.Owner(ResourceTypes.Exhibit, id)))
+                return BadRequest(ErrorMessages.CannotBeDeleted(ResourceTypes.Exhibit, id));
 
             if (status == ContentStatus.Published)
-                return BadRequest(ErrorMessages.CannotBeDeleted(ResourceType.Exhibit, id));
+                return BadRequest(ErrorMessages.CannotBeDeleted(ResourceTypes.Exhibit, id));
 
             // check if exhibit is in use and can't be deleted (it's in use if and only if it is contained in a route).
-            if (_referencesIndex.IsUsed(ResourceType.Exhibit, id))
+            if (_referencesIndex.IsUsed(ResourceTypes.Exhibit, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
 
             // remove the exhibit
-            var ev = new ExhibitDeleted
-            {
-                Id = id,
-                UserId = User.Identity.GetUserIdentity(),
-                Timestamp = DateTimeOffset.Now
-            };
-
-            await _eventStore.AppendEventAsync(ev);
+            await EntityManager.DeleteEntity(_eventStore, ResourceTypes.Exhibit, id, User.Identity.GetUserIdentity());
             return NoContent();
         }
 
@@ -244,10 +242,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!UserPermissions.IsAllowedToGet(User.Identity, _entityIndex.Owner(ResourceType.Exhibit, id)))
+            if (!UserPermissions.IsAllowedToGet(User.Identity, _entityIndex.Owner(ResourceTypes.Exhibit, id)))
                 return Forbid();
 
-            return ReferenceInfoHelper.GetReferenceInfo(ResourceType.Exhibit, id, _entityIndex, _referencesIndex);
+            return ReferenceInfoHelper.GetReferenceInfo(ResourceTypes.Exhibit, id, _entityIndex, _referencesIndex);
         }
 
         [HttpGet("Rating/{id}")]
@@ -261,14 +259,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!_entityIndex.Exists(ResourceType.Exhibit, id))
-                return NotFound(ErrorMessages.ContentNotFound(ResourceType.Exhibit,id));
+            if (!_entityIndex.Exists(ResourceTypes.Exhibit, id))
+                return NotFound(ErrorMessages.ContentNotFound(ResourceTypes.Exhibit, id));
 
             var result = new RatingResult()
             {
                 Id = id,
-                Average = _ratingIndex.Average(ResourceType.Exhibit, id),
-                Count = _ratingIndex.Count(ResourceType.Exhibit, id)
+                Average = _ratingIndex.Average(ResourceTypes.Exhibit, id),
+                Count = _ratingIndex.Count(ResourceTypes.Exhibit, id)
             };
 
             return Ok(result);
@@ -283,16 +281,16 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!_entityIndex.Exists(ResourceType.Exhibit, id))
-                return NotFound(ErrorMessages.ContentNotFound(ResourceType.Exhibit, id));
+            if (!_entityIndex.Exists(ResourceTypes.Exhibit, id))
+                return NotFound(ErrorMessages.ContentNotFound(ResourceTypes.Exhibit, id));
 
             var ev = new RatingAdded()
             {
-                Id = _ratingIndex.NextId(ResourceType.Exhibit),
+                Id = _ratingIndex.NextId(ResourceTypes.Exhibit),
                 EntityId = id,
                 UserId = User.Identity.GetUserIdentity(),
                 Value = args.Rating.GetValueOrDefault(),
-                RatedType = ResourceType.Exhibit,
+                RatedType = ResourceTypes.Exhibit,
                 Timestamp = DateTimeOffset.Now
             };
 
@@ -313,19 +311,19 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (args.Tags != null)
             {
                 var invalidIds = args.Tags
-                    .Where(id => !_entityIndex.Exists(ResourceType.Tag, id))
+                    .Where(id => !_entityIndex.Exists(ResourceTypes.Tag, id))
                     .ToList();
 
                 foreach (var id in invalidIds)
                     ModelState.AddModelError(nameof(args.Tags),
-                        ErrorMessages.ContentNotFound(ResourceType.Tag,id));
+                        ErrorMessages.ContentNotFound(ResourceTypes.Tag, id));
             }
 
             // ensure referenced pages exist
             if (args.Pages != null)
             {
                 var invalidIds = args.Pages
-                    .Where(id => !_entityIndex.Exists(ResourceType.ExhibitPage, id))
+                    .Where(id => !_entityIndex.Exists(ResourceTypes.ExhibitPage, id))
                     .ToList();
 
                 foreach (var id in invalidIds)
