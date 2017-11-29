@@ -57,9 +57,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
                             summary.Changes.Add(new HistorySummary.Change(timestamp, "Created", user));
                             break;
 
-                        case PropertyChangedEvent _:
+                        case PropertyChangedEvent ev:
                             summary.LastModified = timestamp;
-                            summary.Changes.Add(new HistorySummary.Change(timestamp, "Updated", user));
+                            summary.Changes.Add(new HistorySummary.Change(timestamp, "Updated", user, ev.PropertyName, ev.Value));
                             break;
 
                         case DeletedEvent _:

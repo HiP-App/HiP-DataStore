@@ -45,11 +45,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
 
             public object Value { get; set; }
 
-            public Change(DateTimeOffset timestamp, string description, string userId)
+            public Change(DateTimeOffset timestamp, string description, string userId, string property = "", object value = null)
             {
                 Timestamp = timestamp;
                 Description = description;
                 UserId = userId;
+                Property = property;
+                Value = value;
             }
         }
     }

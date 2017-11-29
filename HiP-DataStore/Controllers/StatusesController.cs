@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
+using System;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
@@ -10,12 +13,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
     {
         [HttpGet]
         [ProducesResponseType(typeof(string[]), 200)]
-        public IActionResult Index() => Ok(new[]
-        {
-            ContentStatus.Published,
-            ContentStatus.Unpublished,
-            ContentStatus.In_Review,
-            ContentStatus.Draft            
-        });
+        public IActionResult Index() => Json(Enum.GetValues(typeof(ContentStatus)),
+            new JsonSerializerSettings()
+            {
+                Converters = new[] { new StringEnumConverter() }
+            });
     }
 }
