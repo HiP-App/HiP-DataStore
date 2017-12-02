@@ -12,6 +12,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
         public static readonly ResourceType Tag = new ResourceType("Tag");
         public static readonly ResourceType ScoreRecord = new ResourceType("ScoreRecord");
         public static readonly ResourceType Rating = new ResourceType("Rating");
+        public static readonly ResourceType Review = new ResourceType("Review");
 
         /// <summary>
         /// This name is used in two ways:

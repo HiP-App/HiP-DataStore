@@ -28,6 +28,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly EntityIndex _entityIndex;
         private readonly ReferencesIndex _referencesIndex;
         private readonly RatingIndex _ratingIndex;
+        private readonly ReviewIndex _reviewIndex;
 
         public ExhibitsController(EventStoreService eventStore, CacheDatabaseManager db, InMemoryCache cache)
         {
@@ -37,6 +38,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             _entityIndex = cache.Index<EntityIndex>();
             _referencesIndex = cache.Index<ReferencesIndex>();
             _ratingIndex = cache.Index<RatingIndex>();
+            _reviewIndex = cache.Index<ReviewIndex>();
         }
 
         [HttpGet("ids")]
@@ -299,6 +301,109 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             await _eventStore.AppendEventAsync(ev);
             return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Rating/{ev.Id}", ev.Id);
+        }
+
+        [HttpGet("Review/{id}")]
+        [ProducesResponseType(typeof(ReviewResult), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        public IActionResult GetRreview(int id)
+        {
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!_entityIndex.Exists(ResourceType.Exhibit, id))
+                return NotFound(ErrorMessages.ContentNotFound(ResourceType.Exhibit, id));
+
+            if (!_reviewIndex.Exists(ResourceType.Exhibit, id))
+                return NotFound(ErrorMessages.ReviewNotFound(ResourceType.Exhibit, id));
+
+            var result = new ReviewResult()
+            {
+                Id = id,
+                Description = _reviewIndex.Description(ResourceType.Exhibit, id),
+                Approved = _reviewIndex.Approved(ResourceType.Exhibit, id),
+                Reviewers = _reviewIndex.Reviewers(ResourceType.Exhibit, id),
+                Comments = _reviewIndex.Comments(ResourceType.Exhibit, id),
+                Timestamp = _reviewIndex.Timestamp(ResourceType.Exhibit, id)
+            };
+
+            return Ok(result);
+        }
+
+        [HttpPost("Review/{id}")]
+        [ProducesResponseType(typeof(int), 201)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> PostReviewAsync(int id, ReviewArgs args)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!_entityIndex.Exists(ResourceType.Exhibit, id))
+                return NotFound(ErrorMessages.ContentNotFound(ResourceType.Exhibit, id));
+
+            if (!_entityIndex.Status(ResourceType.Exhibit, id).Equals(ContentStatus.In_Review))
+                return BadRequest(ErrorMessages.CannotAddReviewToContentWithWrongStatus());
+
+            if (_reviewIndex.Exists(ResourceType.Exhibit, id))
+                return BadRequest(ErrorMessages.ContentAlreadyHasReview(ResourceType.Exhibit, id));
+
+            var ev = new ReviewCreated()
+            {
+                Id = _reviewIndex.NextId(ResourceType.Exhibit),
+                EntityId = id,
+                Description = args.Description,
+                Reviewers = args.Reviewers,
+                UserId = User.Identity.GetUserIdentity(),
+                ReviewType = ResourceType.Exhibit,
+                Timestamp = DateTimeOffset.Now
+            };
+
+            await _eventStore.AppendEventAsync(ev);
+            return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Review/{ev.Id}", ev.Id);
+        }
+
+        [HttpPut("Review/{id}")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> PutReviewAsync(int id, ReviewUpdateArgs args)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!_entityIndex.Exists(ResourceType.Exhibit, id))
+                return NotFound(ErrorMessages.ContentNotFound(ResourceType.Exhibit, id));
+
+            if (!_reviewIndex.Exists(ResourceType.Exhibit, id))
+                return NotFound(ErrorMessages.ReviewNotFound(ResourceType.Exhibit, id));
+
+            var owner = _reviewIndex.Owner(ResourceType.Exhibit, id);
+            // Only reviewers, owner and admins/supervisors are allowed to comment
+            if (!UserPermissions.IsAllowedToCommentReview(User.Identity, args.Reviewers, owner))
+                return Forbid();
+
+            // Only Reviewers and admins/supervisors are allowed to change status to approved
+            if (args.Approved != _reviewIndex.Approved(ResourceType.Exhibit, id))
+                if (!UserPermissions.IsAllowedToApproveReview(User.Identity, args.Reviewers))
+                    return Forbid();
+
+            var ev = new ReviewUpdated()
+            {
+                Approved = args.Approved,
+                Comment = args.Comment,
+                EntityId = id,
+                Reviewers = args.Reviewers,
+                UserId = User.Identity.GetUserIdentity(),
+                ReviewType = ResourceType.Exhibit,
+                Timestamp = DateTimeOffset.Now
+            };
+
+            await _eventStore.AppendEventAsync(ev);
+            return StatusCode(204);
         }
 
         private void ValidateExhibitArgs(ExhibitArgs args)

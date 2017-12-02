@@ -27,6 +27,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly EntityIndex _entityIndex;
         private readonly ReferencesIndex _referencesIndex;
         private readonly RatingIndex _ratingIndex;
+        private readonly ReviewIndex _reviewIndex;
 
         public RoutesController(EventStoreService eventStore, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices)
         {
@@ -36,6 +37,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             _entityIndex = indices.OfType<EntityIndex>().First();
             _referencesIndex = indices.OfType<ReferencesIndex>().First();
             _ratingIndex = indices.OfType<RatingIndex>().First();
+            _reviewIndex = indices.OfType<ReviewIndex>().First();
         }
 
         [HttpGet("ids")]
@@ -294,6 +296,108 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Rating/{ev.Id}", ev.Id);
         }
 
+        [HttpGet("Review/{id}")]
+        [ProducesResponseType(typeof(ReviewResult), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        public IActionResult GetRreview(int id)
+        {
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!_entityIndex.Exists(ResourceType.Route, id))
+                return NotFound(ErrorMessages.ContentNotFound(ResourceType.Route, id));
+
+            if (!_reviewIndex.Exists(ResourceType.Route, id))
+                return NotFound(ErrorMessages.ReviewNotFound(ResourceType.Route, id));
+
+            var result = new ReviewResult()
+            {
+                Id = id,
+                Description = _reviewIndex.Description(ResourceType.Route, id),
+                Approved = _reviewIndex.Approved(ResourceType.Route, id),
+                Reviewers = _reviewIndex.Reviewers(ResourceType.Route, id),
+                Comments = _reviewIndex.Comments(ResourceType.Route, id),
+                Timestamp = _reviewIndex.Timestamp(ResourceType.Route, id)
+            };
+
+            return Ok(result);
+        }
+
+        [HttpPost("Review/{id}")]
+        [ProducesResponseType(typeof(int), 201)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> PostReviewAsync(int id, ReviewArgs args)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!_entityIndex.Exists(ResourceType.Route, id))
+                return NotFound(ErrorMessages.ContentNotFound(ResourceType.Route, id));
+
+            if (!_entityIndex.Status(ResourceType.Route, id).Equals(ContentStatus.In_Review))
+                return BadRequest(ErrorMessages.CannotAddReviewToContentWithWrongStatus());
+
+            if (_reviewIndex.Exists(ResourceType.Route, id))
+                return BadRequest(ErrorMessages.ContentAlreadyHasReview(ResourceType.Route, id));
+
+            var ev = new ReviewCreated()
+            {
+                Id = _reviewIndex.NextId(ResourceType.Route),
+                EntityId = id,
+                Description = args.Description,
+                Reviewers = args.Reviewers,
+                UserId = User.Identity.GetUserIdentity(),
+                ReviewType = ResourceType.Route,
+                Timestamp = DateTimeOffset.Now
+            };
+
+            await _eventStore.AppendEventAsync(ev);
+            return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Review/{ev.Id}", ev.Id);
+        }
+
+        [HttpPut("Review/{id}")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> PutReviewAsync(int id, ReviewUpdateArgs args)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!_entityIndex.Exists(ResourceType.Route, id))
+                return NotFound(ErrorMessages.ContentNotFound(ResourceType.Route, id));
+
+            if (!_reviewIndex.Exists(ResourceType.Route, id))
+                return NotFound(ErrorMessages.ReviewNotFound(ResourceType.Route, id));
+
+            var owner = _reviewIndex.Owner(ResourceType.Route, id);
+            // Only reviewers, owner and admins/supervisors are allowed to comment
+            if (!UserPermissions.IsAllowedToCommentReview(User.Identity, args.Reviewers, owner))
+                return Forbid();
+
+            // Only Reviewers and admins/supervisors are allowed to change status to approved
+            if (args.Approved != _reviewIndex.Approved(ResourceType.Route, id))
+                if (!UserPermissions.IsAllowedToApproveReview(User.Identity, args.Reviewers))
+                    return Forbid();
+
+            var ev = new ReviewUpdated()
+            {
+                Approved = args.Approved,
+                Comment = args.Comment,
+                EntityId = id,
+                Reviewers = args.Reviewers,
+                UserId = User.Identity.GetUserIdentity(),
+                ReviewType = ResourceType.Route,
+                Timestamp = DateTimeOffset.Now
+            };
+
+            await _eventStore.AppendEventAsync(ev);
+            return StatusCode(204);
+        }
 
         private void ValidateRouteArgs(RouteArgs args)
         {
