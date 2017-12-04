@@ -129,7 +129,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
         {
             public string UserId { get; set; }
 
-            public bool Approved { get; set; } = false;
+            public bool Approved { get; set; }
 
             public string Description { get; set; }
 

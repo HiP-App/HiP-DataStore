@@ -356,7 +356,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             };
 
             await _eventStore.AppendEventAsync(ev);
-            return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Review/{ev.Id}", ev.Id);
+            return Created($"{Request.Scheme}://{Request.Host}/api/Routes/Review/{ev.Id}", ev.Id);
         }
 
         [HttpPut("Review/{id}")]
