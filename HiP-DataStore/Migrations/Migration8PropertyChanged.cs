@@ -119,6 +119,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
                                 Timestamp = ev.Timestamp
                             });
                             break;
+
+                        case UserActivityBaseEvent ev:
+                            //append all other events
+                            e.AppendEvent(events.Current);
+                            break;
                     }
 
                     foreach (var propEvent in propEvents)
@@ -127,6 +132,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
                         e.AppendEvent(propEvent);
                     }
                 }
+
             }
 
         }
