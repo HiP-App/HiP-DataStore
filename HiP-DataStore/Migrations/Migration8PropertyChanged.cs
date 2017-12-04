@@ -17,11 +17,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
         public async Task MigrateAsync(IStreamMigrationArgs e)
         {
             var events = e.GetExistingEvents();
-            IEnumerable<PropertyChangedEvent> propEvents = new List<PropertyChangedEvent>();
             DateTimeOffset timestamp;
             while (await events.MoveNextAsync())
             {
                 var currentEvent = events.Current;
+                IEnumerable<PropertyChangedEvent> propEvents = new List<PropertyChangedEvent>();
                 if (currentEvent is UserActivityBaseEvent userEvent)
                 {
                     switch (currentEvent)

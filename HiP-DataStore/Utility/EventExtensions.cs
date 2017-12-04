@@ -33,9 +33,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Utility
                     }
                     else throw new NotSupportedException("No supported type as an identifier for a reference could be found");
                 }
-                else
+                else if (e.Value != null)
                 {
-                    return new[] { new EntityId(resourceType, (int)e.Value) };
+                    return new[] { new EntityId(referenceResourceType, (int)e.Value) };
                 }
             }
 

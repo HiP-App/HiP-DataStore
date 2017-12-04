@@ -15,6 +15,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Linq.Expressions;
 using Tag = PaderbornUniversity.SILab.Hip.DataStore.Model.Entity.Tag;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
@@ -64,7 +65,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 
             switch (ev)
             {
-
                 case MediaFileUpdated e:
                     var fileDocBson = e.ToBsonDocument();
                     fileDocBson.Remove("_id");
@@ -140,7 +140,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                 case PropertyChangedEvent e:
                     resourceType = e.GetEntityType();
 
-
                     switch (resourceType)
                     {
                         case ResourceType _ when resourceType == ResourceTypes.Exhibit:
@@ -154,6 +153,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                                 UserId = e.UserId,
                                 Timestamp = e.Timestamp
                             };
+                            updatedExhibit2.References.AddRange(originalExhibit2.References);
                             updatedExhibit2.Referencers.AddRange(originalExhibit2.Referencers);
                             _db.GetCollection<Exhibit>(ResourceTypes.Exhibit.Name).ReplaceOne(x => x.Id == e.Id, updatedExhibit2);
                             break;
@@ -168,6 +168,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                                 UserId = e.UserId,
                                 Timestamp = e.Timestamp
                             };
+                            updatedExhibitPage.References.AddRange(originalExhibitPage.References);
                             updatedExhibitPage.Referencers.AddRange(originalExhibitPage.Referencers);
                             _db.GetCollection<ExhibitPage>(ResourceTypes.ExhibitPage.Name).ReplaceOne(p => p.Id == e.Id, updatedExhibitPage);
                             break;
@@ -183,6 +184,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                                 UserId = e.UserId,
                                 Timestamp = e.Timestamp
                             };
+                            updatedMedium.References.AddRange(originalMedium.References);
                             updatedMedium.Referencers.AddRange(originalMedium.Referencers);
                             _db.GetCollection<MediaElement>(ResourceTypes.Media.Name).ReplaceOne(p => p.Id == e.Id, updatedMedium);
                             break;
@@ -198,6 +200,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                                 UserId = e.UserId,
                                 Timestamp = e.Timestamp
                             };
+                            updatedRoute.References.AddRange(originalRoute.References);
                             updatedRoute.Referencers.AddRange(originalRoute.Referencers);
                             _db.GetCollection<Route>(ResourceTypes.Route.Name).ReplaceOne(p => p.Id == e.Id, updatedRoute);
                             break;
@@ -213,6 +216,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                                 UserId = e.UserId,
                                 Timestamp = e.Timestamp
                             };
+                            updatedTag.References.AddRange(originalTag.References);
                             updatedTag.Referencers.AddRange(originalTag.Referencers);
                             _db.GetCollection<Tag>(ResourceTypes.Tag.Name).ReplaceOne(p => p.Id == e.Id, updatedTag);
                             break;
@@ -247,19 +251,31 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
             {
                 var references = propEvent.GetReferences();
                 if (references.Any())
+                {
+                    ClearOutgoingReferences((propEvent.GetEntityType(), propEvent.Id), references.First().Type);
+                    ClearIncomingReferences((propEvent.GetEntityType(), propEvent.Id), references.First().Type);
                     AddReferences((propEvent.GetEntityType(), propEvent.Id), references);
+                }
             }
 
         }
 
-        private void ClearIncomingReferences(EntityId entity)
+
+
+        private void ClearIncomingReferences(EntityId entity, ResourceType type = null)
         {
             var currentReferencers = _db.GetCollection<dynamic>(entity.Type.Name)
                 .Find(Builders<dynamic>.Filter.Eq("_id", entity.Id))
                 .First()
                 .Referencers;
 
-            foreach (var r in currentReferencers)
+            var filteredReferences = (currentReferencers as IEnumerable<dynamic>).Distinct();
+            if (type != null)
+            {
+                filteredReferences = filteredReferences.Where(r => r.Collection == type.Name);
+            }
+
+            foreach (var r in filteredReferences)
             {
                 // Note: We must use the internal key "_id" here since we use dynamic objects
                 var source = (ResourceType.ResourceTypeDictionary[(string)r.Collection], (int)r._id);
@@ -267,14 +283,21 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
             }
         }
 
-        private void ClearOutgoingReferences(EntityId entity)
+
+        private void ClearOutgoingReferences(EntityId entity, ResourceType type = null)
         {
-            var currentReferences = _db.GetCollection<dynamic>(entity.Type.Name)
+            var currentReferencers = _db.GetCollection<dynamic>(entity.Type.Name)
                 .Find(Builders<dynamic>.Filter.Eq("_id", entity.Id))
                 .First()
                 .References;
 
-            foreach (var r in currentReferences)
+            var filteredReferencers = (currentReferencers as IEnumerable<dynamic>).Distinct();
+            if (type != null)
+            {
+                filteredReferencers = filteredReferencers.Where(r => r.Collection == type.Name);
+            }
+
+            foreach (var r in filteredReferencers)
             {
                 // Note: We must use the internal key "_id" here since we use dynamic objects
                 var target = (ResourceType.ResourceTypeDictionary[(string)r.Collection], (int)r._id);
@@ -288,22 +311,21 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 
             // 1) create a new DocRef pointing to the target and add it to the source's references list
             var targetRefs = targets.Select(target => new DocRef<ContentBase>(target.Id, target.Type.Name));
-            var update = Builders<ContentBase>.Update.PushEach(nameof(ContentBase.References), targetRefs);
+            var update = Builders<ContentBase>.Update.AddToSetEach(nameof(ContentBase.References), targetRefs);
             var result = _db.GetCollection<ContentBase>(source.Type.Name).UpdateOne(x => x.Id == source.Id, update);
-            Debug.Assert(result.ModifiedCount == 1);
 
             // 2) create a new DocRef pointing to the source and add it to the target's referencers list
             var sourceRef = new DocRef<ContentBase>(source.Id, source.Type.Name);
-            var update2 = Builders<ContentBase>.Update.Push(nameof(ContentBase.Referencers), sourceRef);
+            var update2 = Builders<ContentBase>.Update.AddToSet(nameof(ContentBase.Referencers), sourceRef);
             foreach (var target in targets)
             {
                 result = _db.GetCollection<ContentBase>(target.Type.Name).UpdateOne(x => x.Id == target.Id, update2);
-                Debug.Assert(result.ModifiedCount == 1);
             }
         }
 
         private void RemoveReference(EntityId source, EntityId target)
         {
+
             // 1) delete the DocRef pointing to the target from the source's references list
             var update = Builders<dynamic>.Update.PullFilter(
                 nameof(ContentBase.References),
