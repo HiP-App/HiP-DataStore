@@ -42,5 +42,21 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Utility
             return new List<EntityId>();
         }
 
+        public static bool TryGetReferenceType(this PropertyChangedEvent e, out ResourceType type)
+        {
+            type = null;
+            var resourceType = e.GetEntityType();
+            var propertyInfo = resourceType.Type.GetProperty(e.PropertyName);
+            var hasAttribute = propertyInfo.CustomAttributes.Any(attr => attr.AttributeType == typeof(ReferenceAttribute));
+            if (hasAttribute)
+            {
+                var referenceAttribute = propertyInfo.GetCustomAttribute<ReferenceAttribute>();
+                var valueType = Type.GetType(e.ValueTypeName);
+                type = ResourceType.ResourceTypeDictionary[referenceAttribute.ResourceTypeName];
+                return true;
+            }
+
+            return false;
+        }
     }
 }

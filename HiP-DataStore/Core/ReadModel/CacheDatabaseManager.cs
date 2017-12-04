@@ -53,10 +53,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 
         private void ApplyEvent(IEvent ev)
         {
-            if (ev is EventBase crudEvent)
+            if (ev is EventBase baseEvent)
             {
-                var entity = (crudEvent.GetEntityType(), crudEvent.Id);
-                if (crudEvent is DeletedEvent)
+                var entity = (baseEvent.GetEntityType(), baseEvent.Id);
+                if (baseEvent is DeletedEvent)
                 {
                     ClearIncomingReferences(entity);
                     ClearOutgoingReferences(entity);
@@ -247,15 +247,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     break;
             }
 
-            if (ev is PropertyChangedEvent propEvent)
+            if (ev is PropertyChangedEvent propEvent && propEvent.TryGetReferenceType(out var referenceType))
             {
+
+                ClearOutgoingReferences((propEvent.GetEntityType(), propEvent.Id), referenceType);
+                ClearIncomingReferences((propEvent.GetEntityType(), propEvent.Id), referenceType);
+
                 var references = propEvent.GetReferences();
                 if (references.Any())
-                {
-                    ClearOutgoingReferences((propEvent.GetEntityType(), propEvent.Id), references.First().Type);
-                    ClearIncomingReferences((propEvent.GetEntityType(), propEvent.Id), references.First().Type);
                     AddReferences((propEvent.GetEntityType(), propEvent.Id), references);
-                }
             }
 
         }
