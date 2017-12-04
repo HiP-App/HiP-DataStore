@@ -94,6 +94,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             // something), so we manually request an instance here
             app.ApplicationServices.GetService<CacheDatabaseManager>();
 
+            // Ensures that "Request.Scheme" is correctly set to "https" in our nginx-environment
+            app.UseRequestSchemeFixer();
+
             // Use CORS (important: must be before app.UseMvc())
             app.UseCors(builder =>
             {
@@ -108,7 +111,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             app.UseAuthentication();
             app.UseMvc();
 
-            app.UseSwaggerUi(typeof(Startup).Assembly, new SwaggerUiSettings
+            app.UseSwaggerUiHip(typeof(Startup).Assembly, new SwaggerUiSettings
             {
                 Title = Assembly.GetEntryAssembly().GetName().Name,
                 DefaultEnumHandling = EnumHandling.String,
