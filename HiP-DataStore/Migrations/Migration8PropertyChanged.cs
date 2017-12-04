@@ -77,6 +77,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
                             timestamp = ev.Timestamp;
                             break;
                         case ExhibitUpdated ev:
+                            timestamp = ev.Timestamp;
                             var newArgs = ev.Properties;
                             var currentArgs = (ExhibitArgs)dictionary[(ev.GetEntityType(), ev.Id)];
                             propEvents = EntityManager.CompareEntities(currentArgs, newArgs, ev.GetEntityType(), ev.Id, ev.UserId);
@@ -120,17 +121,22 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
                             });
                             break;
 
-                        case UserActivityBaseEvent ev:
+                        default:
                             //append all other events
                             e.AppendEvent(events.Current);
                             break;
                     }
+
 
                     foreach (var propEvent in propEvents)
                     {
                         propEvent.Timestamp = timestamp;
                         e.AppendEvent(propEvent);
                     }
+                }
+                else
+                {
+                    e.AppendEvent(events.Current);
                 }
 
             }

@@ -60,46 +60,70 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 
         public void ApplyEvent(IEvent ev)
         {
+            ResourceType resourceType = null;
+            int eventId = -1;
+            DateTimeOffset timestamp;
+            Type type = null;
+
             if (ev is EventBase baseEvent)
             {
-                var resourceType = baseEvent.GetEntityType();
-                // 1) Update references
-                var source = (resourceType, baseEvent.Id);
-
-                switch (ev)
-                {
-                    case PropertyChangedEvent e:
-                        var references = e.GetReferences();
-                        if (references.Any())
-                        {
-                            var targetResourceType = references.First().Type;
-                            ClearReferences(source, targetResourceType);
-                            AddReferences(source, references);
-                        }
-                        break;
-
-                    case DeletedEvent _:
-                        ClearReferences(source);
-                        break;
-                }
-
-
-
-                // 2) Handle propagation of timestamps
-                var hasDoNotPropagateAttribute = baseEvent.GetType().GetTypeInfo().CustomAttributes
-                    .Any(attr => attr.AttributeType == typeof(DoNotPropagateTimestampToReferencersAttribute));
-
-                if (hasDoNotPropagateAttribute)
-                {
-                    // only set timestamp on the created/updated/deleted entity
-                    _lastModificationCascading[(resourceType, baseEvent.Id)] = baseEvent.Timestamp;
-                }
-                else
-                {
-                    // set timestamp & propagate to entities referencing the created/updated/deleted entity
-                    SetTimestampRecursively(baseEvent.Timestamp, resourceType, baseEvent.Id);
-                }
+                resourceType = baseEvent.GetEntityType();
+                eventId = baseEvent.Id;
+                timestamp = baseEvent.Timestamp;
+                type = baseEvent.GetType();
             }
+            else if (ev is ICrudEvent crudEvent)
+            {
+                resourceType = crudEvent.GetEntityType();
+                eventId = crudEvent.Id;
+                timestamp = crudEvent.Timestamp;
+                type = crudEvent.GetType();
+            }
+            else throw new ArgumentException("Unexpected event type occured!");
+
+
+            // 1) Update references
+            var source = (resourceType, eventId);
+
+            switch (ev)
+            {
+                case PropertyChangedEvent e:
+                    var references = e.GetReferences();
+                    if (references.Any())
+                    {
+                        var targetResourceType = references.First().Type;
+                        ClearReferences(source, targetResourceType);
+                        AddReferences(source, references);
+                    }
+                    break;
+
+                case DeletedEvent _:
+                    ClearReferences(source);
+                    break;
+
+                case IUpdateEvent e:
+                    ClearReferences(source);
+                    AddReferences(source, e.GetReferences());
+                    break;
+            }
+
+
+
+            // 2) Handle propagation of timestamps
+            var hasDoNotPropagateAttribute = type.GetTypeInfo().CustomAttributes
+                .Any(attr => attr.AttributeType == typeof(DoNotPropagateTimestampToReferencersAttribute));
+
+            if (hasDoNotPropagateAttribute)
+            {
+                // only set timestamp on the created/updated/deleted entity
+                _lastModificationCascading[(resourceType, eventId)] = timestamp;
+            }
+            else
+            {
+                // set timestamp & propagate to entities referencing the created/updated/deleted entity
+                SetTimestampRecursively(timestamp, resourceType, eventId);
+            }
+
         }
 
         private void ClearReferences(EntityId source, ResourceType targetResourceType = null)
@@ -109,7 +133,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
             {
                 _referencesOf.Remove(source);
             }
-            else if(_referencesOf.TryGetValue(source, out var set))
+            else if (_referencesOf.TryGetValue(source, out var set))
             {
                 set.RemoveWhere(e => e.Type == targetResourceType);
             }

@@ -11,11 +11,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 
         public string Description { get; set; }
 
+        [Reference(nameof(ResourceTypes.Media))]
         public int? Image { get; set; }
 
         [AllowedStatuses]
         public ContentStatus Status { get; set; }
-        
+
         public IEnumerable<EntityId> GetReferences()
         {
             if (Image != null)
