@@ -63,6 +63,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                 }
             }
 
+            object oldValue = null;
             switch (ev)
             {
                 case MediaFileUpdated e:
@@ -82,8 +83,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     };
                     _db.GetCollection<ScoreRecord>(ResourceTypes.ScoreRecord.Name).InsertOne(newScoreRecord);
                     break;
-                case CreatedEvent e:
 
+                case CreatedEvent e:
                     var resourceType = e.GetEntityType();
                     switch (resourceType)
                     {
@@ -96,6 +97,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                             };
                             _db.GetCollection<Exhibit>(ResourceTypes.Exhibit.Name).InsertOne(newExhibit2);
                             break;
+
                         case ResourceType _ when resourceType == ResourceTypes.ExhibitPage:
                             var newExhibitPage = new ExhibitPage(new ExhibitPageArgs2())
                             {
@@ -139,13 +141,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 
                 case PropertyChangedEvent e:
                     resourceType = e.GetEntityType();
-
                     switch (resourceType)
                     {
                         case ResourceType _ when resourceType == ResourceTypes.Exhibit:
                             var originalExhibit2 = _db.GetCollection<Exhibit>(ResourceTypes.Exhibit.Name).AsQueryable().First(x => x.Id == e.Id);
                             var exhibitArgs = originalExhibit2.CreateExhibitArgs();
                             var propertyInfo = typeof(ExhibitArgs).GetProperty(e.PropertyName);
+                            oldValue = propertyInfo.GetValue(exhibitArgs);
                             propertyInfo.SetValue(exhibitArgs, e.Value);
                             var updatedExhibit2 = new Exhibit(exhibitArgs)
                             {
@@ -157,10 +159,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                             updatedExhibit2.Referencers.AddRange(originalExhibit2.Referencers);
                             _db.GetCollection<Exhibit>(ResourceTypes.Exhibit.Name).ReplaceOne(x => x.Id == e.Id, updatedExhibit2);
                             break;
+
                         case ResourceType _ when resourceType == ResourceTypes.ExhibitPage:
                             var originalExhibitPage = _db.GetCollection<ExhibitPage>(ResourceTypes.ExhibitPage.Name).AsQueryable().First(x => x.Id == e.Id);
                             var pageArgs = originalExhibitPage.CreateExhibitPageArgs();
                             propertyInfo = typeof(ExhibitPageArgs2).GetProperty(e.PropertyName);
+                            oldValue = propertyInfo.GetValue(pageArgs);
                             propertyInfo.SetValue(pageArgs, e.Value);
                             var updatedExhibitPage = new ExhibitPage(pageArgs)
                             {
@@ -177,6 +181,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                             var originalMedium = _db.GetCollection<MediaElement>(ResourceTypes.Media.Name).AsQueryable().First(x => x.Id == e.Id);
                             var mediaArgs = originalMedium.CreateMediaArgs();
                             propertyInfo = typeof(MediaArgs).GetProperty(e.PropertyName);
+                            oldValue = propertyInfo.GetValue(mediaArgs);
                             propertyInfo.SetValue(mediaArgs, e.Value);
                             var updatedMedium = new MediaElement(mediaArgs)
                             {
@@ -184,6 +189,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                                 UserId = e.UserId,
                                 Timestamp = e.Timestamp
                             };
+                            updatedMedium.File = originalMedium.File;
                             updatedMedium.References.AddRange(originalMedium.References);
                             updatedMedium.Referencers.AddRange(originalMedium.Referencers);
                             _db.GetCollection<MediaElement>(ResourceTypes.Media.Name).ReplaceOne(p => p.Id == e.Id, updatedMedium);
@@ -193,6 +199,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                             var originalRoute = _db.GetCollection<Route>(ResourceTypes.Route.Name).AsQueryable().First(x => x.Id == e.Id);
                             var routeArgs = originalRoute.CreateRouteArgs();
                             propertyInfo = typeof(RouteArgs).GetProperty(e.PropertyName);
+                            oldValue = propertyInfo.GetValue(routeArgs);
                             propertyInfo.SetValue(routeArgs, e.Value);
                             var updatedRoute = new Route(routeArgs)
                             {
@@ -209,6 +216,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                             var originalTag = _db.GetCollection<Tag>(ResourceTypes.Tag.Name).AsQueryable().First(x => x.Id == e.Id);
                             var tagArgs = originalTag.CreateTagArgs();
                             propertyInfo = typeof(TagArgs).GetProperty(e.PropertyName);
+                            oldValue = propertyInfo.GetValue(tagArgs);
                             propertyInfo.SetValue(tagArgs, e.Value);
                             var updatedTag = new Tag(tagArgs)
                             {
@@ -249,20 +257,20 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 
             if (ev is PropertyChangedEvent propEvent && propEvent.TryGetReferenceType(out var referenceType))
             {
+                var result = propEvent.DetermineReferences(oldValue);
 
-                ClearOutgoingReferences((propEvent.GetEntityType(), propEvent.Id), referenceType);
-                ClearIncomingReferences((propEvent.GetEntityType(), propEvent.Id), referenceType);
+                foreach (var remove in result.removedReferences)
+                {
+                    RemoveReference((propEvent.GetEntityType(), propEvent.Id), remove);
+                }
 
-                var references = propEvent.GetReferences();
-                if (references.Any())
-                    AddReferences((propEvent.GetEntityType(), propEvent.Id), references);
+                if (result.addedReferences.Any())
+                    AddReferences((propEvent.GetEntityType(), propEvent.Id), result.addedReferences);
             }
 
         }
 
-
-
-        private void ClearIncomingReferences(EntityId entity, ResourceType type = null)
+        private void ClearIncomingReferences(EntityId entity)
         {
             var currentReferencers = _db.GetCollection<dynamic>(entity.Type.Name)
                 .Find(Builders<dynamic>.Filter.Eq("_id", entity.Id))
@@ -270,10 +278,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                 .Referencers;
 
             var filteredReferences = (currentReferencers as IEnumerable<dynamic>).Distinct();
-            if (type != null)
-            {
-                filteredReferences = filteredReferences.Where(r => r.Collection == type.Name);
-            }
 
             foreach (var r in filteredReferences)
             {
@@ -284,7 +288,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
         }
 
 
-        private void ClearOutgoingReferences(EntityId entity, ResourceType type = null)
+        private void ClearOutgoingReferences(EntityId entity)
         {
             var currentReferencers = _db.GetCollection<dynamic>(entity.Type.Name)
                 .Find(Builders<dynamic>.Filter.Eq("_id", entity.Id))
@@ -292,10 +296,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                 .References;
 
             var filteredReferencers = (currentReferencers as IEnumerable<dynamic>).Distinct();
-            if (type != null)
-            {
-                filteredReferencers = filteredReferencers.Where(r => r.Collection == type.Name);
-            }
 
             foreach (var r in filteredReferencers)
             {
@@ -325,7 +325,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 
         private void RemoveReference(EntityId source, EntityId target)
         {
-
             // 1) delete the DocRef pointing to the target from the source's references list
             var update = Builders<dynamic>.Update.PullFilter(
                 nameof(ContentBase.References),
@@ -336,8 +335,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
             var result = _db.GetCollection<dynamic>(source.Type.Name).UpdateOne(
                 Builders<dynamic>.Filter.Eq("_id", source.Id), update);
 
-            Debug.Assert(result.ModifiedCount == 1);
-
             // 2) delete the DocRef pointing to the source from the target's referencers list
             var update2 = Builders<dynamic>.Update.PullFilter(
                 nameof(ContentBase.Referencers),
@@ -347,8 +344,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 
             var result2 = _db.GetCollection<dynamic>(target.Type.Name).UpdateOne(
                 Builders<dynamic>.Filter.Eq("_id", target.Id), update2);
-
-            Debug.Assert(result2.ModifiedCount == 1);
         }
 
         private void MarkDeleted<T>(ResourceType resourceType, int entityId) where T : ContentBase
