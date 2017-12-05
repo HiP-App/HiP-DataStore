@@ -218,7 +218,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return BadRequest(ErrorMessages.CannotBeUnpublished(ResourceTypes.Media));
 
             var currentArgs = await EventStreamExtensions.GetCurrentObjectFromEventStream<MediaArgs>(_eventStore.EventStream, ResourceTypes.Media, id);
-            await EntityManager.CompareAndAddEvents(_eventStore, currentArgs, args, ResourceTypes.Media, id, User.Identity.GetUserIdentity());
+            await EntityManager.UpdateEntity(_eventStore, currentArgs, args, ResourceTypes.Media, id, User.Identity.GetUserIdentity());
             return StatusCode(204);
         }
 

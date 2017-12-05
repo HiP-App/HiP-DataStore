@@ -1,5 +1,4 @@
-﻿using System;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 {

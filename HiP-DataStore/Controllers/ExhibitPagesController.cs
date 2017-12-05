@@ -6,7 +6,6 @@ using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
@@ -243,7 +242,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             // validation passed, emit event
             var currentArgs = await EventStreamExtensions.GetCurrentObjectFromEventStream<ExhibitPageArgs2>(_eventStore.EventStream, ResourceTypes.ExhibitPage, id);
-            await EntityManager.CompareAndAddEvents(_eventStore, currentArgs, args, ResourceTypes.ExhibitPage, id, User.Identity.GetUserIdentity());
+            await EntityManager.UpdateEntity(_eventStore, currentArgs, args, ResourceTypes.ExhibitPage, id, User.Identity.GetUserIdentity());
             return StatusCode(204);
         }
 

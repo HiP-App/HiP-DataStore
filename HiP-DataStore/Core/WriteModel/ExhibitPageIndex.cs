@@ -1,6 +1,4 @@
 ﻿using PaderbornUniversity.SILab.Hip.DataStore.Model;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Events;
 using System.Collections.Generic;
@@ -18,7 +16,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 
         public void ApplyEvent(IEvent e)
         {
-            if (e is EventBase baseEvent && baseEvent.GetEntityType() == ResourceTypes.ExhibitPage)
+            if (e is BaseEvent baseEvent && baseEvent.GetEntityType() == ResourceTypes.ExhibitPage)
                 switch (e)
                 {
                     case CreatedEvent ev:

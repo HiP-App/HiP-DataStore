@@ -13,9 +13,7 @@ using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Linq.Expressions;
 using Tag = PaderbornUniversity.SILab.Hip.DataStore.Model.Entity.Tag;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
@@ -53,7 +51,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 
         private void ApplyEvent(IEvent ev)
         {
-            if (ev is EventBase baseEvent)
+            if (ev is BaseEvent baseEvent)
             {
                 var entity = (baseEvent.GetEntityType(), baseEvent.Id);
                 if (baseEvent is DeletedEvent)

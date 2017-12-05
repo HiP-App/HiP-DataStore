@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using PaderbornUniversity.SILab.Hip.DataStore.Controllers;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using System.Linq;
 using PaderbornUniversity.SILab.Hip.EventSourcing;

@@ -4,7 +4,6 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
 using System.Collections.Generic;
 using System.Linq;
-using System;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 {

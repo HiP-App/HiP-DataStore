@@ -35,7 +35,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
 
             while (await enumerator.MoveNextAsync())
             {
-                if (enumerator.Current is EventBase baseEvent &&
+                if (enumerator.Current is BaseEvent baseEvent &&
                     baseEvent.GetEntityType() == entityId.Type && baseEvent.Id == entityId.Id)
                 {
                     var timestamp = baseEvent.Timestamp;

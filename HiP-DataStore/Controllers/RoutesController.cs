@@ -176,7 +176,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             // validation passed, emit event
             var oldArgs = await EventStreamExtensions.GetCurrentObjectFromEventStream<RouteArgs>(_eventStore.EventStream, ResourceTypes.Route, _entityIndex.NextId(ResourceTypes.Route));
-            await EntityManager.CompareAndAddEvents(_eventStore, oldArgs, args, ResourceTypes.Route, id, User.Identity.GetUserIdentity());
+            await EntityManager.UpdateEntity(_eventStore, oldArgs, args, ResourceTypes.Route, id, User.Identity.GetUserIdentity());
             return StatusCode(204);
         }
 

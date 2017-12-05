@@ -1,11 +1,9 @@
 ﻿using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Events;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -65,7 +63,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
             DateTimeOffset timestamp;
             Type type = null;
 
-            if (ev is EventBase baseEvent)
+            if (ev is BaseEvent baseEvent)
             {
                 resourceType = baseEvent.GetEntityType();
                 eventId = baseEvent.Id;

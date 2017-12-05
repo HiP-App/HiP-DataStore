@@ -4,7 +4,6 @@ using MongoDB.Driver;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
@@ -185,7 +184,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return StatusCode(409, ErrorMessages.TagNameAlreadyUsed);
 
             var oldArgs = await EventStreamExtensions.GetCurrentObjectFromEventStream<TagArgs>(_eventStore.EventStream, ResourceTypes.Tag, id);
-            await EntityManager.CompareAndAddEvents(_eventStore, oldArgs, args, ResourceTypes.Tag, id, User.Identity.GetUserIdentity());
+            await EntityManager.UpdateEntity(_eventStore, oldArgs, args, ResourceTypes.Tag, id, User.Identity.GetUserIdentity());
             return NoContent();
         }
 

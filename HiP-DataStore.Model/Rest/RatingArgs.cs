@@ -1,5 +1,4 @@
-﻿using PaderbornUniversity.SILab.Hip.EventSourcing;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 {
