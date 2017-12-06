@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
-using PaderbornUniversity.SILab.Hip.DataStore.Core;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
@@ -10,12 +10,12 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
+using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
@@ -24,7 +24,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
     public class ExhibitPagesController : Controller
     {
         private readonly IOptions<ExhibitPagesConfig> _exhibitPagesConfig;
-        private readonly EventStoreClient _eventStore;
+        private readonly EventStoreService _eventStore;
         private readonly CacheDatabaseManager _db;
         private readonly MediaIndex _mediaIndex;
         private readonly EntityIndex _entityIndex;
@@ -33,7 +33,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         public ExhibitPagesController(
             IOptions<ExhibitPagesConfig> exhibitPagesConfig,
-            EventStoreClient eventStore,
+            EventStoreService eventStore,
             CacheDatabaseManager db,
             InMemoryCache cache)
         {
@@ -47,13 +47,18 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         }
 
         [HttpGet("Pages/ids")]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(typeof(IReadOnlyCollection<int>), 200)]
-        public IActionResult GetAllIds(ContentStatus? status)
+        public IActionResult GetAllIds(ContentStatus status = ContentStatus.Published)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            return Ok(_entityIndex.AllIds(ResourceType.ExhibitPage, status ?? ContentStatus.Published, User.Identity));
+            if (status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
+                return Forbid();
+
+            return Ok(_entityIndex.AllIds(ResourceType.ExhibitPage, status, User.Identity));
         }
 
         /// <summary>
@@ -64,13 +69,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet("Pages")]
         [ProducesResponseType(typeof(AllItemsResult<ExhibitPageResult>), 200)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(422)]
-        public IActionResult GetAllPages(ExhibitPageQueryArgs args)
+        public IActionResult GetAllPages([FromQuery]ExhibitPageQueryArgs args)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
             args = args ?? new ExhibitPageQueryArgs();
+
+            if (args.Status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
+                return Forbid();
 
             var query = _db.Database.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name).AsQueryable();
             return QueryExhibitPages(query, args);
@@ -79,13 +88,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet("{exhibitId:int}/Pages/ids")]
         [ProducesResponseType(typeof(IReadOnlyCollection<int>), 200)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
-        public IActionResult GetIdsForExhibit(int exhibitId, ContentStatus? status)
+        public IActionResult GetIdsForExhibit(int exhibitId, ContentStatus status = ContentStatus.Published)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            status = status ?? ContentStatus.Published;
+            if (status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
+                return Forbid();
 
             var exhibit = _db.Database.GetCollection<Exhibit>(ResourceType.Exhibit.Name)
                 .AsQueryable()
@@ -96,8 +107,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             var pageIds = exhibit.Pages
                 .LoadAll(_db.Database)
-                .Where(x => x.UserId == User.Identity.GetUserIdentity())
+                .AsQueryable()
                 .Where(p => status == ContentStatus.All || p.Status == status)
+                .FilterIf(status == ContentStatus.All, x => x.Status != ContentStatus.Deleted)
                 .Select(p => p.Id)
                 .ToList();
 
@@ -111,6 +123,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet("{exhibitId}/Pages")]
         [ProducesResponseType(typeof(AllItemsResult<ExhibitPageResult>), 200)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [ProducesResponseType(422)]
         public IActionResult GetPagesForExhibit(int exhibitId, ExhibitPageQueryArgs args)
@@ -119,6 +132,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return BadRequest(ModelState);
 
             args = args ?? new ExhibitPageQueryArgs();
+
+            if (args.Status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
+                return Forbid();
 
             var exhibit = _db.Database.GetCollection<Exhibit>(ResourceType.Exhibit.Name)
                 .AsQueryable()
@@ -136,6 +152,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(typeof(ExhibitPageResult), 200)]
         [ProducesResponseType(304)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public IActionResult GetById(int id, DateTimeOffset? timestamp = null)
         {
@@ -148,7 +165,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             var page = _db.Database.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name)
                 .AsQueryable()
-                .Where(x => x.UserId == User.Identity.GetUserIdentity())
                 .FirstOrDefault(x => x.Id == id);
 
             if (page == null)
@@ -167,8 +183,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         [HttpPost("Pages")]
         [ProducesResponseType(typeof(int), 201)]
-        [ProducesResponseType(403)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         public async Task<IActionResult> PostAsync([FromBody]ExhibitPageArgs2 args)
         {
             // if font family is not specified, fallback to the configured default font family
@@ -223,6 +239,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, _entityIndex.Owner(ResourceType.ExhibitPage, id)))
                 return Forbid();
 
+            var oldStatus = _entityIndex.Status(ResourceType.ExhibitPage, id).GetValueOrDefault();
+            if (args.Status == ContentStatus.Unpublished && oldStatus != ContentStatus.Published)
+                return BadRequest(ErrorMessages.CannotBeUnpublished(ResourceType.ExhibitPage));
+
             // ReSharper disable once PossibleInvalidOperationException (.Value is safe here since we know the entity exists)
             var currentPageType = _exhibitPageIndex.PageType(id).Value;
             // ReSharper disable once PossibleNullReferenceException (args == null is handled through ModelState.IsValid)
@@ -259,6 +279,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!UserPermissions.IsAllowedToDelete(User.Identity, status, _entityIndex.Owner(ResourceType.ExhibitPage, id)))
                 return Forbid();
 
+            if (status == ContentStatus.Published)
+                return BadRequest(ErrorMessages.CannotBeDeleted(ResourceType.ExhibitPage, id));
+
             if (_referencesIndex.IsUsed(ResourceType.ExhibitPage, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
 
@@ -276,6 +299,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet("Pages/{id}/Refs")]
         [ProducesResponseType(typeof(ReferenceInfoResult), 200)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public IActionResult GetReferenceInfo(int id)
         {
@@ -296,7 +320,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 var pages = allPages
                     .FilterByIds(args.Exclude, args.IncludeOnly)
                     .FilterByUser(args.Status,User.Identity)
-                    .FilterByStatus(args.Status)
+                    .FilterByStatus(args.Status, User.Identity)
                     .FilterByTimestamp(args.Timestamp)
                     .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
                         x.Title.ToLower().Contains(args.Query.ToLower()) ||

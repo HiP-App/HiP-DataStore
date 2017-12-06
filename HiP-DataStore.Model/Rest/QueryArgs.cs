@@ -52,7 +52,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         /// of their status shall be returned. Defaults to <see cref="ContentStatus.Published"/>.
         /// </summary>
         [DefaultValue(ContentStatus.Published)]
-        public ContentStatus Status { get; set; } = ContentStatus.Published;
+        public ContentStatus Status { get; set; }
 
         public DateTimeOffset? Timestamp { get; set; }
     }

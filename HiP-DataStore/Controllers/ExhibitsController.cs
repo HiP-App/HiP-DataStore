@@ -1,20 +1,20 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
 using MongoDB.Driver;
-using PaderbornUniversity.SILab.Hip.DataStore.Core;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
+using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
-using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
@@ -22,14 +22,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
     [Route("api/[controller]")]
     public class ExhibitsController : Controller
     {
-        private readonly EventStoreClient _eventStore;
+        private readonly EventStoreService _eventStore;
         private readonly CacheDatabaseManager _db;
         private readonly MediaIndex _mediaIndex;
         private readonly EntityIndex _entityIndex;
         private readonly ReferencesIndex _referencesIndex;
         private readonly RatingIndex _ratingIndex;
 
-        public ExhibitsController(EventStoreClient eventStore, CacheDatabaseManager db, InMemoryCache cache)
+        public ExhibitsController(EventStoreService eventStore, CacheDatabaseManager db, InMemoryCache cache)
         {
             _eventStore = eventStore;
             _db = db;
@@ -40,21 +40,33 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         }
 
         [HttpGet("ids")]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(typeof(IReadOnlyCollection<int>), 200)]
-        public IActionResult GetIds(ContentStatus? status)
+        public IActionResult GetIds(ContentStatus status = ContentStatus.Published)
         {
-            return Ok(_entityIndex.AllIds(ResourceType.Exhibit, status ?? ContentStatus.Published, User.Identity));
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
+                return Forbid();
+
+            return Ok(_entityIndex.AllIds(ResourceType.Exhibit, status , User.Identity));
         }
 
         [HttpGet]
         [ProducesResponseType(typeof(AllItemsResult<ExhibitResult>), 200)]
         [ProducesResponseType(400)]
-        public IActionResult Get(ExhibitQueryArgs args)
+        [ProducesResponseType(403)]
+        public IActionResult Get([FromQuery]ExhibitQueryArgs args)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
             args = args ?? new ExhibitQueryArgs();
+
+            if (args.Status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
+                return Forbid();
 
             var query = _db.Database.GetCollection<Exhibit>(ResourceType.Exhibit.Name).AsQueryable();
 
@@ -64,8 +76,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
                 var exhibits = query
                     .FilterByIds(args.Exclude, args.IncludeOnly)
+                    .FilterByLocation(args.Latitude, args.Longitude)
                     .FilterByUser(args.Status,User.Identity)
-                    .FilterByStatus(args.Status)
+                    .FilterByStatus(args.Status, User.Identity)
                     .FilterByTimestamp(args.Timestamp)
                     .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
                         x.Name.ToLower().Contains(args.Query.ToLower()) ||
@@ -93,6 +106,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(ExhibitResult), 200)]
         [ProducesResponseType(304)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public IActionResult GetById(int id, DateTimeOffset? timestamp = null)
         {
@@ -105,7 +120,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             var exhibit = _db.Database.GetCollection<Exhibit>(ResourceType.Exhibit.Name)
                 .AsQueryable()
-                .Where(x => x.UserId == User.Identity.GetUserIdentity())
                 .FirstOrDefault(x => x.Id == id);
 
             if (exhibit == null)
@@ -124,8 +138,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         [HttpPost]
         [ProducesResponseType(typeof(int), 201)]
-        [ProducesResponseType(403)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         public async Task<IActionResult> PostAsync([FromBody]ExhibitArgs args)
         {
             ValidateExhibitArgs(args);
@@ -167,6 +181,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, _entityIndex.Owner(ResourceType.Exhibit, id)))
                 return Forbid();
 
+            var oldStatus = _entityIndex.Status(ResourceType.Exhibit, id).GetValueOrDefault();
+            if (args.Status == ContentStatus.Unpublished && oldStatus != ContentStatus.Published)
+                return BadRequest(ErrorMessages.CannotBeUnpublished(ResourceType.Exhibit));
+
             // validation passed, emit event
             var ev = new ExhibitUpdated
             {
@@ -195,7 +213,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             var status = _entityIndex.Status(ResourceType.Exhibit, id).GetValueOrDefault();
             if (!UserPermissions.IsAllowedToDelete(User.Identity, status, _entityIndex.Owner(ResourceType.Exhibit, id)))
-                return Forbid();
+                return BadRequest(ErrorMessages.CannotBeDeleted(ResourceType.Exhibit,id));
+
+            if (status == ContentStatus.Published)
+                return BadRequest(ErrorMessages.CannotBeDeleted(ResourceType.Exhibit, id));
 
             // check if exhibit is in use and can't be deleted (it's in use if and only if it is contained in a route).
             if (_referencesIndex.IsUsed(ResourceType.Exhibit, id))
@@ -216,6 +237,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet("{id}/Refs")]
         [ProducesResponseType(typeof(ReferenceInfoResult), 200)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public IActionResult GetReferenceInfo(int id)
         {
@@ -231,6 +253,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet("Rating/{id}")]
         [ProducesResponseType(typeof(RatingResult), 200)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public IActionResult GetRating(int id)
         {
@@ -239,13 +262,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return BadRequest(ModelState);
 
             if (!_entityIndex.Exists(ResourceType.Exhibit, id))
-                return NotFound(ErrorMessages.ExhibitNotFound(id));
+                return NotFound(ErrorMessages.ContentNotFound(ResourceType.Exhibit,id));
 
             var result = new RatingResult()
             {
                 Id = id,
                 Average = _ratingIndex.Average(ResourceType.Exhibit, id),
-                Count = _ratingIndex.Count(ResourceType.Exhibit, id)
+                Count = _ratingIndex.Count(ResourceType.Exhibit, id),
+                RatingTable = _ratingIndex.Table(ResourceType.Exhibit, id)
             };
 
             return Ok(result);
@@ -261,7 +285,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return BadRequest(ModelState);
 
             if (!_entityIndex.Exists(ResourceType.Exhibit, id))
-                return NotFound(ErrorMessages.ExhibitNotFound(id));
+                return NotFound(ErrorMessages.ContentNotFound(ResourceType.Exhibit, id));
 
             var ev = new RatingAdded()
             {
@@ -281,7 +305,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         {
             if (args == null)
                 return;
-
             // ensure referenced image exists
             if (args.Image != null && !_mediaIndex.IsImage(args.Image.Value))
                 ModelState.AddModelError(nameof(args.Image),
@@ -296,7 +319,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
                 foreach (var id in invalidIds)
                     ModelState.AddModelError(nameof(args.Tags),
-                        ErrorMessages.TagNotFound(id));
+                        ErrorMessages.ContentNotFound(ResourceType.Tag,id));
             }
 
             // ensure referenced pages exist

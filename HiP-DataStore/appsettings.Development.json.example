@@ -10,12 +10,12 @@
   "Endpoints": {
     "MongoDbHost": "mongodb://localhost:27017",
     "MongoDbName": "main",
-
-    "EventStoreHost": "tcp://localhost:1113",
-
+    "ThumbnailUrlPattern": "https://docker-hip.cs.upb.de/develop/thumbnailservice/api/Thumbnails?Url=datastore/api/Media/{0}/File"
+  },
+  "EventStore": {
     // To connect to an Event Store cluster use this instead:
-    // "EventStoreHost": "discover://username:password@myserver:1113",
-
-    "EventStoreStream": "main-stream"
+    // "Host": "discover://username:password@myserver:1113",
+    "Host": "tcp://localhost:1113",
+    "Stream": "main-stream"
   }
 }

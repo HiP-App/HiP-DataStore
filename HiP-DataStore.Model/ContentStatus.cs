@@ -24,7 +24,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
         In_Review,
 
         /// <summary>
-        /// The content is approved by a supervisor.
+        /// The content is approved by a supervisor or administrator.
         /// </summary>
         [EnumMember(Value = "PUBLISHED")]
         Published,
@@ -34,6 +34,18 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
         /// included in the response) - it is not a valid status for content.
         /// </summary>
         [EnumMember(Value = "ALL")]
-        All
+        All,
+
+        /// <summary>
+        /// The content is deleted
+        /// </summary>
+        [EnumMember(Value = "DELETED")]
+        Deleted,
+
+        /// <summary>
+        /// The content is was published and then deleted (e.g. exhibit event has been finished)
+        /// </summary>
+        [EnumMember(Value = "UNPUBLISHED")]
+        Unpublished
     }
 }

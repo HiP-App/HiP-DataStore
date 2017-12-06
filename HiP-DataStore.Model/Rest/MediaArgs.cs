@@ -1,4 +1,5 @@
 ﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Utility;
 using System.ComponentModel.DataAnnotations;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
@@ -12,6 +13,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 
         public MediaType Type { get; set; }
 
+        [AllowedStatuses]
         public ContentStatus Status { get; set; }
     }
 }

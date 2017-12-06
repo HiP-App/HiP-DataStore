@@ -1,19 +1,19 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
-using PaderbornUniversity.SILab.Hip.DataStore.Core;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
+using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
-using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
@@ -21,37 +21,51 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
     [Route("api/[controller]")]
     public class RoutesController : Controller
     {
-        private readonly EventStoreClient _eventStore;
+        private readonly EventStoreService _eventStore;
         private readonly CacheDatabaseManager _db;
         private readonly MediaIndex _mediaIndex;
         private readonly EntityIndex _entityIndex;
         private readonly ReferencesIndex _referencesIndex;
+        private readonly RatingIndex _ratingIndex;
 
-        public RoutesController(EventStoreClient eventStore, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices)
+        public RoutesController(EventStoreService eventStore, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices)
         {
             _eventStore = eventStore;
             _db = db;
             _mediaIndex = indices.OfType<MediaIndex>().First();
             _entityIndex = indices.OfType<EntityIndex>().First();
             _referencesIndex = indices.OfType<ReferencesIndex>().First();
+            _ratingIndex = indices.OfType<RatingIndex>().First();
         }
 
         [HttpGet("ids")]
         [ProducesResponseType(typeof(IReadOnlyCollection<int>), 200)]
-        public IActionResult GetIds(ContentStatus? status)
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
+        public IActionResult GetIds(ContentStatus status = ContentStatus.Published)
         {
-            return Ok(_entityIndex.AllIds(ResourceType.Route, status ?? ContentStatus.Published, User.Identity));
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
+                return Forbid();
+
+            return Ok(_entityIndex.AllIds(ResourceType.Route, status, User.Identity));
         }
 
         [HttpGet]
         [ProducesResponseType(typeof(AllItemsResult<RouteResult>), 200)]
         [ProducesResponseType(400)]
-        public IActionResult Get(RouteQueryArgs args)
+        [ProducesResponseType(403)]
+        public IActionResult Get([FromQuery]RouteQueryArgs args)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
             args = args ?? new RouteQueryArgs();
+
+            if (args.Status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
+                return Forbid();
 
             var query = _db.Database.GetCollection<Route>(ResourceType.Route.Name).AsQueryable();
 
@@ -60,7 +74,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 var routes = query
                     .FilterByIds(args.Exclude, args.IncludeOnly)
                     .FilterByUser(args.Status, User.Identity)
-                    .FilterByStatus(args.Status)
+                    .FilterByStatus(args.Status, User.Identity)
                     .FilterByTimestamp(args.Timestamp)
                     .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
                         x.Title.ToLower().Contains(args.Query.ToLower()) ||
@@ -86,6 +100,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(RouteResult), 200)]
         [ProducesResponseType(304)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public IActionResult GetById(int id, DateTimeOffset? timestamp = null)
         {
@@ -98,7 +114,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             var route = _db.Database.GetCollection<Route>(ResourceType.Route.Name)
                 .AsQueryable()
-                .Where(x => x.UserId == User.Identity.GetUserIdentity())
                 .FirstOrDefault(x => x.Id == id);
 
             if (route == null)
@@ -161,6 +176,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, _entityIndex.Owner(ResourceType.Route, id)))
                 return Forbid();
 
+            var oldStatus = _entityIndex.Status(ResourceType.Route, id).GetValueOrDefault();
+            if (args.Status == ContentStatus.Unpublished && oldStatus != ContentStatus.Published)
+                return BadRequest(ErrorMessages.CannotBeUnpublished(ResourceType.Route));
+
             // validation passed, emit event
             var ev = new RouteUpdated
             {
@@ -191,6 +210,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!UserPermissions.IsAllowedToDelete(User.Identity, status, _entityIndex.Owner(ResourceType.Route, id)))
                 return Forbid();
 
+            if (status == ContentStatus.Published)
+                return BadRequest(ErrorMessages.CannotBeDeleted(ResourceType.Route, id));
+
             if (_referencesIndex.IsUsed(ResourceType.Route, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
 
@@ -209,6 +231,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet("{id}/Refs")]
         [ProducesResponseType(typeof(ReferenceInfoResult), 200)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public IActionResult GetReferenceInfo(int id)
         {
@@ -219,6 +242,56 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return Forbid();
 
             return ReferenceInfoHelper.GetReferenceInfo(ResourceType.Route, id, _entityIndex, _referencesIndex);
+        }
+
+        [HttpGet("Rating/{id}")]
+        [ProducesResponseType(typeof(RatingResult), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public IActionResult GetRating(int id)
+        {
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!_entityIndex.Exists(ResourceType.Route, id))
+                return NotFound(ErrorMessages.ContentNotFound(ResourceType.Route, id));
+
+            var result = new RatingResult()
+            {
+                Id = id,
+                Average = _ratingIndex.Average(ResourceType.Route, id),
+                Count = _ratingIndex.Count(ResourceType.Route, id),
+                RatingTable = _ratingIndex.Table(ResourceType.Route, id)
+            };
+
+            return Ok(result);
+        }
+
+        [HttpPost("Rating/{id}")]
+        [ProducesResponseType(typeof(int), 201)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> PostRatingAsync(int id, RatingArgs args)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!_entityIndex.Exists(ResourceType.Route, id))
+                return NotFound(ErrorMessages.ContentNotFound(ResourceType.Route,id));
+
+            var ev = new RatingAdded()
+            {
+                Id = _ratingIndex.NextId(ResourceType.Route),
+                EntityId = id,
+                UserId = User.Identity.GetUserIdentity(),
+                Value = args.Rating.GetValueOrDefault(),
+                RatedType = ResourceType.Route,
+                Timestamp = DateTimeOffset.Now
+            };
+
+            await _eventStore.AppendEventAsync(ev);
+            return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Rating/{ev.Id}", ev.Id);
         }
 
 
@@ -246,7 +319,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
                 foreach (var id in invalidIds)
                     ModelState.AddModelError(nameof(args.Exhibits),
-                        ErrorMessages.ExhibitNotFound(id));
+                        ErrorMessages.ContentNotFound(ResourceType.Exhibit,id));
             }
 
             // ensure referenced tags exist
@@ -258,7 +331,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
                 foreach (var id in invalidIds)
                     ModelState.AddModelError(nameof(args.Tags),
-                        ErrorMessages.TagNotFound(id));
+                        ErrorMessages.ContentNotFound(ResourceType.Tag,id));
             }
         }
     }

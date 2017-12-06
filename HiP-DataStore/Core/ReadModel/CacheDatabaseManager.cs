@@ -7,6 +7,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
+using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
 using System;
 using System.Collections.Generic;
@@ -21,13 +22,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
     /// </summary>
     public class CacheDatabaseManager
     {
-        private readonly EventStoreClient _eventStore;
+        private readonly EventStoreService _eventStore;
         private readonly IMongoDatabase _db;
 
         public IMongoDatabase Database => _db;
 
         public CacheDatabaseManager(
-            EventStoreClient eventStore,
+            EventStoreService eventStore,
             IOptions<EndpointConfig> config,
             ILogger<CacheDatabaseManager> logger)
         {
@@ -44,9 +45,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 
             // 2) Subscribe to EventStore to receive all past and future events
             _eventStore = eventStore;
-
-            var subscription = _eventStore.EventStream.SubscribeCatchUp();
-            subscription.EventAppeared.Subscribe(ApplyEvent);
+            _eventStore.EventStream.SubscribeCatchUp(ApplyEvent);
         }
         
         private void ApplyEvent(IEvent ev)
@@ -93,7 +92,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     break;
 
                 case ExhibitDeleted e:
-                    _db.GetCollection<Exhibit>(ResourceType.Exhibit.Name).DeleteOne(x => x.Id == e.Id);
+                    MarkDeleted<Exhibit>(ResourceType.Exhibit, e.Id);
                     break;
 
                 case ExhibitPageCreated3 e:
@@ -121,7 +120,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     break;
 
                 case ExhibitPageDeleted2 e:
-                    _db.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name).DeleteOne(x => x.Id == e.Id);
+                    MarkDeleted<ExhibitPage>(ResourceType.ExhibitPage, e.Id);
                     break;
 
                 case RouteCreated e:
@@ -149,7 +148,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     break;
 
                 case RouteDeleted e:
-                    _db.GetCollection<Route>(ResourceType.Route.Name).DeleteOne(r => r.Id == e.Id);
+                    MarkDeleted<Route>(ResourceType.Route, e.Id);
                     break;
 
                 case MediaCreated e:
@@ -178,7 +177,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     break;
 
                 case MediaDeleted e:
-                    _db.GetCollection<MediaElement>(ResourceType.Media.Name).DeleteOne(m => m.Id == e.Id);
+                    MarkDeleted<MediaElement>(ResourceType.Media, e.Id);
                     break;
 
                 case MediaFileUpdated e:
@@ -213,7 +212,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     break;
 
                 case TagDeleted e:
-                    _db.GetCollection<Tag>(ResourceType.Tag.Name).DeleteOne(x => x.Id == e.Id);
+                    MarkDeleted<Tag>(ResourceType.Tag, e.Id);
                     break;
 
                 case ScoreAdded e:
@@ -309,6 +308,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                 Builders<dynamic>.Filter.Eq("_id", target.Id), update2);
 
             Debug.Assert(result2.ModifiedCount == 1);
+        }
+
+        private void MarkDeleted<T>(ResourceType resourceType, int entityId) where T : ContentBase
+        {
+            var collection = _db.GetCollection<T>(resourceType.Name);
+            var entity = collection.AsQueryable().First(x => x.Id == entityId);
+            entity.Status = ContentStatus.Deleted;
+            collection.ReplaceOne(x => x.Id == entityId, entity);
         }
     }
 }

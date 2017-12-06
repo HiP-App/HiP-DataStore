@@ -4,6 +4,15 @@
 # App settings for development
 appsettings.Development.json
 
+# Generated files (NSwag)
+swagger.json
+HiP-DataStore.Sdk/*.g.cs
+HiP-DataStore.TypeScript/package/dist/
+HiP-DataStore.TypeScript/package/lib/
+HiP-DataStore.TypeScript/package/node_modules/
+HiP-DataStore.TypeScript/package/*.tgz
+/HiP-DataStore.TypeScript/package/.npmrc
+
 # User-specific files
 *.suo
 *.user

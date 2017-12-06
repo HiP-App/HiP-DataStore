@@ -1,19 +1,19 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
-using PaderbornUniversity.SILab.Hip.DataStore.Core;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
+using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Tag = PaderbornUniversity.SILab.Hip.DataStore.Model.Entity.Tag;
-using Microsoft.AspNetCore.Authorization;
-using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
@@ -21,14 +21,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
     [Route("api/[controller]")]
     public class TagsController : Controller
     {
-        private readonly EventStoreClient _eventStore;
+        private readonly EventStoreService _eventStore;
         private readonly CacheDatabaseManager _db;
         private readonly EntityIndex _entityIndex;
         private readonly MediaIndex _mediaIndex;
         private readonly TagIndex _tagIndex;
         private readonly ReferencesIndex _referencesIndex;
 
-        public TagsController(EventStoreClient eventStore, CacheDatabaseManager db, InMemoryCache cache)
+        public TagsController(EventStoreService eventStore, CacheDatabaseManager db, InMemoryCache cache)
         {
             _eventStore = eventStore;
             _db = db;
@@ -39,19 +39,32 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         }
 
         [HttpGet("ids")]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(typeof(IReadOnlyCollection<int>), 200)]
-        public IActionResult GetIds(ContentStatus? status)
+        public IActionResult GetIds(ContentStatus status = ContentStatus.Published)
         {
-            return Ok(_entityIndex.AllIds(ResourceType.Tag, status ?? ContentStatus.Published, User.Identity));
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
+                return Forbid();
+
+            return Ok(_entityIndex.AllIds(ResourceType.Tag, status, User.Identity));
         }
 
         [HttpGet]
         [ProducesResponseType(typeof(AllItemsResult<TagResult>), 200)]
         [ProducesResponseType(304)]
-        public IActionResult GetAll(TagQueryArgs args)
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
+        public IActionResult GetAll([FromQuery]TagQueryArgs args)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
+            if (args.Status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
+                return Forbid();
 
             var query = _db.Database.GetCollection<Tag>(ResourceType.Tag.Name).AsQueryable();
 
@@ -60,7 +73,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 var tags = query
                     .FilterByIds(args.Exclude, args.IncludeOnly)
                     .FilterByUser(args.Status, User.Identity)
-                    .FilterByStatus(args.Status)
+                    .FilterByStatus(args.Status, User.Identity)
                     .FilterByTimestamp(args.Timestamp)
                     .FilterByUsage(args.Used)
                     .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
@@ -89,6 +102,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(typeof(TagResult), 200)]
         [ProducesResponseType(304)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public IActionResult GetById(int id, DateTimeOffset? timestamp = null)
         {
@@ -101,7 +115,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             var tag = _db.Database.GetCollection<Tag>(ResourceType.Tag.Name)
                 .AsQueryable()
-                .Where(x => x.UserId == User.Identity.GetUserIdentity())
                 .FirstOrDefault(x => x.Id == id);
 
             if (tag == null)
@@ -171,6 +184,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, _entityIndex.Owner(ResourceType.Tag, id)))
                 return Forbid();
 
+            var oldStatus = _entityIndex.Status(ResourceType.Tag, id).GetValueOrDefault();
+            if (args.Status == ContentStatus.Unpublished && oldStatus != ContentStatus.Published)
+                return BadRequest(ErrorMessages.CannotBeUnpublished(ResourceType.Tag));
+            
             var tagIdWithSameTitle = _tagIndex.GetIdByTagTitle(args.Title);
 
             if (tagIdWithSameTitle != null && tagIdWithSameTitle != id)
@@ -205,6 +222,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!UserPermissions.IsAllowedToDelete(User.Identity, status, _entityIndex.Owner(ResourceType.Tag, id)))
                 return Forbid();
 
+            if (status == ContentStatus.Published)
+                return BadRequest(ErrorMessages.CannotBeDeleted(ResourceType.Route, id));
+
             if (_referencesIndex.IsUsed(ResourceType.Tag, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
 
@@ -222,6 +242,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet("{id}/Refs")]
         [ProducesResponseType(typeof(ReferenceInfoResult), 200)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public IActionResult GetReferenceInfo(int id)
         {

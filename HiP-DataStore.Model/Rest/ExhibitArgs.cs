@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Utility;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 
@@ -22,11 +23,18 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         [Range(-180, 180)]
         public float Longitude { get; set; }
 
+        [AllowedStatuses]
         public ContentStatus Status { get; set; }
 
         public List<int> Tags { get; set; }
 
         public List<int> Pages { get; set; }
+
+        /// <summary>
+        /// The radius (in km) in which the exhibit can be accessed.
+        /// </summary>
+        [Range(0.001, 1000)]
+        public float AccessRadius { get; set; } = 1000;
 
         public IEnumerable<EntityId> GetReferences()
         {

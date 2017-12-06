@@ -2,9 +2,9 @@
 
 ## Development Environment Setup
 For testing purposes, install & run Event Store and MongoDB on your local machine. Steps on Windows:
-* [Download Event Store](https://geteventstore.com/downloads/)
+* [Download Event Store](https://eventstore.org/downloads/)
     * Run with `EventStore.ClusterNode.exe --db ./db --log ./logs`
-    * For further information, see documentation: [Connecting to a Server](http://docs.geteventstore.com/dotnet-api/4.0.0/connecting-to-a-server/), especially section "URIs"
+    * For further information, see documentation: [Connecting to a Server](https://eventstore.org/docs/dotnet-api/4.0.0/connecting-to-a-server/), especially section "URIs"
 * [Download MongoDB](https://www.mongodb.com/download-center?jmp=docs)
     * Default database path: `C:\data\db` (if installed on drive C:)
     * Run with `mongod.exe`

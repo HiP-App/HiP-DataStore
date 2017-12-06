@@ -1,0 +1,29 @@
+{
+  "name": "hip-datastore",
+  "version": "2.0.0",
+  "description": "Typescript client for HiP-DataStore",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/HiP-App/HiP-DataStore/"
+  },  
+  "keywords": [],
+  "author": "",
+  "main": "./dist/HiP-DataStore.js",
+  "types": "./dist/HiP-DataStore.d.ts",
+  "license": "Apache-2.0",
+  "outDir": "./dist",
+  "dependencies": {    
+    "@angular/core": "4.3.6",
+    "@angular/http": "4.3.6",
+    "@angular/platform-browser": "4.3.6",
+    "@angular/common": "4.3.6",     
+    "rxjs": "5.4.3",
+    "typescript":"2.5.2",
+    "zone.js": "0.8.18"
+  },
+  "scripts": {
+    "build":"tsc",
+    "prepublish": "npm run build"    
+  }
+}
+

@@ -3,7 +3,11 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
     <RootNamespace>PaderbornUniversity.SILab.Hip.DataStore</RootNamespace>
+    <NoWarn>1701;1702;1705;1591</NoWarn>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
+  
   <ItemGroup>
     <Folder Include="Media\Image\" />
     <Folder Include="wwwroot\" />
@@ -12,13 +16,15 @@
     <PackageReference Include="EventStore.ClientAPI.NetCore" Version="4.0.2-rc" />
     <PackageReference Include="HiP-WebserviceLib" Version="2.1.0" />
     <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.1.1" />
-    <PackageReference Include="Microsoft.AspNetCore" Version="2.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="2.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.StaticFiles" Version="2.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore" Version="2.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="2.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.StaticFiles" Version="2.0.1" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="2.0.0" />
     <PackageReference Include="MongoDB.Driver" Version="2.4.4" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="1.0.0" />
+    <PackageReference Include="NSwag.AspNetCore" Version="11.12.9" />
+    <PackageReference Include="NSwag.MSBuild" Version="11.12.9" />
+
   </ItemGroup>
   <ItemGroup>
     <DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="1.0.0" />
@@ -26,5 +32,15 @@
   <ItemGroup>
     <ProjectReference Include="..\HiP-DataStore.Model\HiP-DataStore.Model.csproj" />
   </ItemGroup>
+
+  <Target Name="NSwag" AfterTargets="Build" Condition="'$(OS)'=='Windows_NT'">
+    <Exec Command="$(NSwagExe_Core20) webapi2swagger /assembly:$(TargetPath) /output:../swagger.json /defaultPropertyNameHandling:camelCase" />
+
+    <!--C# clients-->
+    <Exec Command="$(NSwagExe_Core20) swagger2csclient /input:../swagger.json /output:../$(ProjectName).Sdk/NSwag.g.cs /namespace:$(RootNamespace) /clientBaseClass:NSwagClientBase /useHttpClientCreationMethod:true /generateOptionalParameters:true" />
+    
+    <!--Typescript clients-->
+    <Exec Command="$(NSwagExe_Core20) swagger2tsclient /input:../swagger.json /output:../$(ProjectName).TypeScript/package/lib/$(ProjectName).ts /baseUrlTokenName:$(ProjectName.Replace('-','_'))_URL /template:angular /clientBaseClass:NSwagClientBase /extensionCode:../$(ProjectName).TypeScript/NSwagClientBase.ts /injectionTokenType:InjectionToken /generateOptionalParameters:true /useTransformOptionsMethod:true" />
+  </Target>
 
 </Project>
