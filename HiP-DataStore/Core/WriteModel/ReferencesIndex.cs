@@ -18,6 +18,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
         // for each entity X, this stores the entities referencing X
         private readonly Dictionary<EntityId, HashSet<EntityId>> _referencesTo = new Dictionary<EntityId, HashSet<EntityId>>();
 
+        private readonly Dictionary<(EntityId, string), HashSet<EntityId>> _referencesPerProperty = new Dictionary<(EntityId, string), HashSet<EntityId>>();
+
         // for each entity this stores the date and time of last modification (through POST and PUT APIs)
         private readonly Dictionary<EntityId, DateTimeOffset> _lastModificationCascading = new Dictionary<EntityId, DateTimeOffset>();
 
@@ -38,6 +40,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
         {
             var key = new EntityId(type, id);
             return _referencesOf.TryGetValue(key, out var set) ? set.ToArray() : Array.Empty<EntityId>();
+        }
+
+        /// <summary>
+        /// Returns the IDs of the entities referenced by the property of the entity with the specified type and ID
+        /// </summary>
+        public IReadOnlyCollection<EntityId> ReferencesOf(ResourceType type, int id, string propertyName)
+        {
+            var key = (new EntityId(type, id), propertyName);
+            return _referencesPerProperty.TryGetValue(key, out var set) ? set.ToArray() : Array.Empty<EntityId>();
         }
 
         /// <summary>
@@ -86,13 +97,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
             switch (ev)
             {
                 case PropertyChangedEvent e:
+                    ClearReferences(source, e.PropertyName);
                     var references = e.GetReferences();
-                    if (references.Any())
-                    {
-                        var targetResourceType = references.First().Type;
-                        ClearReferences(source, targetResourceType);
-                        AddReferences(source, references);
-                    }
+                    AddReferences(source, references, e.PropertyName);
+
                     break;
 
                 case DeletedEvent _:
@@ -124,23 +132,30 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 
         }
 
-        private void ClearReferences(EntityId source, ResourceType targetResourceType = null)
+        private void ClearReferences(EntityId source, string propertyName = null)
         {
-            var oldReferences = ReferencesOf(source.Type, source.Id);
-            if (targetResourceType == null)
+            IEnumerable<EntityId> oldReferences = new List<EntityId>();
+
+            if (propertyName == null)
             {
+                oldReferences = ReferencesOf(source.Type, source.Id);
                 _referencesOf.Remove(source);
             }
-            else if (_referencesOf.TryGetValue(source, out var set))
+            else if (_referencesPerProperty.TryGetValue((source, propertyName), out var set))
             {
-                set.RemoveWhere(e => e.Type == targetResourceType);
+                oldReferences = ReferencesOf(source.Type, source.Id, propertyName);
+                _referencesPerProperty.Remove((source, propertyName));
+
+                foreach (var reference in oldReferences)
+                {
+                    _referencesOf[source].Remove(reference);
+                }
             }
 
             foreach (var target in oldReferences)
             {
                 if (_referencesTo.TryGetValue(target, out var set))
                 {
-                    if (targetResourceType != null && target.Type != targetResourceType) continue;
                     set.Remove(source);
                     if (set.Count == 0)
                         _referencesTo.Remove(target);
@@ -148,13 +163,20 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
             }
         }
 
-        private void AddReferences(EntityId source, IEnumerable<EntityId> targets)
+        private void AddReferences(EntityId source, IEnumerable<EntityId> targets, string propertyName = null)
         {
             foreach (var target in targets)
             {
                 GetOrCreateSet(_referencesOf, source).Add(target);
                 GetOrCreateSet(_referencesTo, target).Add(source);
+
+                if (propertyName != null)
+                {
+                    GetOrCreatePropertySet(source, propertyName).Add(target);
+                }
             }
+
+
         }
 
         private void SetTimestampRecursively(DateTimeOffset timestamp, ResourceType entityType, int id)
@@ -186,6 +208,16 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                 return set;
 
             return dict[entity] = new HashSet<EntityId>();
+        }
+
+        private HashSet<EntityId> GetOrCreatePropertySet(EntityId entity, string propertyName)
+        {
+            if (_referencesPerProperty.TryGetValue((entity, propertyName), out var set))
+            {
+                return set;
+            }
+
+            return _referencesPerProperty[(entity, propertyName)] = new HashSet<EntityId>();
         }
     }
 }
