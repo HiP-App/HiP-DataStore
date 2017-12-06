@@ -1,6 +1,6 @@
 {
   "name": "hip-datastore",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "Typescript client for HiP-DataStore",
   "repository": {
     "type": "git",
