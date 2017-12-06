@@ -13,14 +13,14 @@ npm install
 Switch ("$env:Build_SourceBranchName") 
 {
     "develop"{		
-		npm --% publish  --registry=%NPMFeed% --tag %tag%	
+		npm --% publish --registry=%NPMFeed% --tag %tag%	
 	}
 
 	"master" {
 		$json = Get-Content -Path package.json | ConvertFrom-Json
 		$env:version = $json.version
 		$env:name = $json.name
-		npm --% dist-tag add %name%@%version% %tag%
+		npm --% dist-tag add %name%@%version% %tag% --registry=%NPMFeed%
 	}
 }
 
