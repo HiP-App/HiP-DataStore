@@ -62,9 +62,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 
             // properties only valid for certain page types:
 
-            if (page.Type == PageType.Appetizer_Page || page.Type == PageType.Image_Page)
+            if (page.Type == PageType.Image_Page)
             {
-                // 'image' only allowed for types APPETIZER_PAGE and IMAGE_PAGE
+                // 'image' only allowed for type IMAGE_PAGE
                 Image = (int?)page.Image.Id;
             }
 
