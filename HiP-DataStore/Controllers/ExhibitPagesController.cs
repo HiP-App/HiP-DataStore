@@ -241,7 +241,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return StatusCode(422, ErrorMessages.CannotChangeExhibitPageType(currentPageType, args.Type));
 
             // validation passed, emit event
-            var currentArgs = await EventStreamExtensions.GetCurrentObjectFromEventStream<ExhibitPageArgs2>(_eventStore.EventStream, ResourceTypes.ExhibitPage, id);
+            var currentArgs = await EventStreamExtensions.GetCurrentEntity<ExhibitPageArgs2>(_eventStore.EventStream, ResourceTypes.ExhibitPage, id);
             await EntityManager.UpdateEntity(_eventStore, currentArgs, args, ResourceTypes.ExhibitPage, id, User.Identity.GetUserIdentity());
             return StatusCode(204);
         }

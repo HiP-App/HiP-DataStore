@@ -175,7 +175,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return BadRequest(ErrorMessages.CannotBeUnpublished(ResourceTypes.Route));
 
             // validation passed, emit event
-            var oldArgs = await EventStreamExtensions.GetCurrentObjectFromEventStream<RouteArgs>(_eventStore.EventStream, ResourceTypes.Route, _entityIndex.NextId(ResourceTypes.Route));
+            var oldArgs = await EventStreamExtensions.GetCurrentEntity<RouteArgs>(_eventStore.EventStream, ResourceTypes.Route, _entityIndex.NextId(ResourceTypes.Route));
             await EntityManager.UpdateEntity(_eventStore, oldArgs, args, ResourceTypes.Route, id, User.Identity.GetUserIdentity());
             return StatusCode(204);
         }

@@ -197,7 +197,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             //};
 
             //await _eventStore.AppendEventAsync(ev);
-            var oldExhibitArgs = await EventStreamExtensions.GetCurrentObjectFromEventStream<ExhibitArgs>(_eventStore.EventStream, ResourceTypes.Exhibit, id);
+            var oldExhibitArgs = await EventStreamExtensions.GetCurrentEntity<ExhibitArgs>(_eventStore.EventStream, ResourceTypes.Exhibit, id);
             await EntityManager.UpdateEntity(_eventStore, oldExhibitArgs, args, ResourceTypes.Exhibit, id, User.Identity.GetUserIdentity());
 
             return StatusCode(204);

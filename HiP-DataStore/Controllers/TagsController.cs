@@ -183,7 +183,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (tagIdWithSameTitle != null && tagIdWithSameTitle != id)
                 return StatusCode(409, ErrorMessages.TagNameAlreadyUsed);
 
-            var oldArgs = await EventStreamExtensions.GetCurrentObjectFromEventStream<TagArgs>(_eventStore.EventStream, ResourceTypes.Tag, id);
+            var oldArgs = await EventStreamExtensions.GetCurrentEntity<TagArgs>(_eventStore.EventStream, ResourceTypes.Tag, id);
             await EntityManager.UpdateEntity(_eventStore, oldArgs, args, ResourceTypes.Tag, id, User.Identity.GetUserIdentity());
             return NoContent();
         }
