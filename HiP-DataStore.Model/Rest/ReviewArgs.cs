@@ -7,5 +7,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         public string Description { get; set; }
 
         public List<string> Reviewers { get; set; }
+
+        public int StudentsToApprove { get; set; }
+
+        public bool ReviewableByStudents { get; set; }
     }
 }

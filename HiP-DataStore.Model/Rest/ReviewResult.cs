@@ -25,11 +25,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 
             public string UserId { get; set; }
 
-            public Comment(string text, DateTimeOffset timestamp, string userId)
+            public bool Approved { get; set; }
+
+            public Comment(string text, DateTimeOffset timestamp, string userId, bool approved)
             {
                 Text = text;
                 Timestamp = timestamp;
                 UserId = userId;
+                Approved = approved;
             }
         }
     }

@@ -331,6 +331,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_reviewIndex.Exists(ResourceType.ExhibitPage, id))
                 return NotFound(ErrorMessages.ReviewNotFound(ResourceType.ExhibitPage, id));
 
+            if (!_reviewIndex.ReviewableByStudents(ResourceType.ExhibitPage, id) && !UserPermissions.IsSupervisorOrAdmin(User.Identity))
+                return Forbid();
+
             var result = new ReviewResult()
             {
                 Id = id,
@@ -347,6 +350,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpPost("Pages/Review/{id}")]
         [ProducesResponseType(typeof(int), 201)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public async Task<IActionResult> PostReviewAsync(int id, ReviewArgs args)
         {
@@ -362,10 +366,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (_reviewIndex.Exists(ResourceType.ExhibitPage, id))
                 return BadRequest(ErrorMessages.ContentAlreadyHasReview(ResourceType.ExhibitPage, id));
 
+            if (!UserPermissions.IsAllowedToCreateReview(User.Identity, _reviewIndex.Owner(ResourceType.Exhibit, id)))
+                return Forbid();
+
             var ev = new ReviewCreated()
             {
                 Id = _reviewIndex.NextId(ResourceType.ExhibitPage),
                 EntityId = id,
+                StudentsToApprove = args.StudentsToApprove,
+                ReviewableByStudents = args.ReviewableByStudents,
                 Description = args.Description,
                 Reviewers = args.Reviewers,
                 UserId = User.Identity.GetUserIdentity(),
@@ -380,6 +389,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpPut("Pages/Review/{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public async Task<IActionResult> PutReviewAsync(int id, ReviewUpdateArgs args)
         {
@@ -392,20 +402,28 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_reviewIndex.Exists(ResourceType.ExhibitPage, id))
                 return NotFound(ErrorMessages.ReviewNotFound(ResourceType.ExhibitPage, id));
 
-            var owner = _reviewIndex.Owner(ResourceType.ExhibitPage, id);
-            // Only reviewers, owner and admins/supervisors are allowed to comment
-            if (!UserPermissions.IsAllowedToCommentReview(User.Identity, args.Reviewers, owner))
+            if (!_reviewIndex.ReviewableByStudents(ResourceType.ExhibitPage, id) && !UserPermissions.IsSupervisorOrAdmin(User.Identity))
                 return Forbid();
 
-            // Only Reviewers and admins/supervisors are allowed to change status to approved
-            if (args.Approved != _reviewIndex.Approved(ResourceType.ExhibitPage, id))
-                if (!UserPermissions.IsAllowedToApproveReview(User.Identity, args.Reviewers))
-                    return Forbid();
+            // Only reviewers, owner and admins/supervisors are allowed to comment
+            if (!UserPermissions.IsAllowedToCommentReview(User.Identity, args.Reviewers,
+                _reviewIndex.Owner(ResourceType.ExhibitPage, id)))
+                return Forbid();
+
+            if (args.StudentsToApprove != _reviewIndex.StudentsToApprove(ResourceType.ExhibitPage, id)
+                && !UserPermissions.IsSupervisorOrAdmin(User.Identity))
+                return Forbid();
+
+            if (_reviewIndex.ReviewableByStudents(ResourceType.ExhibitPage, id) && !UserPermissions.IsSupervisorOrAdmin(User.Identity))
+                args.ReviewableByStudents = true;
 
             var ev = new ReviewUpdated()
             {
-                Approved = args.Approved,
+                Approved = _reviewIndex.ReviewApproved(ResourceType.ExhibitPage, id, User.Identity, args.Approved),
+                ApprovedComment = args.Approved,
                 Comment = args.Comment,
+                StudentsToApprove = args.StudentsToApprove,
+                ReviewableByStudents = args.ReviewableByStudents,
                 EntityId = id,
                 Reviewers = args.Reviewers,
                 UserId = User.Identity.GetUserIdentity(),

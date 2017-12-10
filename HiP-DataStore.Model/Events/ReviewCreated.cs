@@ -10,6 +10,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 
         public string Description { get; set; }
 
+        public int StudentsToApprove { get; set; }
+
+        public bool ReviewableByStudents { get; set; }
+
         public List<string> Reviewers { get; set; }
 
         public ResourceType ReviewType { get; set; }

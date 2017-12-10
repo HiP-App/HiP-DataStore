@@ -84,15 +84,20 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Utility
             return (ownerId == identity.GetUserIdentity()) || CheckRoles(identity);
         }
 
-        public static bool IsAllowedToCommentReview(IIdentity identity, List<string> reviewers, string ownerId)
+        public static bool IsAllowedToCommentReview(IIdentity identity, List<string> reviewers, string owner)
         {
             return (CheckRoles(identity) || reviewers.Contains(identity.GetUserIdentity()) 
-                || ownerId == identity.GetUserIdentity());
+                || owner.Equals(identity.GetUserIdentity()));
         }
 
-        public static bool IsAllowedToApproveReview(IIdentity identity, List<string> reviewers)
+        public static bool IsSupervisorOrAdmin(IIdentity identity)
         {
-            return (CheckRoles(identity) || reviewers.Contains(identity.GetUserIdentity()));
+            return (CheckRoles(identity));
+        }
+
+        public static bool IsAllowedToCreateReview(IIdentity identity, string owner)
+        {
+            return (CheckRoles(identity) || identity.GetUserIdentity().Equals(owner));
         }
 
         //Check if the user has the nessesary roles
