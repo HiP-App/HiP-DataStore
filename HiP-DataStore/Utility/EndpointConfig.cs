@@ -15,13 +15,6 @@
         public string MongoDbName { get; set; }
         
         /// <summary>
-        /// URL that points to the "swagger.json" file. If set, this URL is entered by default
-        /// when accessing the Swagger UI page. If not set, we will try to construct the URL
-        /// automatically which might result in an invalid URL.
-        /// </summary>
-        public string SwaggerEndpoint { get; set; }
-
-        /// <summary>
         /// URL pattern for generating thumbnail URLs. Should contain a placeholder "{0}" that is replaced with the
         /// ID of the requested media at runtime. The endpoint should support GET and DELETE requests. Example:
         /// "https://docker-hip.cs.upb.de/develop/thumbnailservice/api/Thumbnails?Url=datastore/api/Media/{0}/File"
