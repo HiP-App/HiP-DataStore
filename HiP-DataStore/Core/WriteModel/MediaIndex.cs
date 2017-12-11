@@ -86,7 +86,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                         }
                         else if (ev.Value is MediaType type)
                         {
-                            _media[ev.Id].Type = type;
+                            lock (_lockObject)
+                                _media[ev.Id].Type = type;
                         }
                     }
                     break;

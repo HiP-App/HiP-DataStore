@@ -310,14 +310,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
             // 1) create a new DocRef pointing to the target and add it to the source's references list
             var targetRefs = targets.Select(target => new DocRef<ContentBase>(target.Id, target.Type.Name));
             var update = Builders<ContentBase>.Update.AddToSetEach(nameof(ContentBase.References), targetRefs);
-            var result = _db.GetCollection<ContentBase>(source.Type.Name).UpdateOne(x => x.Id == source.Id, update);
+            _db.GetCollection<ContentBase>(source.Type.Name).UpdateOne(x => x.Id == source.Id, update);
 
             // 2) create a new DocRef pointing to the source and add it to the target's referencers list
             var sourceRef = new DocRef<ContentBase>(source.Id, source.Type.Name);
             var update2 = Builders<ContentBase>.Update.AddToSet(nameof(ContentBase.Referencers), sourceRef);
             foreach (var target in targets)
             {
-                result = _db.GetCollection<ContentBase>(target.Type.Name).UpdateOne(x => x.Id == target.Id, update2);
+               _db.GetCollection<ContentBase>(target.Type.Name).UpdateOne(x => x.Id == target.Id, update2);
             }
         }
 
@@ -330,7 +330,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     Builders<dynamic>.Filter.Eq(nameof(DocRefBase.Collection), target.Type.Name),
                     Builders<dynamic>.Filter.Eq("_id", target.Id)));
 
-            var result = _db.GetCollection<dynamic>(source.Type.Name).UpdateOne(
+            _db.GetCollection<dynamic>(source.Type.Name).UpdateOne(
                 Builders<dynamic>.Filter.Eq("_id", source.Id), update);
 
             // 2) delete the DocRef pointing to the source from the target's referencers list
@@ -340,7 +340,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     Builders<dynamic>.Filter.Eq(nameof(DocRefBase.Collection), source.Type.Name),
                     Builders<dynamic>.Filter.Eq("_id", source.Id)));
 
-            var result2 = _db.GetCollection<dynamic>(target.Type.Name).UpdateOne(
+            _db.GetCollection<dynamic>(target.Type.Name).UpdateOne(
                 Builders<dynamic>.Filter.Eq("_id", target.Id), update2);
         }
 

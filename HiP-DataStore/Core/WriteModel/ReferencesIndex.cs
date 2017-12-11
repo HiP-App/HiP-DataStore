@@ -105,7 +105,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 
                 case DeletedEvent _:
                     ClearReferences(source);
-                    break;                
+                    break;
             }
 
 
@@ -136,7 +136,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                 oldReferences = ReferencesOf(source.Type, source.Id);
                 _referencesOf.Remove(source);
             }
-            else if (_referencesPerProperty.TryGetValue((source, propertyName), out var set))
+            else if (_referencesPerProperty.ContainsKey((source, propertyName)))
             {
                 oldReferences = ReferencesOf(source.Type, source.Id, propertyName);
                 _referencesPerProperty.Remove((source, propertyName));
