@@ -142,20 +142,20 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     switch (resourceType)
                     {
                         case ResourceType _ when resourceType == ResourceTypes.Exhibit:
-                            var originalExhibit2 = _db.GetCollection<Exhibit>(ResourceTypes.Exhibit.Name).AsQueryable().First(x => x.Id == e.Id);
-                            var exhibitArgs = originalExhibit2.CreateExhibitArgs();
+                            var originalExhibit = _db.GetCollection<Exhibit>(ResourceTypes.Exhibit.Name).AsQueryable().First(x => x.Id == e.Id);
+                            var exhibitArgs = originalExhibit.CreateExhibitArgs();
                             var propertyInfo = typeof(ExhibitArgs).GetProperty(e.PropertyName);
                             oldValue = propertyInfo.GetValue(exhibitArgs);
-                            propertyInfo.SetValue(exhibitArgs, e.Value);
-                            var updatedExhibit2 = new Exhibit(exhibitArgs)
+                            e.ApplyTo(exhibitArgs);
+                            var updatedExhibit = new Exhibit(exhibitArgs)
                             {
                                 Id = e.Id,
                                 UserId = e.UserId,
                                 Timestamp = e.Timestamp
                             };
-                            updatedExhibit2.References.AddRange(originalExhibit2.References);
-                            updatedExhibit2.Referencers.AddRange(originalExhibit2.Referencers);
-                            _db.GetCollection<Exhibit>(ResourceTypes.Exhibit.Name).ReplaceOne(x => x.Id == e.Id, updatedExhibit2);
+                            updatedExhibit.References.AddRange(originalExhibit.References);
+                            updatedExhibit.Referencers.AddRange(originalExhibit.Referencers);
+                            _db.GetCollection<Exhibit>(ResourceTypes.Exhibit.Name).ReplaceOne(x => x.Id == e.Id, updatedExhibit);
                             break;
 
                         case ResourceType _ when resourceType == ResourceTypes.ExhibitPage:
@@ -163,7 +163,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                             var pageArgs = originalExhibitPage.CreateExhibitPageArgs();
                             propertyInfo = typeof(ExhibitPageArgs2).GetProperty(e.PropertyName);
                             oldValue = propertyInfo.GetValue(pageArgs);
-                            propertyInfo.SetValue(pageArgs, e.Value);
+                            e.ApplyTo(pageArgs);
                             var updatedExhibitPage = new ExhibitPage(pageArgs)
                             {
                                 Id = e.Id,
@@ -180,7 +180,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                             var mediaArgs = originalMedium.CreateMediaArgs();
                             propertyInfo = typeof(MediaArgs).GetProperty(e.PropertyName);
                             oldValue = propertyInfo.GetValue(mediaArgs);
-                            propertyInfo.SetValue(mediaArgs, e.Value);
+                            e.ApplyTo(mediaArgs);
                             var updatedMedium = new MediaElement(mediaArgs)
                             {
                                 Id = e.Id,
@@ -198,7 +198,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                             var routeArgs = originalRoute.CreateRouteArgs();
                             propertyInfo = typeof(RouteArgs).GetProperty(e.PropertyName);
                             oldValue = propertyInfo.GetValue(routeArgs);
-                            propertyInfo.SetValue(routeArgs, e.Value);
+                            e.ApplyTo(routeArgs);
                             var updatedRoute = new Route(routeArgs)
                             {
                                 Id = e.Id,
@@ -215,7 +215,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                             var tagArgs = originalTag.CreateTagArgs();
                             propertyInfo = typeof(TagArgs).GetProperty(e.PropertyName);
                             oldValue = propertyInfo.GetValue(tagArgs);
-                            propertyInfo.SetValue(tagArgs, e.Value);
+                            e.ApplyTo(tagArgs);
                             var updatedTag = new Tag(tagArgs)
                             {
                                 Id = e.Id,
@@ -253,7 +253,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     break;
             }
 
-            if (ev is PropertyChangedEvent propEvent && propEvent.TryGetReferenceType(out var referenceType))
+            if (ev is PropertyChangedEvent propEvent)
             {
                 var result = propEvent.DetermineReferences(oldValue);
 
@@ -351,5 +351,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
             entity.Status = ContentStatus.Deleted;
             collection.ReplaceOne(x => x.Id == entityId, entity);
         }
+
     }
 }
