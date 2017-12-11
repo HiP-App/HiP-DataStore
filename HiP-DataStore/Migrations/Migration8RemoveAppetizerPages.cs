@@ -12,8 +12,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
     /// In more detail: Removes all ExhibitPageCreated/-Updated/-Deleted events for appetizer pages and
     /// modifies ExhibitCreated/-Updated events so they no longer reference these deleted pages.
     /// </summary>
-    [StreamMigration(from: -1, to: -1)] // TODO: negotiate with other migrations currently being developed
-    public class MigrationXRemoveAppetizerPages : IStreamMigration
+    [StreamMigration(from: 7, to: 8)]
+    public class Migration8RemoveAppetizerPages : IStreamMigration
     {
         // Enum member PageType.Appetizer_Page had value 0 before it was removed
         private const PageType AppetizerPageType = 0;
