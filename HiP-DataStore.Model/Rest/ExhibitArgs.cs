@@ -38,17 +38,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         /// </summary>
         [Range(0.001, 1000)]
         public float AccessRadius { get; set; }
-
-        public IEnumerable<EntityId> GetReferences()
-        {
-            if (Image != null)
-                yield return (ResourceTypes.Media, Image.Value);
-
-            foreach (var pageId in Pages?.Distinct() ?? Enumerable.Empty<int>())
-                yield return (ResourceTypes.ExhibitPage, pageId);
-
-            foreach (var tagId in Tags?.Distinct() ?? Enumerable.Empty<int>())
-                yield return (ResourceTypes.Tag, tagId);
-        }
+        
     }
 }

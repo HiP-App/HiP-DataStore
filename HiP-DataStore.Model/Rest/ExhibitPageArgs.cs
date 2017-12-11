@@ -36,22 +36,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         public IReadOnlyCollection<int> AdditionalInformationPages { get; set; }
 
         [AllowedStatuses]
-        public ContentStatus Status { get; set; }
-
-        public IEnumerable<EntityId> GetReferences()
-        {
-            if (Audio != null)
-                yield return (ResourceTypes.Media, Audio.Value);
-
-            if (Image != null)
-                yield return (ResourceTypes.Media, Image.Value);
-
-            foreach (var img in Images?.Select(i => i.Image).Distinct() ?? Enumerable.Empty<int>())
-                yield return (ResourceTypes.Media, img);
-
-            foreach (var id in AdditionalInformationPages?.Distinct() ?? Enumerable.Empty<int>())
-                yield return (ResourceTypes.ExhibitPage, id);
-        }
+        public ContentStatus Status { get; set; }        
     }
 
     public class ExhibitPageArgs : IMigratable<ExhibitPageArgs2>

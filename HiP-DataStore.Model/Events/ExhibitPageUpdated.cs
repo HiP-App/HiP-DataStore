@@ -15,8 +15,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
         public override ResourceType GetEntityType() => ResourceTypes.ExhibitPage;
 
         public ContentStatus GetStatus() => Properties.Status;
-
-        public IEnumerable<EntityId> GetReferences() => Properties?.GetReferences() ?? Enumerable.Empty<EntityId>();
     }
 
     [Obsolete]
@@ -33,8 +31,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
         public ResourceType GetEntityType() => ResourceTypes.ExhibitPage;
 
         public ContentStatus GetStatus() => Properties.Status;
-
-        public IEnumerable<EntityId> GetReferences() => throw new NotSupportedException();
     }
 
     [Obsolete]
@@ -51,8 +47,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
         public ResourceType GetEntityType() => ResourceTypes.ExhibitPage;
 
         public ContentStatus GetStatus() => Properties.Status;
-
-        public IEnumerable<EntityId> GetReferences() => throw new NotSupportedException();
 
         public ExhibitPageUpdated2 Migrate() => new ExhibitPageUpdated2
         {

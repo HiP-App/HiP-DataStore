@@ -105,12 +105,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 
                 case DeletedEvent _:
                     ClearReferences(source);
-                    break;
-
-                case IUpdateEvent e:
-                    ClearReferences(source);
-                    AddReferences(source, e.GetReferences());
-                    break;
+                    break;                
             }
 
 

@@ -27,22 +27,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 
     public interface ICreateEvent : ICrudEvent
     {
-        ContentStatus GetStatus();
-
-        /// <summary>
-        /// Gets a list of entities that are referenced by the created entity.
-        /// </summary>
-        IEnumerable<EntityId> GetReferences();
+        ContentStatus GetStatus();        
     }
 
     public interface IUpdateEvent : ICrudEvent
     {
         ContentStatus GetStatus();
-
-        /// <summary>
-        /// Gets a list of entities that are referenced by the updated entity.
-        /// </summary>
-        IEnumerable<EntityId> GetReferences();
     }
 
     public interface IDeleteEvent : ICrudEvent

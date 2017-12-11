@@ -151,15 +151,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return Forbid();
 
             //// validation passed, emit event
-            //var ev = new ExhibitCreated
-            //{
-            //    Id = _entityIndex.NextId(ResourceTypes.Exhibit),
-            //    UserId = User.Identity.GetUserIdentity(),
-            //    Properties = args,
-            //    Timestamp = DateTimeOffset.Now
-            //};
-
-            //await _eventStore.AppendEventAsync(ev);
             var id = _entityIndex.NextId(ResourceTypes.Exhibit);
             await EntityManager.CreateEntity(_eventStore, args, ResourceTypes.Exhibit, id, User.Identity.GetUserIdentity());
             return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/{id}", id);
@@ -188,15 +179,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return BadRequest(ErrorMessages.CannotBeUnpublished(ResourceTypes.Exhibit));
 
             // validation passed, emit event
-            //var ev = new ExhibitUpdated
-            //{
-            //    Id = id,
-            //    UserId = User.Identity.GetUserIdentity(),
-            //    Properties = args,
-            //    Timestamp = DateTimeOffset.Now
-            //};
-
-            //await _eventStore.AppendEventAsync(ev);
             var oldExhibitArgs = await EventStreamExtensions.GetCurrentEntity<ExhibitArgs>(_eventStore.EventStream, ResourceTypes.Exhibit, id);
             await EntityManager.UpdateEntity(_eventStore, oldExhibitArgs, args, ResourceTypes.Exhibit, id, User.Identity.GetUserIdentity());
 

@@ -30,21 +30,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         public ContentStatus Status { get; set; }
 
         [Reference(nameof(ResourceTypes.Tag))]
-        public List<int> Tags { get; set; }
-
-        public IEnumerable<EntityId> GetReferences()
-        {
-            if (Image != null)
-                yield return (ResourceTypes.Media, Image.Value);
-
-            if (Audio != null)
-                yield return (ResourceTypes.Media, Audio.Value);
-
-            foreach (var exhibitId in Exhibits?.Distinct() ?? Enumerable.Empty<int>())
-                yield return (ResourceTypes.Exhibit, exhibitId);
-
-            foreach (var tagId in Tags?.Distinct() ?? Enumerable.Empty<int>())
-                yield return (ResourceTypes.Tag, tagId);
-        }
+        public List<int> Tags { get; set; }        
     }
 }

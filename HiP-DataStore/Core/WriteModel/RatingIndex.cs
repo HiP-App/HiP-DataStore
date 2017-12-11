@@ -34,7 +34,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
             switch (e)
             {
                 case RatingAdded ev:
-
                     var ratedType = GetOrCreateRatingTypeInfo(ev.RatedType);
                     ratedType.MaximumId = Math.Max(ratedType.MaximumId, ev.Id);
 

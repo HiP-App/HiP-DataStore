@@ -150,7 +150,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return StatusCode(409);
 
             int id = _entityIndex.NextId(ResourceTypes.Tag);
-
             await EntityManager.CreateEntity(_eventStore, args, ResourceTypes.Tag, id, User.Identity.GetUserIdentity());
             return Created($"{Request.Scheme}://{Request.Host}/api/Tags/{id}", id);
         }

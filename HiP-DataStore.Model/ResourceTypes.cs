@@ -15,7 +15,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
 
 
         /// <summary>
-        /// Initalizes the fields
+        /// Initializes the fields
         /// </summary>
         public static void Initialize()
         {
