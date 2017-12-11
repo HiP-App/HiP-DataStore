@@ -4,11 +4,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 {
     public class RatingAdded : UserActivityBaseEvent
     {
-
-        public RatingAdded()
-        {
-        }
-
         public int EntityId { get; set; }
 
         // User Rating Value

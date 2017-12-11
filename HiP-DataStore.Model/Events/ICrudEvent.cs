@@ -1,6 +1,5 @@
 ﻿using PaderbornUniversity.SILab.Hip.EventSourcing;
 using System;
-using System.Collections.Generic;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 {
