@@ -1,21 +1,21 @@
 ﻿{
-  "Logging": {
-    "IncludeScopes": false,
-    "LogLevel": {
-      "Default": "Debug",
-      "System": "Information",
-      "Microsoft": "None"
+    "Logging": {
+        "IncludeScopes": false,
+        "LogLevel": {
+            "Default": "Debug",
+            "System": "Information",
+            "Microsoft": "None"
+        }
+    },
+
+    "Endpoints": {
+        "ThumbnailUrlPattern": "https://docker-hip.cs.upb.de/develop/thumbnailservice/api/Thumbnails?Url=datastore/api/Media/{0}/File"
+    },
+
+    "EventStore": {
+        // To connect to an Event Store cluster use this instead:
+        // "Host": "discover://username:password@myserver:1113",
+        "Host": "tcp://localhost:1113",
+        "Stream": "main-stream"
     }
-  },
-  "Endpoints": {
-    "MongoDbHost": "mongodb://localhost:27017",
-    "MongoDbName": "main",
-    "ThumbnailUrlPattern": "https://docker-hip.cs.upb.de/develop/thumbnailservice/api/Thumbnails?Url=datastore/api/Media/{0}/File"
-  },
-  "EventStore": {
-    // To connect to an Event Store cluster use this instead:
-    // "Host": "discover://username:password@myserver:1113",
-    "Host": "tcp://localhost:1113",
-    "Stream": "main-stream"
-  }
 }
