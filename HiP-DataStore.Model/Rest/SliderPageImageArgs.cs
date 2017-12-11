@@ -15,8 +15,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
             var args = obj as SliderPageImageArgs;
             return args != null &&
                    Date == args.Date &&
-                   Image == args.Image &&
-                   ReferenceId == args.ReferenceId;
+                   Image == args.Image;
         }
 
         public override int GetHashCode()
@@ -24,7 +23,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
             var hashCode = 2128754378;
             hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Date);
             hashCode = hashCode * -1521134295 + Image.GetHashCode();
-            hashCode = hashCode * -1521134295 + ReferenceId.GetHashCode();
             return hashCode;
         }
     }

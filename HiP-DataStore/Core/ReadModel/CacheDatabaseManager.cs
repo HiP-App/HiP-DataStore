@@ -275,7 +275,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                 .First()
                 .Referencers;
 
-            var filteredReferences = (currentReferencers as IEnumerable<dynamic>).Distinct();
+            var filteredReferences = ((IEnumerable<dynamic>)currentReferencers).Distinct();
 
             foreach (var r in filteredReferences)
             {
@@ -293,7 +293,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                 .First()
                 .References;
 
-            var filteredReferencers = (currentReferencers as IEnumerable<dynamic>).Distinct();
+            var filteredReferencers = ((IEnumerable<dynamic>)currentReferencers).Distinct();
 
             foreach (var r in filteredReferencers)
             {
@@ -317,7 +317,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
             var update2 = Builders<ContentBase>.Update.AddToSet(nameof(ContentBase.Referencers), sourceRef);
             foreach (var target in targets)
             {
-               _db.GetCollection<ContentBase>(target.Type.Name).UpdateOne(x => x.Id == target.Id, update2);
+                _db.GetCollection<ContentBase>(target.Type.Name).UpdateOne(x => x.Id == target.Id, update2);
             }
         }
 

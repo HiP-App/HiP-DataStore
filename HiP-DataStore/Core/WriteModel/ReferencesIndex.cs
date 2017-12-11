@@ -69,10 +69,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 
         public void ApplyEvent(IEvent ev)
         {
-            ResourceType resourceType = null;
-            int eventId = -1;
+            ResourceType resourceType;
+            int eventId;
             DateTimeOffset timestamp;
-            Type type = null;
+            Type type;
 
             if (ev is BaseEvent baseEvent)
             {
