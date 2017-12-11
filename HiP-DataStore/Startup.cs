@@ -110,25 +110,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
 
             app.UseAuthentication();
             app.UseMvc();
-
-            app.UseSwaggerUiHip(typeof(Startup).Assembly, new SwaggerUiSettings
-            {
-                Title = Assembly.GetEntryAssembly().GetName().Name,
-                DefaultEnumHandling = EnumHandling.String,
-                DocExpansion = "list",
-                PostProcess = doc =>
-                {
-                    foreach (var op in doc.Operations)
-                    {
-                        op.Operation.Parameters.Add(new SwaggerParameter
-                        {
-                            Name = "Authorization",
-                            Kind = SwaggerParameterKind.Header,
-                            IsRequired = true
-                        });
-                    }
-                }
-            });
+            app.UseSwaggerUiHip();
         }
     }
 }
