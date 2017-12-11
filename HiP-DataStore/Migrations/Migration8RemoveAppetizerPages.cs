@@ -37,7 +37,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
                         {
                             // pages of other types are kept, but first filter out referenced appetizer pages
                             ev.Properties.AdditionalInformationPages =
-                                ev.Properties.AdditionalInformationPages.Except(appetizerPageIds).ToList();
+                                ev.Properties.AdditionalInformationPages?.Except(appetizerPageIds).ToList();
                             e.AppendEvent(ev);
                         }
                         break;
@@ -49,7 +49,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
                         {                        
                             // filter out referenced appetizer pages
                             ev.Properties.AdditionalInformationPages =
-                                ev.Properties.AdditionalInformationPages.Except(appetizerPageIds).ToList();
+                                ev.Properties.AdditionalInformationPages?.Except(appetizerPageIds).ToList();
                             e.AppendEvent(ev);
                         }
                         break;
@@ -62,13 +62,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
 
                     case ExhibitCreated ev:
                         // filter out referenced appetizer pages
-                        ev.Properties.Pages = ev.Properties.Pages.Except(appetizerPageIds).ToList();
+                        ev.Properties.Pages = ev.Properties.Pages?.Except(appetizerPageIds).ToList();
                         e.AppendEvent(ev);
                         break;
 
                     case ExhibitUpdated ev:
                         // filter out referenced appetizer pages
-                        ev.Properties.Pages = ev.Properties.Pages.Except(appetizerPageIds).ToList();
+                        ev.Properties.Pages = ev.Properties.Pages?.Except(appetizerPageIds).ToList();
                         e.AppendEvent(ev);
                         break;
 
