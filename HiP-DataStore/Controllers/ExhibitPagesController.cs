@@ -351,7 +351,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return;
 
             // constrain properties Image, Images and HideYearNumbers to their respective page types
-            if (args.Image != null && args.Type != PageType.Appetizer_Page && args.Type != PageType.Image_Page)
+            if (args.Image != null && args.Type != PageType.Image_Page)
                 ModelState.AddModelError(nameof(args.Image),
                     ErrorMessages.FieldNotAllowedForPageType(nameof(args.Image), args.Type));
 
