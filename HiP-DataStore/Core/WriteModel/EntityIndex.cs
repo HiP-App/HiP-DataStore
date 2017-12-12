@@ -7,6 +7,7 @@ using System.Linq;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using System.Security.Principal;
+using ResourceType = PaderbornUniversity.SILab.Hip.DataStore.Model.ResourceType; // TODO: Remove after architectural changes
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 {

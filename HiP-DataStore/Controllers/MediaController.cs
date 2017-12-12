@@ -20,7 +20,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
-using System.Web;
+using ResourceType = PaderbornUniversity.SILab.Hip.DataStore.Model.ResourceType; // TODO: Remove after architectural changes
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
