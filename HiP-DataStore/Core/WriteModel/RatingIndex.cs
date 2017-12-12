@@ -1,8 +1,8 @@
 ﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
-using System.Collections.Generic;
 using System;
+using System.Collections.Generic;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 {
@@ -16,6 +16,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
         public int Count(ResourceType res, int id)
         {
             return GetOrCreateRatingTypeInfo(res).Ratings.TryGetValue(id, out var t) ? t.NumberRates : 0;
+        }
+        public Dictionary<int,int> Table(ResourceType res, int id)
+        {
+            return GetOrCreateRatingTypeInfo(res).Ratings.TryGetValue(id, out var t) ? t.GetRatingTable() : null;
         }
 
         public double Average(ResourceType res,int id)
@@ -87,6 +91,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
             }
         }
 
+        public Dictionary<int,int> GetRatingTable()
+        {
+            Dictionary <int,int> table = new Dictionary <int,int> { {1,0}, {2, 0}, {3, 0}, {4, 0}, {5, 0} };
+            foreach (var rate in _allRates)
+            {
+                table[rate.Value]++;
+            }
+            return table;
+        }
         bool CalculateAverageRating(int? oldRate, int newRate)
         {
             if (!(IsOldRatingValid(oldRate) && CheckRatingRange(newRate)))
