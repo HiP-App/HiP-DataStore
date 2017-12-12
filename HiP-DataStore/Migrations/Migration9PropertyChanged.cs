@@ -9,8 +9,8 @@ using System.Threading.Tasks;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
 {
-    [StreamMigration(from: 7, to: 8)]
-    public class Migration8PropertyChanged : IStreamMigration
+    [StreamMigration(from: 8, to: 9)]
+    public class Migration9PropertyChanged : IStreamMigration
     {
         private Dictionary<(ResourceType, int), object> argumentDictionary = new Dictionary<(ResourceType, int), object>();
 

@@ -8,7 +8,7 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <PackageReference Include="HiP-EventStoreLib" Version="1.1.0-develop" />
+    <PackageReference Include="HiP-EventStoreLib" Version="1.1.2-develop" />
     <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
     <PackageReference Include="System.ComponentModel.Annotations" Version="4.4.0" />
   </ItemGroup>

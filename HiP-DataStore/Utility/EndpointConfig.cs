@@ -4,16 +4,16 @@
     {
         /// <summary>
         /// Connection string for the Mongo DB cache database.
-        /// Example: "mongodb://localhost:27017"
+        /// Default value: "mongodb://localhost:27017"
         /// </summary>
-        public string MongoDbHost { get; set; }
+        public string MongoDbHost { get; set; } = "mongodb://localhost:27017";
 
         /// <summary>
         /// Name of the database to use.
-        /// Example: "main"
+        /// Default value: "main"
         /// </summary>
-        public string MongoDbName { get; set; }
-        
+        public string MongoDbName { get; set; } = "main";
+
         /// <summary>
         /// URL pattern for generating thumbnail URLs. Should contain a placeholder "{0}" that is replaced with the
         /// ID of the requested media at runtime. The endpoint should support GET and DELETE requests. Example:

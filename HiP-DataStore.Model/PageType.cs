@@ -3,9 +3,8 @@
     // ReSharper disable InconsistentNaming
     public enum PageType
     {
-        Appetizer_Page,
-        Image_Page,
-        Slider_Page,
-        Text_Page
+        Image_Page = 1,
+        Slider_Page = 2,
+        Text_Page = 3
     }
 }
