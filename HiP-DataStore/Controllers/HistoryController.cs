@@ -2,11 +2,11 @@
 using Microsoft.AspNetCore.Mvc;
 using PaderbornUniversity.SILab.Hip.DataStore.Core;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
-using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
 using System.Threading.Tasks;
+using ResourceType = PaderbornUniversity.SILab.Hip.DataStore.Model.ResourceType; // TODO: Remove after architectural changes
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
