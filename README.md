@@ -4,6 +4,7 @@ Microservice that manages the content for the [mobile app](https://github.com/Hi
 
 ## Development Environment Setup
 For testing purposes, install & run Event Store and MongoDB on your local machine. Steps on Windows:
+
 * [Download Event Store](https://eventstore.org/downloads/)
     * Run with `EventStore.ClusterNode.exe --db ./db --log ./logs`
     * For further information, see documentation: [Connecting to a Server](https://eventstore.org/docs/dotnet-api/4.0.0/connecting-to-a-server/), especially section "URIs"
