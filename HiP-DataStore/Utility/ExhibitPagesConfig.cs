@@ -13,8 +13,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Utility
         /// <summary>
         /// The default font family to be used if no font family is specified during creation or update
         /// of an exhibit page. Should be contained in <see cref="FontFamilies"/>.
+        /// Default value: "DEFAULT"
         /// </summary>
-        public string DefaultFontFamily { get; set; }
+        public string DefaultFontFamily { get; set; } = "DEFAULT";
 
         public bool IsFontFamilyValid(string fontFamily) =>
             fontFamily != null && FontFamilies.Contains(fontFamily, StringComparer.OrdinalIgnoreCase);
