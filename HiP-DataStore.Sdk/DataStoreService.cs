@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore
 {
@@ -17,12 +18,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
         private readonly ILogger<DataStoreService> _logger;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public DataStoreService(DataStoreConfig config, ILogger<DataStoreService> logger,
+        public DataStoreService(IOptions<DataStoreConfig> config, ILogger<DataStoreService> logger,
             IHttpContextAccessor httpContextAccessor)
         {
-            _config = config;
+            _config = config.Value;
             _logger = logger;
             _httpContextAccessor = httpContextAccessor;
+
+            if (string.IsNullOrWhiteSpace(config.Value.DataStoreHost))
+                logger.LogWarning($"{nameof(DataStoreConfig.DataStoreHost)} is not configured correctly!");
         }
 
         public ExhibitPagesClient ExhibitPages => new ExhibitPagesClient(_config.DataStoreHost)
