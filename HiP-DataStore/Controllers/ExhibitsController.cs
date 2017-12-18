@@ -267,6 +267,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceTypes.Exhibit, id))
                 return NotFound(ErrorMessages.ContentNotFound(ResourceTypes.Exhibit, id));
 
+            if (User.Identity.GetUserIdentity() == null)
+                return Unauthorized();
+
             var ev = new RatingAdded()
             {
                 Id = _ratingIndex.NextId(ResourceTypes.Exhibit),
