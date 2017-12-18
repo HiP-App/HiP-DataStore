@@ -285,6 +285,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            if (User.Identity.GetUserIdentity() == null)
+                return Unauthorized();
+
             if (!_entityIndex.Exists(ResourceType.Exhibit, id))
                 return NotFound(ErrorMessages.ContentNotFound(ResourceType.Exhibit, id));
 
