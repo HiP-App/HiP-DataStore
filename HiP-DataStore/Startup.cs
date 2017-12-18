@@ -5,8 +5,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using NJsonSchema;
-using NSwag;
 using NSwag.AspNetCore;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
@@ -14,7 +12,6 @@ using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
 using PaderbornUniversity.SILab.Hip.Webservice;
-using System.Reflection;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore
 {
@@ -94,6 +91,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             // something), so we manually request an instance here
             app.ApplicationServices.GetService<CacheDatabaseManager>();
 
+            // Ensures that "Request.Scheme" is correctly set to "https" in our nginx-environment
+            app.UseRequestSchemeFixer();
+
             // Use CORS (important: must be before app.UseMvc())
             app.UseCors(builder =>
             {
@@ -107,25 +107,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
 
             app.UseAuthentication();
             app.UseMvc();
-
-            app.UseSwaggerUi(typeof(Startup).Assembly, new SwaggerUiSettings
-            {
-                Title = Assembly.GetEntryAssembly().GetName().Name,
-                DefaultEnumHandling = EnumHandling.String,
-                DocExpansion = "list",
-                PostProcess = doc =>
-                {
-                    foreach (var op in doc.Operations)
-                    {
-                        op.Operation.Parameters.Add(new SwaggerParameter
-                        {
-                            Name = "Authorization",
-                            Kind = SwaggerParameterKind.Header,
-                            IsRequired = true
-                        });
-                    }
-                }
-            });
+            app.UseSwaggerUiHip();
         }
     }
 }

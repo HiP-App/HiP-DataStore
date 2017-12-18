@@ -34,7 +34,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         /// The radius (in km) in which the exhibit can be accessed.
         /// </summary>
         [Range(0.001, 1000)]
-        public float AccessRadius { get; set; }
+        public float AccessRadius { get; set; } = 1000;
 
         public IEnumerable<EntityId> GetReferences()
         {

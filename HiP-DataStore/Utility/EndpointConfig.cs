@@ -4,22 +4,15 @@
     {
         /// <summary>
         /// Connection string for the Mongo DB cache database.
-        /// Example: "mongodb://localhost:27017"
+        /// Default value: "mongodb://localhost:27017"
         /// </summary>
-        public string MongoDbHost { get; set; }
+        public string MongoDbHost { get; set; } = "mongodb://localhost:27017";
 
         /// <summary>
         /// Name of the database to use.
-        /// Example: "main"
+        /// Default value: "main"
         /// </summary>
-        public string MongoDbName { get; set; }
-        
-        /// <summary>
-        /// URL that points to the "swagger.json" file. If set, this URL is entered by default
-        /// when accessing the Swagger UI page. If not set, we will try to construct the URL
-        /// automatically which might result in an invalid URL.
-        /// </summary>
-        public string SwaggerEndpoint { get; set; }
+        public string MongoDbName { get; set; } = "main";
 
         /// <summary>
         /// URL pattern for generating thumbnail URLs. Should contain a placeholder "{0}" that is replaced with the
