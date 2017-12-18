@@ -150,7 +150,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return StatusCode(409);
 
             int id = _entityIndex.NextId(ResourceTypes.Tag);
-            await EntityManager.CreateEntity(_eventStore, args, ResourceTypes.Tag, id, User.Identity.GetUserIdentity());
+            await EntityManager.CreateEntityAsync(_eventStore, args, ResourceTypes.Tag, id, User.Identity.GetUserIdentity());
             return Created($"{Request.Scheme}://{Request.Host}/api/Tags/{id}", id);
         }
 
@@ -182,8 +182,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (tagIdWithSameTitle != null && tagIdWithSameTitle != id)
                 return StatusCode(409, ErrorMessages.TagNameAlreadyUsed);
 
-            var oldArgs = await EventStreamExtensions.GetCurrentEntity<TagArgs>(_eventStore.EventStream, ResourceTypes.Tag, id);
-            await EntityManager.UpdateEntity(_eventStore, oldArgs, args, ResourceTypes.Tag, id, User.Identity.GetUserIdentity());
+            var oldArgs = await EventStreamExtensions.GetCurrentEntityAsync<TagArgs>(_eventStore.EventStream, ResourceTypes.Tag, id);
+            await EntityManager.UpdateEntityAsync(_eventStore, oldArgs, args, ResourceTypes.Tag, id, User.Identity.GetUserIdentity());
             return NoContent();
         }
 
@@ -210,7 +210,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (_referencesIndex.IsUsed(ResourceTypes.Tag, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
 
-            await EntityManager.DeleteEntity(_eventStore, ResourceTypes.Tag, id, User.Identity.GetUserIdentity());
+            await EntityManager.DeleteEntityAsync(_eventStore, ResourceTypes.Tag, id, User.Identity.GetUserIdentity());
             return NoContent();
         }
 

@@ -147,7 +147,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             // validation passed, emit event
             var id = _entityIndex.NextId(ResourceTypes.Route);
-            await EntityManager.CreateEntity(_eventStore, args, ResourceTypes.Route, id, User.Identity.GetUserIdentity());
+            await EntityManager.CreateEntityAsync(_eventStore, args, ResourceTypes.Route, id, User.Identity.GetUserIdentity());
 
             return Created($"{Request.Scheme}://{Request.Host}/api/Routes/{id}", id);
         }
@@ -175,8 +175,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return BadRequest(ErrorMessages.CannotBeUnpublished(ResourceTypes.Route));
 
             // validation passed, emit event
-            var oldArgs = await EventStreamExtensions.GetCurrentEntity<RouteArgs>(_eventStore.EventStream, ResourceTypes.Route, _entityIndex.NextId(ResourceTypes.Route));
-            await EntityManager.UpdateEntity(_eventStore, oldArgs, args, ResourceTypes.Route, id, User.Identity.GetUserIdentity());
+            var oldArgs = await EventStreamExtensions.GetCurrentEntityAsync<RouteArgs>(_eventStore.EventStream, ResourceTypes.Route, _entityIndex.NextId(ResourceTypes.Route));
+            await EntityManager.UpdateEntityAsync(_eventStore, oldArgs, args, ResourceTypes.Route, id, User.Identity.GetUserIdentity());
             return StatusCode(204);
         }
 
@@ -204,7 +204,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return BadRequest(ErrorMessages.ResourceInUse);
 
             // validation passed, emit event
-            await EntityManager.DeleteEntity(_eventStore, ResourceTypes.Route, id, User.Identity.GetUserIdentity());
+            await EntityManager.DeleteEntityAsync(_eventStore, ResourceTypes.Route, id, User.Identity.GetUserIdentity());
             return NoContent();
         }
 

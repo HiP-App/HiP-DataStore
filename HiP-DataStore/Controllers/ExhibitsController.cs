@@ -152,7 +152,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             //// validation passed, emit event
             var id = _entityIndex.NextId(ResourceTypes.Exhibit);
-            await EntityManager.CreateEntity(_eventStore, args, ResourceTypes.Exhibit, id, User.Identity.GetUserIdentity());
+            await EntityManager.CreateEntityAsync(_eventStore, args, ResourceTypes.Exhibit, id, User.Identity.GetUserIdentity());
             return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/{id}", id);
         }
 
@@ -179,8 +179,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return BadRequest(ErrorMessages.CannotBeUnpublished(ResourceTypes.Exhibit));
 
             // validation passed, emit event
-            var oldExhibitArgs = await EventStreamExtensions.GetCurrentEntity<ExhibitArgs>(_eventStore.EventStream, ResourceTypes.Exhibit, id);
-            await EntityManager.UpdateEntity(_eventStore, oldExhibitArgs, args, ResourceTypes.Exhibit, id, User.Identity.GetUserIdentity());
+            var oldExhibitArgs = await EventStreamExtensions.GetCurrentEntityAsync<ExhibitArgs>(_eventStore.EventStream, ResourceTypes.Exhibit, id);
+            await EntityManager.UpdateEntityAsync(_eventStore, oldExhibitArgs, args, ResourceTypes.Exhibit, id, User.Identity.GetUserIdentity());
 
             return StatusCode(204);
         }
@@ -210,7 +210,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return BadRequest(ErrorMessages.ResourceInUse);
 
             // remove the exhibit
-            await EntityManager.DeleteEntity(_eventStore, ResourceTypes.Exhibit, id, User.Identity.GetUserIdentity());
+            await EntityManager.DeleteEntityAsync(_eventStore, ResourceTypes.Exhibit, id, User.Identity.GetUserIdentity());
             return NoContent();
         }
 

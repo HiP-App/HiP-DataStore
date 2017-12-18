@@ -202,7 +202,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             // validation passed, emit event
             var newPageId = _entityIndex.NextId(ResourceTypes.ExhibitPage);
 
-            await EntityManager.CreateEntity(_eventStore, args, ResourceTypes.ExhibitPage, newPageId, User.Identity.GetUserIdentity());
+            await EntityManager.CreateEntityAsync(_eventStore, args, ResourceTypes.ExhibitPage, newPageId, User.Identity.GetUserIdentity());
             return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Pages/{newPageId}", newPageId);
         }
 
@@ -241,8 +241,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return StatusCode(422, ErrorMessages.CannotChangeExhibitPageType(currentPageType, args.Type));
 
             // validation passed, emit event
-            var currentArgs = await EventStreamExtensions.GetCurrentEntity<ExhibitPageArgs2>(_eventStore.EventStream, ResourceTypes.ExhibitPage, id);
-            await EntityManager.UpdateEntity(_eventStore, currentArgs, args, ResourceTypes.ExhibitPage, id, User.Identity.GetUserIdentity());
+            var currentArgs = await EventStreamExtensions.GetCurrentEntityAsync<ExhibitPageArgs2>(_eventStore.EventStream, ResourceTypes.ExhibitPage, id);
+            await EntityManager.UpdateEntityAsync(_eventStore, currentArgs, args, ResourceTypes.ExhibitPage, id, User.Identity.GetUserIdentity());
             return StatusCode(204);
         }
 
@@ -269,7 +269,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (_referencesIndex.IsUsed(ResourceTypes.ExhibitPage, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
 
-            await EntityManager.DeleteEntity(_eventStore, ResourceTypes.ExhibitPage, id, User.Identity.GetUserIdentity());
+            await EntityManager.DeleteEntityAsync(_eventStore, ResourceTypes.ExhibitPage, id, User.Identity.GetUserIdentity());
             return NoContent();
         }
 

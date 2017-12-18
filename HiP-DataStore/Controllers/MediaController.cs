@@ -77,7 +77,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!UserPermissions.IsAllowedToCreate(User.Identity, args.Status))
                 return Forbid();
             int id = _entityIndex.NextId(ResourceTypes.Media);
-            await EntityManager.CreateEntity(_eventStore, args, ResourceTypes.Media, id, User.Identity.GetUserIdentity());
+            await EntityManager.CreateEntityAsync(_eventStore, args, ResourceTypes.Media, id, User.Identity.GetUserIdentity());
             return Created($"{Request.Scheme}://{Request.Host}/api/Media/{id}", id);
         }
 
@@ -192,7 +192,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (directoryPath != null && Directory.Exists(directoryPath))
                 Directory.Delete(directoryPath, true);
 
-            await EntityManager.DeleteEntity(_eventStore, ResourceTypes.Media, id, User.Identity.GetUserIdentity());
+            await EntityManager.DeleteEntityAsync(_eventStore, ResourceTypes.Media, id, User.Identity.GetUserIdentity());
             await InvalidateThumbnailCacheAsync(id);
             return StatusCode(204);
         }
@@ -217,8 +217,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (args.Status == ContentStatus.Unpublished && oldStatus != ContentStatus.Published)
                 return BadRequest(ErrorMessages.CannotBeUnpublished(ResourceTypes.Media));
 
-            var currentArgs = await EventStreamExtensions.GetCurrentEntity<MediaArgs>(_eventStore.EventStream, ResourceTypes.Media, id);
-            await EntityManager.UpdateEntity(_eventStore, currentArgs, args, ResourceTypes.Media, id, User.Identity.GetUserIdentity());
+            var currentArgs = await EventStreamExtensions.GetCurrentEntityAsync<MediaArgs>(_eventStore.EventStream, ResourceTypes.Media, id);
+            await EntityManager.UpdateEntityAsync(_eventStore, currentArgs, args, ResourceTypes.Media, id, User.Identity.GetUserIdentity());
             return StatusCode(204);
         }
 
