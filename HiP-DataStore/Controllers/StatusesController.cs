@@ -9,6 +9,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
     public class StatusesController : Controller
     {
         [HttpGet]
+        [AllowAnonymous]
         [ProducesResponseType(typeof(string[]), 200)]
         public IActionResult Index() => Ok(new[]
         {

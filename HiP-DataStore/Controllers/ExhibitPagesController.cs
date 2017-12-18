@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ResourceType = PaderbornUniversity.SILab.Hip.DataStore.Model.ResourceType; // TODO: Remove after architectural changes
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
@@ -350,7 +351,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return;
 
             // constrain properties Image, Images and HideYearNumbers to their respective page types
-            if (args.Image != null && args.Type != PageType.Appetizer_Page && args.Type != PageType.Image_Page)
+            if (args.Image != null && args.Type != PageType.Image_Page)
                 ModelState.AddModelError(nameof(args.Image),
                     ErrorMessages.FieldNotAllowedForPageType(nameof(args.Image), args.Type));
 
