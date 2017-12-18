@@ -15,14 +15,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
     public class DataStoreService
     {
         private readonly DataStoreConfig _config;
-        private readonly ILogger<DataStoreService> _logger;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
         public DataStoreService(IOptions<DataStoreConfig> config, ILogger<DataStoreService> logger,
             IHttpContextAccessor httpContextAccessor)
         {
             _config = config.Value;
-            _logger = logger;
             _httpContextAccessor = httpContextAccessor;
 
             if (string.IsNullOrWhiteSpace(config.Value.DataStoreHost))
