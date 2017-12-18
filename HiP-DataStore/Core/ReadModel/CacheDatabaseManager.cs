@@ -15,6 +15,7 @@ using System.Diagnostics;
 using System.Linq;
 using Tag = PaderbornUniversity.SILab.Hip.DataStore.Model.Entity.Tag;
 using ResourceType = PaderbornUniversity.SILab.Hip.DataStore.Model.ResourceType; // TODO: Remove after architectural changes
+using PaderbornUniversity.SILab.Hip.DataStore.MongoTemp;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 {
@@ -24,27 +25,20 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
     public class CacheDatabaseManager
     {
         private readonly EventStoreService _eventStore;
-        private readonly IMongoDatabase _db;
+        private readonly IMongoDbContext _db;
 
-        public IMongoDatabase Database => _db;
+        public IMongoDbContext Database => _db;
 
         public CacheDatabaseManager(
+            IMongoDbContext db,
             EventStoreService eventStore,
-            IOptions<EndpointConfig> config,
             ILogger<CacheDatabaseManager> logger)
         {
             // For now, the cache database is always created from scratch by replaying all events.
             // This also implies that, for now, the cache database always contains the entire data (not a subset).
             // In order to receive all the events, a Catch-Up Subscription is created.
-
-            // 1) Open MongoDB connection and clear existing database
-            var mongo = new MongoClient(config.Value.MongoDbHost);
-            mongo.DropDatabase(config.Value.MongoDbName);
-            _db = mongo.GetDatabase(config.Value.MongoDbName);
-            var uri = new Uri(config.Value.MongoDbHost);
-            logger.LogInformation($"Connected to MongoDB cache database on '{uri.Host}', using database '{config.Value.MongoDbName}'");
-
-            // 2) Subscribe to EventStore to receive all past and future events
+            
+            // Subscribe to EventStore to receive all past and future events
             _eventStore = eventStore;
             _eventStore.EventStream.SubscribeCatchUp(ApplyEvent);
         }
@@ -56,12 +50,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                 var entity = (crudEvent.GetEntityType(), crudEvent.Id);
                 if (crudEvent is IDeleteEvent)
                 {
-                    ClearIncomingReferences(entity);
-                    ClearOutgoingReferences(entity);
+                    _db.ClearIncomingReferences(entity);
+                    _db.ClearOutgoingReferences(entity);
                 }
                 else if (crudEvent is IUpdateEvent)
                 {
-                    ClearOutgoingReferences(entity);
+                    _db.ClearOutgoingReferences(entity);
                 }
             }
 
@@ -75,11 +69,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         Timestamp = e.Timestamp
                     };
 
-                    _db.GetCollection<Exhibit>(ResourceType.Exhibit.Name).InsertOne(newExhibit);
+                    _db.Add(ResourceType.Exhibit, newExhibit);
                     break;
 
                 case ExhibitUpdated e:
-                    var originalExhibit = _db.GetCollection<Exhibit>(ResourceType.Exhibit.Name).AsQueryable().First(x => x.Id == e.Id);
+                    var originalExhibit = _db.Get<Exhibit>((ResourceType.Exhibit, e.Id));
 
                     var updatedExhibit = new Exhibit(e.Properties)
                     {
@@ -89,11 +83,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     };
 
                     updatedExhibit.Referencers.AddRange(originalExhibit.Referencers);
-                    _db.GetCollection<Exhibit>(ResourceType.Exhibit.Name).ReplaceOne(x => x.Id == e.Id, updatedExhibit);
+                    _db.Replace((ResourceType.Exhibit, e.Id), updatedExhibit);
                     break;
 
                 case ExhibitDeleted e:
-                    MarkDeleted<Exhibit>(ResourceType.Exhibit, e.Id);
+                    MarkDeleted((ResourceType.Exhibit, e.Id));
                     break;
 
                 case ExhibitPageCreated3 e:
@@ -104,11 +98,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         Timestamp = e.Timestamp
                     };
 
-                    _db.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name).InsertOne(newPage);
+                    _db.Add(ResourceType.ExhibitPage, newPage);
                     break;
 
                 case ExhibitPageUpdated3 e:
-                    var originalPage = _db.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name).AsQueryable().First(x => x.Id == e.Id);
+                    var originalPage = _db.Get<ExhibitPage>((ResourceType.ExhibitPage, e.Id));
                     var updatedPage = new ExhibitPage(e.Properties)
                     {
                         Id = e.Id,
@@ -117,11 +111,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     };
 
                     updatedPage.Referencers.AddRange(originalPage.Referencers);
-                    _db.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name).ReplaceOne(x => x.Id == e.Id, updatedPage);
+                    _db.Replace((ResourceType.ExhibitPage, e.Id), updatedPage);
                     break;
 
                 case ExhibitPageDeleted2 e:
-                    MarkDeleted<ExhibitPage>(ResourceType.ExhibitPage, e.Id);
+                    MarkDeleted((ResourceType.ExhibitPage, e.Id));
                     break;
 
                 case RouteCreated e:
@@ -132,11 +126,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         Timestamp = e.Timestamp
                     };
 
-                    _db.GetCollection<Route>(ResourceType.Route.Name).InsertOne(newRoute);
+                    _db.Add(ResourceType.Route, newRoute);
                     break;
 
                 case RouteUpdated e:
-                    var originalRoute = _db.GetCollection<Route>(ResourceType.Route.Name).AsQueryable().First(x => x.Id == e.Id);
+                    var originalRoute = _db.Get<Route>((ResourceType.Route, e.Id));
                     var updatedRoute = new Route(e.Properties)
                     {
                         Id = e.Id,
@@ -145,11 +139,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     };
 
                     updatedRoute.Referencers.AddRange(originalRoute.Referencers);
-                    _db.GetCollection<Route>(ResourceType.Route.Name).ReplaceOne(r => r.Id == e.Id, updatedRoute);
+                    _db.Replace((ResourceType.Route, e.Id), updatedRoute);
                     break;
 
                 case RouteDeleted e:
-                    MarkDeleted<Route>(ResourceType.Route, e.Id);
+                    MarkDeleted((ResourceType.Route, e.Id));
                     break;
 
                 case MediaCreated e:
@@ -160,11 +154,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         Timestamp = e.Timestamp
                     };
 
-                    _db.GetCollection<MediaElement>(ResourceType.Media.Name).InsertOne(newMedia);
+                    _db.Add(ResourceType.Media, newMedia);
                     break;
 
                 case MediaUpdate e:
-                    var originalMedia = _db.GetCollection<MediaElement>(ResourceType.Media.Name).AsQueryable().First(x => x.Id == e.Id);
+                    var originalMedia = _db.Get<MediaElement>((ResourceType.Media, e.Id));
                     var updatedMedia = new MediaElement(e.Properties)
                     {
                         Id = e.Id,
@@ -174,18 +168,22 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 
                     updatedMedia.Referencers.AddRange(originalMedia.Referencers);
                     updatedMedia.File = originalMedia.File;
-                    _db.GetCollection<MediaElement>(ResourceType.Media.Name).ReplaceOne(m => m.Id == e.Id, updatedMedia);
+                    _db.Replace((ResourceType.Media, e.Id), updatedMedia);
                     break;
 
                 case MediaDeleted e:
-                    MarkDeleted<MediaElement>(ResourceType.Media, e.Id);
+                    MarkDeleted((ResourceType.Media, e.Id));
                     break;
 
                 case MediaFileUpdated e:
                     var fileDocBson = e.ToBsonDocument();
                     fileDocBson.Remove("_id");
                     var bsonDoc = new BsonDocument("$set", fileDocBson);
-                    _db.GetCollection<MediaElement>(ResourceType.Media.Name).UpdateOne(x => x.Id == e.Id, bsonDoc);
+
+                    _db.Update<MediaElement>((ResourceType.Media, e.Id), update =>
+                    {
+
+                    });
                     break;
 
                 case TagCreated e:
@@ -196,11 +194,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         Timestamp = e.Timestamp,
                     };
 
-                    _db.GetCollection<Tag>(ResourceType.Tag.Name).InsertOne(newTag);
+                    _db.Add(ResourceType.Tag, newTag);
                     break;
 
                 case TagUpdated e:
-                    var originalTag = _db.GetCollection<Tag>(ResourceType.Tag.Name).AsQueryable().First(x => x.Id == e.Id);
+                    var originalTag = _db.Get<Tag>((ResourceType.Tag, e.Id));
                     var updatedTag = new Tag(e.Properties)
                     {
                         Id = e.Id,
@@ -209,11 +207,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     };
 
                     updatedTag.Referencers.AddRange(originalTag.Referencers);
-                    _db.GetCollection<Tag>(ResourceType.Tag.Name).ReplaceOne(x => x.Id == e.Id, updatedTag);
+                    _db.Replace((ResourceType.Tag, e.Id), updatedTag);
                     break;
 
                 case TagDeleted e:
-                    MarkDeleted<Tag>(ResourceType.Tag, e.Id);
+                    MarkDeleted((ResourceType.Tag, e.Id));
                     break;
 
                 case ScoreAdded e:
@@ -224,99 +222,19 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         Score = e.Score,
                         Timestamp = e.Timestamp
                     };
-                    _db.GetCollection<ScoreRecord>(ResourceType.ScoreRecord.Name).InsertOne(newScoreRecord);
+                    _db.Add(ResourceType.ScoreRecord, newScoreRecord);
                     break;
             }
 
             if (ev is ICreateEvent createEvent)
-                AddReferences((createEvent.GetEntityType(), createEvent.Id), createEvent.GetReferences());
+                _db.AddReferences((createEvent.GetEntityType(), createEvent.Id), createEvent.GetReferences());
             else if (ev is IUpdateEvent updateEvent)
-                AddReferences((updateEvent.GetEntityType(), updateEvent.Id), updateEvent.GetReferences());
+                _db.AddReferences((updateEvent.GetEntityType(), updateEvent.Id), updateEvent.GetReferences());
         }
 
-        private void ClearIncomingReferences(EntityId entity)
+        private void MarkDeleted(EntityId entity)
         {
-            var currentReferencers = _db.GetCollection<dynamic>(entity.Type.Name)
-                .Find(Builders<dynamic>.Filter.Eq("_id", entity.Id))
-                .First()
-                .Referencers;
-
-            foreach (var r in currentReferencers)
-            {
-                // Note: We must use the internal key "_id" here since we use dynamic objects
-                var source = (new ResourceType(r.Collection), (int)r._id);
-                RemoveReference(source, entity);
-            }
-        }
-
-        private void ClearOutgoingReferences(EntityId entity)
-        {
-            var currentReferences = _db.GetCollection<dynamic>(entity.Type.Name)
-                .Find(Builders<dynamic>.Filter.Eq("_id", entity.Id))
-                .First()
-                .References;
-
-            foreach (var r in currentReferences)
-            {
-                // Note: We must use the internal key "_id" here since we use dynamic objects
-                var target = (new ResourceType(r.Collection), (int)r._id);
-                RemoveReference(entity, target);
-            }
-        }
-
-        private void AddReferences(EntityId source, IEnumerable<EntityId> targets)
-        {
-            // for each reference (source -> target)...
-
-            // 1) create a new DocRef pointing to the target and add it to the source's references list
-            var targetRefs = targets.Select(target => new DocRef<ContentBase>(target.Id, target.Type.Name));
-            var update = Builders<ContentBase>.Update.PushEach(nameof(ContentBase.References), targetRefs);
-            var result = _db.GetCollection<ContentBase>(source.Type.Name).UpdateOne(x => x.Id == source.Id, update);
-            Debug.Assert(result.ModifiedCount == 1);
-
-            // 2) create a new DocRef pointing to the source and add it to the target's referencers list
-            var sourceRef = new DocRef<ContentBase>(source.Id, source.Type.Name);
-            var update2 = Builders<ContentBase>.Update.Push(nameof(ContentBase.Referencers), sourceRef);
-            foreach (var target in targets)
-            {
-                result = _db.GetCollection<ContentBase>(target.Type.Name).UpdateOne(x => x.Id == target.Id, update2);
-                Debug.Assert(result.ModifiedCount == 1);
-            }
-        }
-
-        private void RemoveReference(EntityId source, EntityId target)
-        {
-            // 1) delete the DocRef pointing to the target from the source's references list
-            var update = Builders<dynamic>.Update.PullFilter(
-                nameof(ContentBase.References),
-                Builders<dynamic>.Filter.And(
-                    Builders<dynamic>.Filter.Eq(nameof(DocRefBase.Collection), target.Type.Name),
-                    Builders<dynamic>.Filter.Eq("_id", target.Id)));
-
-            var result = _db.GetCollection<dynamic>(source.Type.Name).UpdateOne(
-                Builders<dynamic>.Filter.Eq("_id", source.Id), update);
-
-            Debug.Assert(result.ModifiedCount == 1);
-
-            // 2) delete the DocRef pointing to the source from the target's referencers list
-            var update2 = Builders<dynamic>.Update.PullFilter(
-                nameof(ContentBase.Referencers),
-                Builders<dynamic>.Filter.And(
-                    Builders<dynamic>.Filter.Eq(nameof(DocRefBase.Collection), source.Type.Name),
-                    Builders<dynamic>.Filter.Eq("_id", source.Id)));
-
-            var result2 = _db.GetCollection<dynamic>(target.Type.Name).UpdateOne(
-                Builders<dynamic>.Filter.Eq("_id", target.Id), update2);
-
-            Debug.Assert(result2.ModifiedCount == 1);
-        }
-
-        private void MarkDeleted<T>(ResourceType resourceType, int entityId) where T : ContentBase
-        {
-            var collection = _db.GetCollection<T>(resourceType.Name);
-            var entity = collection.AsQueryable().First(x => x.Id == entityId);
-            entity.Status = ContentStatus.Deleted;
-            collection.ReplaceOne(x => x.Id == entityId, entity);
+            var result = _db.Update<ContentBase>(entity, update => update.Set(o => o.Status, ContentStatus.Published));
         }
     }
 }

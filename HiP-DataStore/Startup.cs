@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 using NSwag.AspNetCore;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
+using PaderbornUniversity.SILab.Hip.DataStore.MongoTemp;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
@@ -34,6 +35,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
         {
             services
                 .Configure<EndpointConfig>(Configuration.GetSection("Endpoints"))
+                .Configure<MongoDbConfig>(Configuration.GetSection("Endpoints"))
                 .Configure<EventStoreConfig>(Configuration.GetSection("EventStore"))
                 .Configure<UploadFilesConfig>(Configuration.GetSection("UploadingFiles"))
                 .Configure<ExhibitPagesConfig>(Configuration.GetSection("ExhibitPages"))
@@ -68,6 +70,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             services.AddMvc();
 
             services
+                .AddSingleton<MongoDbContext>()
                 .AddSingleton<EventStoreService>()
                 .AddSingleton<CacheDatabaseManager>()
                 .AddSingleton<InMemoryCache>()

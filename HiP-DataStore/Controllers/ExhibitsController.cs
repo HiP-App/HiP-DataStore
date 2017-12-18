@@ -8,6 +8,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using PaderbornUniversity.SILab.Hip.DataStore.MongoTemp;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
@@ -24,13 +25,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
     public class ExhibitsController : Controller
     {
         private readonly EventStoreService _eventStore;
-        private readonly CacheDatabaseManager _db;
+        private readonly IMongoDbContext _db;
         private readonly MediaIndex _mediaIndex;
         private readonly EntityIndex _entityIndex;
         private readonly ReferencesIndex _referencesIndex;
         private readonly RatingIndex _ratingIndex;
 
-        public ExhibitsController(EventStoreService eventStore, CacheDatabaseManager db, InMemoryCache cache)
+        public ExhibitsController(EventStoreService eventStore, IMongoDbContext db, InMemoryCache cache)
         {
             _eventStore = eventStore;
             _db = db;
@@ -69,13 +70,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (args.Status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
                 return Forbid();
 
-            var query = _db.Database.GetCollection<Exhibit>(ResourceType.Exhibit.Name).AsQueryable();
-
             try
             {
                 var routeIds = args.OnlyRoutes?.Select(id => (BsonValue)id).ToList();
 
-                var exhibits = query
+                var exhibits = _db
+                    .GetCollection<Exhibit>(ResourceType.Exhibit)
                     .FilterByIds(args.Exclude, args.IncludeOnly)
                     .FilterByLocation(args.Latitude, args.Longitude)
                     .FilterByUser(args.Status,User.Identity)
@@ -119,9 +119,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!UserPermissions.IsAllowedToGet(User.Identity, status, _entityIndex.Owner(ResourceType.Exhibit, id)))
                 return Forbid();
 
-            var exhibit = _db.Database.GetCollection<Exhibit>(ResourceType.Exhibit.Name)
-                .AsQueryable()
-                .FirstOrDefault(x => x.Id == id);
+            var exhibit = _db.Get<Exhibit>((ResourceType.Exhibit, id));
 
             if (exhibit == null)
                 return NotFound();

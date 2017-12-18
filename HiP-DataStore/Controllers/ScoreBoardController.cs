@@ -6,6 +6,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using PaderbornUniversity.SILab.Hip.DataStore.MongoTemp;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
@@ -21,10 +22,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
     public class ScoreBoardController : Controller
     {
         private readonly EventStoreService _eventStore;
-        private readonly CacheDatabaseManager _db;
+        private readonly IMongoDbContext _db;
         private readonly ScoreBoardIndex _board;
 
-        public ScoreBoardController(EventStoreService ev, CacheDatabaseManager db, InMemoryCache cache)
+        public ScoreBoardController(EventStoreService ev, IMongoDbContext db, InMemoryCache cache)
         {
             _eventStore = ev;
             _db = db;
@@ -59,7 +60,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_board.AllRecords().Any(x => x.UserId == id))
                 return NotFound();
 
-            var query = _db.Database.GetCollection<ScoreRecord>(ResourceType.ScoreRecord.Name).AsQueryable();
+            var query = _db.GetCollection<ScoreRecord>(ResourceType.ScoreRecord);
             var allRecords = new ScoreResults(query.Where(x => x.UserId == id)
                                                    .OrderByDescending(x => x.Timestamp)
                                                    .PaginateAndSelect(null, null, x => new ScoreResult(x))); 

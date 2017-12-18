@@ -1,15 +1,20 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27004.2005
+VisualStudioVersion = 15.0.27130.2010
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HiP-DataStore", "HiP-DataStore\HiP-DataStore.csproj", "{AA345286-8B3C-48B3-8E3A-F0D0571A9091}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HiP-DataStore.Model", "HiP-DataStore.Model\HiP-DataStore.Model.csproj", "{974D45A5-D139-4838-B766-9349E7C20CE4}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HiP-DataStore.Tests", "HiP-DataStore.Tests\HiP-DataStore.Tests.csproj", "{2168A290-1074-4577-8F33-3872B39B02ED}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HiP-DataStore.Sdk", "HiP-DataStore.Sdk\HiP-DataStore.Sdk.csproj", "{2656E922-F10C-4558-9461-8409DFF28A3B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{AA345286-8B3C-48B3-8E3A-F0D0571A9091} = {AA345286-8B3C-48B3-8E3A-F0D0571A9091}
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HiP-DataStore.TestsOld", "HiP-DataStore.TestsOld\HiP-DataStore.TestsOld.csproj", "{1D7E9A73-9CC6-4425-9C78-321AECE52C05}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HiP-DataStore.Tests", "HiP-DataStore.Tests\HiP-DataStore.Tests.csproj", "{59ED523A-8E32-45A1-8765-4BB80CC43A82}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -25,14 +30,18 @@ Global
 		{974D45A5-D139-4838-B766-9349E7C20CE4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{974D45A5-D139-4838-B766-9349E7C20CE4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{974D45A5-D139-4838-B766-9349E7C20CE4}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2168A290-1074-4577-8F33-3872B39B02ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2168A290-1074-4577-8F33-3872B39B02ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2168A290-1074-4577-8F33-3872B39B02ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2168A290-1074-4577-8F33-3872B39B02ED}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2656E922-F10C-4558-9461-8409DFF28A3B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{2656E922-F10C-4558-9461-8409DFF28A3B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2656E922-F10C-4558-9461-8409DFF28A3B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2656E922-F10C-4558-9461-8409DFF28A3B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1D7E9A73-9CC6-4425-9C78-321AECE52C05}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1D7E9A73-9CC6-4425-9C78-321AECE52C05}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1D7E9A73-9CC6-4425-9C78-321AECE52C05}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1D7E9A73-9CC6-4425-9C78-321AECE52C05}.Release|Any CPU.Build.0 = Release|Any CPU
+		{59ED523A-8E32-45A1-8765-4BB80CC43A82}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{59ED523A-8E32-45A1-8765-4BB80CC43A82}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{59ED523A-8E32-45A1-8765-4BB80CC43A82}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{59ED523A-8E32-45A1-8765-4BB80CC43A82}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

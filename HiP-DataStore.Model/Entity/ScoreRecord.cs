@@ -2,7 +2,7 @@
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 {
-    public class ScoreRecord
+    public class ScoreRecord : IEntity<int>
     {
         public int Id { get; set; }
 

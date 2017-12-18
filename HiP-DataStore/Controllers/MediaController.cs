@@ -11,6 +11,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using PaderbornUniversity.SILab.Hip.DataStore.MongoTemp;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
@@ -30,14 +31,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
     {
         private readonly EventStoreService _eventStore;
         private readonly ILogger<MediaController> _logger;
-        private readonly CacheDatabaseManager _db;
+        private readonly IMongoDbContext _db;
         private readonly UploadFilesConfig _uploadConfig;
         private readonly EndpointConfig _endpointConfig;
         private readonly EntityIndex _entityIndex;
         private readonly MediaIndex _mediaIndex;
         private readonly ReferencesIndex _referencesIndex;
 
-        public MediaController(EventStoreService eventStore, CacheDatabaseManager db, InMemoryCache cache,
+        public MediaController(EventStoreService eventStore, IMongoDbContext db, InMemoryCache cache,
             IOptions<UploadFilesConfig> uploadConfig, IOptions<EndpointConfig> endpointConfig,
             ILogger<MediaController> logger)
         {
@@ -102,11 +103,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (args.Status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
                 return Forbid();
 
-            var query = _db.Database.GetCollection<MediaElement>(ResourceType.Media.Name).AsQueryable();
-
             try
             {
-                var medias = query
+                var medias = _db
+                    .GetCollection<MediaElement>(ResourceType.Media)
                     .FilterByIds(args.Exclude, args.IncludeOnly)
                     .FilterByUser(args.Status, User.Identity)
                     .FilterByStatus(args.Status, User.Identity)
@@ -150,9 +150,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!UserPermissions.IsAllowedToGet(User.Identity, status, _entityIndex.Owner(ResourceType.Media, id)))
                 return Forbid();
 
-            var media = _db.Database.GetCollection<MediaElement>(ResourceType.Media.Name)
-                .AsQueryable()
-                .FirstOrDefault(x => x.Id == id);
+            var media = _db.Get<MediaElement>((ResourceType.Media, id));
 
             if (media == null)
                 return NotFound();
@@ -262,9 +260,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceType.Media, id))
                 return NotFound();
 
-            var media = _db.Database.GetCollection<MediaElement>(ResourceType.Media.Name)
-                .AsQueryable()
-                .FirstOrDefault(x => x.Id == id);
+            var media = _db.Get<MediaElement>((ResourceType.Media, id));
 
             if (media?.File == null || !System.IO.File.Exists(media.File))
                 return NotFound();

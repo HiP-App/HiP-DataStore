@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
-using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
@@ -26,7 +25,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
     {
         private readonly IOptions<ExhibitPagesConfig> _exhibitPagesConfig;
         private readonly EventStoreService _eventStore;
-        private readonly CacheDatabaseManager _db;
+        private readonly IMongoDbContext _db;
         private readonly MediaIndex _mediaIndex;
         private readonly EntityIndex _entityIndex;
         private readonly ReferencesIndex _referencesIndex;
@@ -35,7 +34,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         public ExhibitPagesController(
             IOptions<ExhibitPagesConfig> exhibitPagesConfig,
             EventStoreService eventStore,
-            CacheDatabaseManager db,
+            IMongoDbContext db,
             InMemoryCache cache)
         {
             _exhibitPagesConfig = exhibitPagesConfig;
@@ -82,7 +81,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (args.Status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
                 return Forbid();
 
-            var query = _db.Database.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name).AsQueryable();
+            var query = _db.GetCollection<ExhibitPage>(ResourceType.ExhibitPage);
             return QueryExhibitPages(query, args);
         }
 
@@ -99,15 +98,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
                 return Forbid();
 
-            var exhibit = _db.Database.GetCollection<Exhibit>(ResourceType.Exhibit.Name)
-                .AsQueryable()
-                .FirstOrDefault(x => x.Id == exhibitId);
+            var exhibit = _db.Get<Exhibit>((ResourceType.Exhibit, exhibitId));
 
             if (exhibit == null)
                 return NotFound();
 
             var pageIds = exhibit.Pages
-                .LoadAll(_db.Database)
+                .LoadAll(_db)
                 .AsQueryable()
                 .Where(p => status == ContentStatus.All || p.Status == status)
                 .FilterIf(status == ContentStatus.All, x => x.Status != ContentStatus.Deleted)
@@ -137,14 +134,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (args.Status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
                 return Forbid();
 
-            var exhibit = _db.Database.GetCollection<Exhibit>(ResourceType.Exhibit.Name)
-                .AsQueryable()
-                .FirstOrDefault(x => x.Id == exhibitId);
+            var exhibit = _db.Get<Exhibit>((ResourceType.Exhibit, exhibitId));
 
             if (exhibit == null)
                 return NotFound();
 
-            var query = exhibit.Pages.LoadAll(_db.Database).AsQueryable();
+            var query = exhibit.Pages.LoadAll(_db).AsQueryable();
 
             return QueryExhibitPages(query, args);
         }
@@ -164,9 +159,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!UserPermissions.IsAllowedToGet(User.Identity, status, _entityIndex.Owner(ResourceType.ExhibitPage, id)))
                 return Forbid();
 
-            var page = _db.Database.GetCollection<ExhibitPage>(ResourceType.ExhibitPage.Name)
-                .AsQueryable()
-                .FirstOrDefault(x => x.Id == id);
+            var page = _db.Get<ExhibitPage>((ResourceType.ExhibitPage, id));
 
             if (page == null)
                 return NotFound();

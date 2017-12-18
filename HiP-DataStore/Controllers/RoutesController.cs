@@ -7,6 +7,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using PaderbornUniversity.SILab.Hip.DataStore.MongoTemp;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
@@ -23,13 +24,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
     public class RoutesController : Controller
     {
         private readonly EventStoreService _eventStore;
-        private readonly CacheDatabaseManager _db;
+        private readonly IMongoDbContext _db;
         private readonly MediaIndex _mediaIndex;
         private readonly EntityIndex _entityIndex;
         private readonly ReferencesIndex _referencesIndex;
         private readonly RatingIndex _ratingIndex;
 
-        public RoutesController(EventStoreService eventStore, CacheDatabaseManager db, IEnumerable<IDomainIndex> indices)
+        public RoutesController(EventStoreService eventStore, IMongoDbContext db, IEnumerable<IDomainIndex> indices)
         {
             _eventStore = eventStore;
             _db = db;
@@ -68,11 +69,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (args.Status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
                 return Forbid();
 
-            var query = _db.Database.GetCollection<Route>(ResourceType.Route.Name).AsQueryable();
-
             try
             {
-                var routes = query
+                var routes = _db
+                    .GetCollection<Route>(ResourceType.Route)
                     .FilterByIds(args.Exclude, args.IncludeOnly)
                     .FilterByUser(args.Status, User.Identity)
                     .FilterByStatus(args.Status, User.Identity)
@@ -113,9 +113,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!UserPermissions.IsAllowedToGet(User.Identity, status, _entityIndex.Owner(ResourceType.Route, id)))
                 return Forbid();
 
-            var route = _db.Database.GetCollection<Route>(ResourceType.Route.Name)
-                .AsQueryable()
-                .FirstOrDefault(x => x.Id == id);
+            var route = _db.Get<Route>((ResourceType.Route, id));
 
             if (route == null)
                 return NotFound();
