@@ -18,7 +18,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         public IActionResult Index() => Json(Enum.GetValues(typeof(ContentStatus)),
             new JsonSerializerSettings()
             {
-                Converters = new List<JsonConverter> { new StringEnumConverter() }
+                Converters = { new StringEnumConverter() }
             });
     }
 }

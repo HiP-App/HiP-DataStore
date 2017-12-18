@@ -10,39 +10,24 @@ using System.Reflection;
 namespace PaderbornUniversity.SILab.Hip.DataStore.Utility
 {
     public static class EventExtensions
-    {
+    {        
         public static IEnumerable<EntityId> GetReferences(this PropertyChangedEvent e)
         {
             var resourceType = e.GetEntityType();
             var propertyInfo = resourceType.Type.GetProperty(e.PropertyName);
             var hasAttribute = propertyInfo.CustomAttributes.Any(attr => attr.AttributeType == typeof(ReferenceAttribute));
-            if (hasAttribute)
-            {
-                var referenceAttribute = propertyInfo.GetCustomAttribute<ReferenceAttribute>();
-                var valueType = Type.GetType(e.ValueTypeName);
-                var referenceResourceType = ResourceType.ResourceTypeDictionary[referenceAttribute.ResourceTypeName];
-                if (typeof(IEnumerable).IsAssignableFrom(valueType))
-                {
-                    if (typeof(IEnumerable<int>).IsAssignableFrom(valueType))
-                    {
-                        return ((IEnumerable<int>)e.Value).Select(v => new EntityId(referenceResourceType, v));
-                    }
-                    else if (typeof(IEnumerable<IReference>).IsAssignableFrom(valueType))
-                    {
-                        return ((IEnumerable<IReference>)e.Value).Select(v => new EntityId(referenceResourceType, v.ReferenceId));
-                    }
-                    else throw new NotSupportedException("No supported type as an identifier for a reference could be found");
-                }
-                else if (e.Value != null)
-                {
-                    return new[] { new EntityId(referenceResourceType, (int)e.Value) };
-                }
-            }
+            if (!hasAttribute)
+                return Enumerable.Empty<EntityId>();
 
-            return new List<EntityId>();
+            var referenceAttribute = propertyInfo.GetCustomAttribute<ReferenceAttribute>();
+            var referenceResourceType = ResourceType.ResourceTypeDictionary[referenceAttribute.ResourceTypeName];
+            return GetEntityIdsFromObject(e.Value, referenceResourceType);
         }
 
-        public static (IEnumerable<EntityId> addedReferences, IEnumerable<EntityId> removedReferences) DetermineReferences(this PropertyChangedEvent e, object oldValue)
+        /// <summary>
+        /// Returns the added and removed references by comparing the references from <paramref name="oldValue"/> and the value of <paramref name="e"/>.
+        /// </summary>
+        public static (IEnumerable<EntityId> addedReferences, IEnumerable<EntityId> removedReferences) GetReferenceDifferences(this PropertyChangedEvent e, object oldValue)
         {
             var resourceType = e.GetEntityType();
             var propertyInfo = resourceType.Type.GetProperty(e.PropertyName);
@@ -50,40 +35,33 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Utility
             if (hasAttribute)
             {
                 var referenceAttribute = propertyInfo.GetCustomAttribute<ReferenceAttribute>();
-                var valueType = Type.GetType(e.ValueTypeName);
                 var referenceResourceType = ResourceType.ResourceTypeDictionary[referenceAttribute.ResourceTypeName];
 
                 if (!Equals(oldValue, e.Value))
                 {
-                    if (oldValue == null)
-                    {
-                        return (GetEntityIdsFromObject(e.Value, referenceResourceType), new List<EntityId>());
-                    }
-                    else if (e.Value == null)
-                    {
-                        return (new List<EntityId>(), GetEntityIdsFromObject(oldValue, referenceResourceType));
-                    }
-                    else if (typeof(IEnumerable).IsAssignableFrom(valueType))
-                    {
-                        if (typeof(IEnumerable<int>).IsAssignableFrom(valueType))
-                        {
-                            var enumValue = (IEnumerable<int>)oldValue;
-                            var eventValue = (IEnumerable<int>)e.Value;
-                            return (eventValue.Except(enumValue).Select(r => new EntityId(referenceResourceType, r)), enumValue.Except(eventValue).Select(r => new EntityId(referenceResourceType, r)));
-                        }
-                        else if (typeof(IEnumerable<IReference>).IsAssignableFrom(valueType))
-                        {
-                            var enumValue = (IEnumerable<IReference>)oldValue;
-                            var eventValue = (IEnumerable<IReference>)e.Value;
-                            return (eventValue.Except(enumValue).Select(r => new EntityId(referenceResourceType, r.ReferenceId)), enumValue.Except(eventValue).Select(r => new EntityId(referenceResourceType, r.ReferenceId)));
-                        }
-                    }
-                    else if (typeof(int).IsAssignableFrom(valueType))
-                    {
-                        return (new[] { new EntityId(referenceResourceType, (int)e.Value) }, new[] { new EntityId(referenceResourceType, (int)oldValue) });
-                    }
-                    else throw new NotSupportedException("No supported type as an identifier for a reference could be found");
+                    if (oldValue == null || e.Value == null)
+                        return (GetEntityIdsFromObject(e.Value, referenceResourceType), GetEntityIdsFromObject(oldValue, referenceResourceType));
 
+                    switch (oldValue)
+                    {
+                        case IEnumerable<int> oldIds:
+                            var newIds = (IEnumerable<int>)e.Value;
+                            return (newIds.Except(oldIds).Select(r => new EntityId(referenceResourceType, r)), oldIds.Except(newIds).Select(r => new EntityId(referenceResourceType, r)));
+
+                        case IEnumerable<IReference> oldList:
+                            var newList = (IEnumerable<IReference>)e.Value;
+                            return (newList.Except(oldList).Select(r => new EntityId(referenceResourceType, r.ReferenceId)), oldList.Except(newList).Select(r => new EntityId(referenceResourceType, r.ReferenceId)));
+
+                        case int i:
+                            return (new[] { new EntityId(referenceResourceType, (int)e.Value) }, new[] { new EntityId(referenceResourceType, i) });
+
+                        case IReference r:
+                            return (new[] { new EntityId(referenceResourceType, ((IReference)e.Value).ReferenceId) }, new[] { new EntityId(referenceResourceType, r.ReferenceId) });
+
+                        default:
+                            throw new NotSupportedException("No supported type as an identifier for a reference could be found");
+
+                    }
                 }
             }
 
@@ -92,27 +70,25 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Utility
 
         private static IEnumerable<EntityId> GetEntityIdsFromObject(object obj, ResourceType resourceType)
         {
-            var valueType = obj.GetType();
-            if (typeof(IEnumerable).IsAssignableFrom(valueType))
-            {
-                if (typeof(IEnumerable<int>).IsAssignableFrom(valueType))
-                {
-                    var enumValue = (IEnumerable<int>)obj;
-                    return enumValue.Select(r => new EntityId(resourceType, r));
-                }
-                else if (typeof(IEnumerable<IReference>).IsAssignableFrom(valueType))
-                {
-                    var enumValue = (IEnumerable<IReference>)obj;
-                    return enumValue.Select(r => new EntityId(resourceType, r.ReferenceId));
-                }
-            }
-            else if (typeof(int).IsAssignableFrom(valueType))
-            {
-                return new[] { new EntityId(resourceType, (int)obj) };
-            }
-            else throw new NotSupportedException("No supported type as an identifier for a reference could be found");
+            if (obj == null) return Enumerable.Empty<EntityId>();
 
-            return new List<EntityId>();
+            switch (obj)
+            {
+                case IEnumerable<int> e:
+                    return e.Select(r => new EntityId(resourceType, r));
+
+                case IEnumerable<IReference> e:
+                    return e.Select(r => new EntityId(resourceType, r.ReferenceId));
+
+                case int i:
+                    return new[] { new EntityId(resourceType, i) };
+
+                case IReference r:
+                    return new[] { new EntityId(resourceType, r.ReferenceId) };
+
+                default:
+                    throw new NotSupportedException("No supported type as an identifier for a reference could be found");
+            }
         }
     }
 }

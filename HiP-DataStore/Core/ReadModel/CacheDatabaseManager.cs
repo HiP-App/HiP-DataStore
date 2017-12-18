@@ -255,7 +255,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 
             if (ev is PropertyChangedEvent propEvent)
             {
-                var result = propEvent.DetermineReferences(oldValue);
+                var result = propEvent.GetReferenceDifferences(oldValue);
 
                 foreach (var remove in result.removedReferences)
                 {

@@ -7,7 +7,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
     /// <summary>
     /// Model for creating new exhibits.
     /// </summary>
-    public class ExhibitArgs
+    public class ExhibitArgs : IContentArgs
     {
         [Required]
         public string Name { get; set; }

@@ -49,16 +49,18 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         public ExhibitArgs CreateExhibitArgs()
         {
-            var args = new ExhibitArgs();
-            args.Name = Name;
-            args.Description = Description;
-            args.Image = Image.Id.AsNullableInt32;
-            args.Latitude = Latitude;
-            args.Longitude = Longitude;
-            args.Status = Status;
-            args.Tags = Tags?.Ids.Select(id => id.AsInt32).ToList();
-            args.Pages = Pages?.Ids.Select(id => id.AsInt32).ToList();
-            args.AccessRadius = AccessRadius;
+            var args = new ExhibitArgs
+            {
+                Name = Name,
+                Description = Description,
+                Image = Image.Id.AsNullableInt32,
+                Latitude = Latitude,
+                Longitude = Longitude,
+                Status = Status,
+                Tags = Tags?.Ids.Select(id => id.AsInt32).ToList(),
+                Pages = Pages?.Ids.Select(id => id.AsInt32).ToList(),
+                AccessRadius = AccessRadius
+            };
             return args;
         }
     }

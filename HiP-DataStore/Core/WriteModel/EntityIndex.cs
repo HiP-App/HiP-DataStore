@@ -7,6 +7,7 @@ using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using System.Security.Principal;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Events;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 {
@@ -116,10 +117,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                     lock (_lockObject)
                     {
                         var info2 = GetOrCreateEntityTypeInfo(ev.GetEntityType());
-                        if (info2.Entities.TryGetValue(ev.Id, out var entity))
+                        if (info2.Entities.TryGetValue(ev.Id, out var entity) && ev.PropertyName == nameof(IContentArgs.Status) && ev.Value is ContentStatus status)
                         {
-                            if (ev.Value is ContentStatus status)
-                                entity.Status = status;
+                            entity.Status = status;
                         }
                     }
                     break;

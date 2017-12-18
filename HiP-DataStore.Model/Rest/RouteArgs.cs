@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 {
-    public class RouteArgs
+    public class RouteArgs : IContentArgs
     {
         [Required]
         public string Title { get; set; }
@@ -29,6 +29,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         public ContentStatus Status { get; set; }
 
         [Reference(nameof(ResourceTypes.Tag))]
-        public List<int> Tags { get; set; }        
+        public List<int> Tags { get; set; }
     }
 }

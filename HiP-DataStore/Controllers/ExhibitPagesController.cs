@@ -202,7 +202,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             // validation passed, emit event
             var newPageId = _entityIndex.NextId(ResourceTypes.ExhibitPage);
 
-            await EntityManager.CreateEntity(_eventStore, args, ResourceTypes.ExhibitPage, _entityIndex.NextId(ResourceTypes.ExhibitPage), User.Identity.GetUserIdentity());
+            await EntityManager.CreateEntity(_eventStore, args, ResourceTypes.ExhibitPage, newPageId, User.Identity.GetUserIdentity());
             return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Pages/{newPageId}", newPageId);
         }
 

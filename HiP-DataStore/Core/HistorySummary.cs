@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core
@@ -41,11 +42,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
             public string Description { get; set; }
             public string UserId { get; set; }
 
+            [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
             public string Property { get; set; }
 
+            [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
             public object Value { get; set; }
 
-            public Change(DateTimeOffset timestamp, string description, string userId, string property = "", object value = null)
+            public Change(DateTimeOffset timestamp, string description, string userId, string property = null, object value = null)
             {
                 Timestamp = timestamp;
                 Description = description;

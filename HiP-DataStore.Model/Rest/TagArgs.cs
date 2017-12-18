@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 {
-    public class TagArgs
+    public class TagArgs : IContentArgs
     {
         [Required]
         public string Title { get; set; }

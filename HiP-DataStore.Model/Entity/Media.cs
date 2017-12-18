@@ -29,11 +29,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         public MediaArgs CreateMediaArgs()
         {
-            var args = new MediaArgs();
-            args.Title = Title;
-            args.Description = Description;
-            args.Type = Type;
-            args.Status = Status;
+            var args = new MediaArgs
+            {
+                Title = Title,
+                Description = Description,
+                Type = Type,
+                Status = Status
+            };
             return args;
         }
     }

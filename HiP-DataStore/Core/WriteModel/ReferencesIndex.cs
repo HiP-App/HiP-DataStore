@@ -90,7 +90,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
             }
             else throw new ArgumentException("Unexpected event type occured!");
 
-
             // 1) Update references
             var source = (resourceType, eventId);
 
@@ -108,8 +107,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                     break;
             }
 
-
-
             // 2) Handle propagation of timestamps
             var hasDoNotPropagateAttribute = type.GetTypeInfo().CustomAttributes
                 .Any(attr => attr.AttributeType == typeof(DoNotPropagateTimestampToReferencersAttribute));
@@ -124,7 +121,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                 // set timestamp & propagate to entities referencing the created/updated/deleted entity
                 SetTimestampRecursively(timestamp, resourceType, eventId);
             }
-
         }
 
         private void ClearReferences(EntityId source, string propertyName = null)
@@ -170,8 +166,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                     GetOrCreatePropertySet(source, propertyName).Add(target);
                 }
             }
-
-
         }
 
         private void SetTimestampRecursively(DateTimeOffset timestamp, ResourceType entityType, int id)

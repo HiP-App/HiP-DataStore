@@ -4,6 +4,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Events;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 {
@@ -60,36 +61,32 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
         {
             switch (e)
             {
-                case CreatedEvent ev:
-                    if (ev.GetEntityType() == ResourceTypes.Media)
-                    {
-                        lock (_lockObject)
-                            _media.Add(ev.Id, new MediaInfo());
-                    }
+                case CreatedEvent ev when ev.GetEntityType() == ResourceTypes.Media:
+
+                    lock (_lockObject)
+                        _media.Add(ev.Id, new MediaInfo());
+
                     break;
 
-                case DeletedEvent ev:
-                    if (ev.GetEntityType() == ResourceTypes.Media)
-                    {
-                        lock (_lockObject)
-                            _media.Remove(ev.Id);
-                    }
+                case DeletedEvent ev when ev.GetEntityType() == ResourceTypes.Media:
+
+                    lock (_lockObject)
+                        _media.Remove(ev.Id);
+
                     break;
 
-                case PropertyChangedEvent ev:
-                    if (ev.GetEntityType() == ResourceTypes.Media)
+                case PropertyChangedEvent ev when ev.GetEntityType() == ResourceTypes.Media:
+                    if (ev.PropertyName == nameof(MediaArgs.Status))
                     {
-                        if (ev.Value is ContentStatus status)
-                        {
-                            lock (_lockObject)
-                                _media[ev.Id].Status = status;
-                        }
-                        else if (ev.Value is MediaType type)
-                        {
-                            lock (_lockObject)
-                                _media[ev.Id].Type = type;
-                        }
+                        lock (_lockObject)
+                            _media[ev.Id].Status = (ContentStatus)ev.Value;
                     }
+                    else if (ev.PropertyName == nameof(MediaArgs.Type))
+                    {
+                        lock (_lockObject)
+                            _media[ev.Id].Type = (MediaType)ev.Value;
+                    }
+
                     break;
 
                 case MediaFileUpdated ev:
