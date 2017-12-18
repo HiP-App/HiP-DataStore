@@ -31,42 +31,42 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
 
         public ExhibitPagesClient ExhibitPages => new ExhibitPagesClient(_config.DataStoreHost)
         {
-            Authorization = _httpContextAccessor.HttpContext.Request.Headers["Authorization"]
+            Authorization = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"]
         };
 
         public ExhibitsClient Exhibits => new ExhibitsClient(_config.DataStoreHost)
         {
-            Authorization = _httpContextAccessor.HttpContext.Request.Headers["Authorization"]
+            Authorization = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"]
         };
 
         public HistoryClient History => new HistoryClient(_config.DataStoreHost)
         {
-            Authorization = _httpContextAccessor.HttpContext.Request.Headers["Authorization"]
+            Authorization = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"]
         };
 
         public MediaClient Media => new MediaClient(_config.DataStoreHost)
         {
-            Authorization = _httpContextAccessor.HttpContext.Request.Headers["Authorization"]
+            Authorization = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"]
         };
 
         public RoutesClient Routes => new RoutesClient(_config.DataStoreHost)
         {
-            Authorization = _httpContextAccessor.HttpContext.Request.Headers["Authorization"]
+            Authorization = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"]
         };
 
         public ScoreBoardClient ScoreBoard => new ScoreBoardClient(_config.DataStoreHost)
         {
-            Authorization = _httpContextAccessor.HttpContext.Request.Headers["Authorization"]
+            Authorization = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"]
         };
 
         public StatusesClient Statuses => new StatusesClient(_config.DataStoreHost)
         {
-            Authorization = _httpContextAccessor.HttpContext.Request.Headers["Authorization"]
+            Authorization = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"]
         };
 
         public TagsClient Tags => new TagsClient(_config.DataStoreHost)
         {
-            Authorization = _httpContextAccessor.HttpContext.Request.Headers["Authorization"]
+            Authorization = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"]
         };
     }
 }
