@@ -4,7 +4,6 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using System;
-using System.Collections.Generic;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
