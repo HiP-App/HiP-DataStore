@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
 {    /// <summary>
-     /// Updating to version 8. We have events in our EventStore that have UserId null. That`s not right. 
+     /// Updating to version 9. We have events in our EventStore that have UserId null. That`s not right. 
      /// In our migration we will replace them with admin userId = auth0|5968ed8cdd1b3733ca94865d
      /// </summary>
     [StreamMigration(from: 8, to: 9)]
