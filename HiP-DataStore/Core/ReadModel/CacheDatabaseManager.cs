@@ -51,14 +51,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 
         private void ApplyEvent(IEvent ev)
         {
-            if (ev is BaseEvent baseEvent)
+            if (ev is DeletedEvent baseEvent)
             {
                 var entity = (baseEvent.GetEntityType(), baseEvent.Id);
-                if (baseEvent is DeletedEvent)
-                {
-                    ClearIncomingReferences(entity);
-                    ClearOutgoingReferences(entity);
-                }
+                ClearIncomingReferences(entity);
+                ClearOutgoingReferences(entity);
             }
 
             object oldValue = null;
@@ -255,17 +252,16 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 
             if (ev is PropertyChangedEvent propEvent)
             {
-                var result = propEvent.GetReferenceDifferences(oldValue);
+                var (addedReferences, removedReferences) = propEvent.GetReferenceDifferences(oldValue);
 
-                foreach (var remove in result.removedReferences)
+                foreach (var remove in removedReferences)
                 {
                     RemoveReference((propEvent.GetEntityType(), propEvent.Id), remove);
                 }
 
-                if (result.addedReferences.Any())
-                    AddReferences((propEvent.GetEntityType(), propEvent.Id), result.addedReferences);
+                if (addedReferences.Any())
+                    AddReferences((propEvent.GetEntityType(), propEvent.Id), addedReferences);
             }
-
         }
 
         private void ClearIncomingReferences(EntityId entity)
@@ -351,6 +347,5 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
             entity.Status = ContentStatus.Deleted;
             collection.ReplaceOne(x => x.Id == entityId, entity);
         }
-
     }
 }
