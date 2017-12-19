@@ -8,9 +8,11 @@ using Microsoft.Extensions.Options;
 using NSwag.AspNetCore;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
+using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
+using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
 using PaderbornUniversity.SILab.Hip.Webservice;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore

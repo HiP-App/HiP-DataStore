@@ -23,8 +23,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
         private readonly EventStoreService _eventStore;
         private readonly IMongoDbContext _db;
 
-        public IMongoDbContext Database => _db;
-
         public CacheDatabaseManager(
             IMongoDbContext db,
             EventStoreService eventStore,
@@ -33,7 +31,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
             // For now, the cache database is always created from scratch by replaying all events.
             // This also implies that, for now, the cache database always contains the entire data (not a subset).
             // In order to receive all the events, a Catch-Up Subscription is created.
-            
+            _db = db;
+
             // Subscribe to EventStore to receive all past and future events
             _eventStore = eventStore;
             _eventStore.EventStream.SubscribeCatchUp(ApplyEvent);

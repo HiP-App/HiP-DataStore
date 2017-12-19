@@ -1,5 +1,4 @@
 ﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
-using PaderbornUniversity.SILab.Hip.EventSourcing;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 {
@@ -9,7 +8,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         public string Description { get; set; }
 
-        [ResourceReference(nameof(ResourceTypes.Media))]
         public int? Image { get; set; }
 
         public Tag()

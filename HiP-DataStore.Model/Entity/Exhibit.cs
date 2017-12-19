@@ -1,7 +1,5 @@
 ﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
-using PaderbornUniversity.SILab.Hip.EventSourcing;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 {
@@ -17,13 +15,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         public float AccessRadius { get; set; }
 
-        [ResourceReference(nameof(ResourceTypes.Media))]
         public int? Image { get; set; }
 
-        [ResourceReference(nameof(ResourceTypes.Tag))]
         public List<int> Tags { get; set; }
 
-        [ResourceReference(nameof(ResourceTypes.ExhibitPage))]
         public List<int> Pages { get; private set; }
 
         public Exhibit()

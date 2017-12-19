@@ -1,7 +1,5 @@
 ﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
-using PaderbornUniversity.SILab.Hip.EventSourcing;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 {
@@ -17,16 +15,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         public double Distance { get; set; }
 
-        [ResourceReference(nameof(ResourceTypes.Media))]
         public int? Image { get; set; }
 
-        [ResourceReference(nameof(ResourceTypes.Media))]
         public int? Audio { get; set; }
 
-        [ResourceReference(nameof(ResourceTypes.Exhibit))]
         public List<int> Exhibits { get; set; }
 
-        [ResourceReference(nameof(ResourceTypes.Tag))]
         public List<int> Tags { get; set; }
 
         public Route()

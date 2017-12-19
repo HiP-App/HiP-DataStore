@@ -1,5 +1,4 @@
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Utility;
-using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Migrations;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;

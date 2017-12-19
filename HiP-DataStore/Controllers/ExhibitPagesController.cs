@@ -79,7 +79,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (args.Status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
                 return Forbid();
 
-            var query = _db.GetCollection<ExhibitPage>(ResourceType.ExhibitPage);
+            var query = _db.GetCollection<ExhibitPage>(ResourceTypes.ExhibitPage);
             return QueryExhibitPages(query, args);
         }
 
@@ -96,13 +96,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
                 return Forbid();
 
-            var exhibit = _db.Get<Exhibit>((ResourceType.Exhibit, exhibitId));
+            var exhibit = _db.Get<Exhibit>((ResourceTypes.Exhibit, exhibitId));
 
             if (exhibit == null)
                 return NotFound();
 
-            var pageIds = exhibit.Pages
-                .LoadAll(_db)
+            var pageIds = _db.GetMany<ExhibitPage>(ResourceTypes.ExhibitPage, exhibit.Pages)
                 .AsQueryable()
                 .Where(p => status == ContentStatus.All || p.Status == status)
                 .FilterIf(status == ContentStatus.All, x => x.Status != ContentStatus.Deleted)
@@ -132,12 +131,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (args.Status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
                 return Forbid();
 
-            var exhibit = _db.Get<Exhibit>((ResourceType.Exhibit, exhibitId));
+            var exhibit = _db.Get<Exhibit>((ResourceTypes.Exhibit, exhibitId));
 
             if (exhibit == null)
                 return NotFound();
 
-            var query = exhibit.Pages.LoadAll(_db).AsQueryable();
+            var query = _db.GetMany<ExhibitPage>(ResourceTypes.ExhibitPage, exhibit.Pages).AsQueryable();
 
             return QueryExhibitPages(query, args);
         }
@@ -157,7 +156,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!UserPermissions.IsAllowedToGet(User.Identity, status, _entityIndex.Owner(ResourceTypes.ExhibitPage, id)))
                 return Forbid();
 
-            var page = _db.Get<ExhibitPage>((ResourceType.ExhibitPage, id));
+            var page = _db.Get<ExhibitPage>((ResourceTypes.ExhibitPage, id));
 
             if (page == null)
                 return NotFound();

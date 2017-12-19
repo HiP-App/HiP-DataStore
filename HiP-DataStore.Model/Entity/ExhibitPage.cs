@@ -1,8 +1,4 @@
-﻿using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
-using PaderbornUniversity.SILab.Hip.EventSourcing;
-using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
+﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -25,17 +21,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         public string FontFamily { get; set; }
 
-        [ResourceReference(nameof(ResourceTypes.Media))]
         public int? Audio { get; set; }
         
-        [ResourceReference(nameof(ResourceTypes.Media))]
         public int? Image { get; set; }
 
         public List<SliderPageImage> Images { get; private set; }
 
         public bool HideYearNumbers { get; set; }
 
-        [ResourceReference(nameof(ResourceTypes.ExhibitPage))]
         public List<int> AdditionalInformationPages { get; set; }
 
         public ExhibitPage()
