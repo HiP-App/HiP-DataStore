@@ -1,7 +1,9 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
@@ -9,7 +11,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
     public class Route : ContentBase
     {
         // TODO: What about waypoints?
-        
+
         public string Title { get; set; }
 
         public string Description { get; set; }
@@ -18,21 +20,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         public double Distance { get; set; }
 
-        [BsonElement]
-        public DocRef<MediaElement> Image { get; private set; } =
-            new DocRef<MediaElement>(ResourceType.Media.Name);
+        [ResourceReference(nameof(ResourceType.Media))]
+        public int? Image { get; set; }
 
-        [BsonElement]
-        public DocRef<MediaElement> Audio { get; private set; } =
-            new DocRef<MediaElement>(ResourceType.Media.Name);
+        [ResourceReference(nameof(ResourceType.Media))]
+        public int? Audio { get; set; }
 
-        [BsonElement]
-        public DocRefList<Exhibit> Exhibits { get; private set; } =
-            new DocRefList<Exhibit>(ResourceType.Exhibit.Name);
+        [ResourceReference(nameof(ResourceType.Exhibit))]
+        public List<int> Exhibits { get; set; }
 
-        [BsonElement]
-        public DocRefList<Tag> Tags { get; private set; } =
-            new DocRefList<Tag>(ResourceType.Tag.Name);
+        [ResourceReference(nameof(ResourceType.Tag))]
+        public List<int> Tags { get; set; }
 
         public Route()
         {
@@ -44,11 +42,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
             Description = args.Description;
             Duration = args.Duration;
             Distance = args.Distance;
-            Image.Id = args.Image;
-            Audio.Id = args.Audio;
-            Exhibits.Add(args.Exhibits?.Select(id => (BsonValue)id));
+            Image = args.Image;
+            Audio = args.Audio;
+            Exhibits = args.Exhibits;
             Status = args.Status;
-            Tags.Add(args.Tags?.Select(id => (BsonValue)id));
+            Tags = args.Tags;
         }
     }
 }

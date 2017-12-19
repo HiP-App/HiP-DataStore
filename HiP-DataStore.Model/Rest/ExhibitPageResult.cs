@@ -54,8 +54,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
             Description = page.Description;
             FontFamily = page.FontFamily;
             UserId = page.UserId;
-            Audio = (int?)page.Audio.Id;
-            AdditionalInformationPages = page.AdditionalInformationPages.Ids.Select(id => (int)id).ToList();
+            Audio = page.Audio;
+            AdditionalInformationPages = page.AdditionalInformationPages;
             Status = page.Status;
             Timestamp = page.Timestamp;
             Used = page.Referencers.Count > 0; // a page is in use if it is referenced by an exhibit or page
@@ -65,7 +65,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
             if (page.Type == PageType.Image_Page)
             {
                 // 'image' only allowed for type IMAGE_PAGE
-                Image = (int?)page.Image.Id;
+                Image = page.Image;
             }
 
             if (page.Type == PageType.Slider_Page)

@@ -16,7 +16,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         public SliderPageImageResult(SliderPageImage img)
         {
             Date = img.Date;
-            Image = (int)img.Image.Id;
+            Image = (int)img.Image;
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,22 +25,18 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         public string FontFamily { get; set; }
 
-        [BsonElement]
-        public DocRef<MediaElement> Audio { get; private set; } =
-            new DocRef<MediaElement>(ResourceType.Media.Name);
+        [ResourceReference(nameof(ResourceType.Media))]
+        public int? Audio { get; set; }
+        
+        [ResourceReference(nameof(ResourceType.Media))]
+        public int? Image { get; set; }
 
-        [BsonElement]
-        public DocRef<MediaElement> Image { get; private set; } =
-            new DocRef<MediaElement>(ResourceType.Media.Name);
-
-        [BsonElement]
         public List<SliderPageImage> Images { get; private set; }
 
         public bool HideYearNumbers { get; set; }
 
-        [BsonElement]
-        public DocRefList<ExhibitPage> AdditionalInformationPages { get; private set; } =
-            new DocRefList<ExhibitPage>(ResourceType.ExhibitPage.Name);
+        [ResourceReference(nameof(ResourceType.ExhibitPage))]
+        public List<int> AdditionalInformationPages { get; set; }
 
         public ExhibitPage()
         {
@@ -52,11 +49,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
             Text = args.Text;
             Description = args.Description;
             FontFamily = args.FontFamily;
-            Audio.Id = args.Audio;
-            Image.Id = args.Image;
+            Audio = args.Audio;
+            Image = args.Image;
             Images = args.Images?.Select(img => new SliderPageImage(img)).ToList();
             HideYearNumbers = args.HideYearNumbers ?? false;
-            AdditionalInformationPages.Add(args.AdditionalInformationPages?.Select(id => (BsonValue)id));
+            AdditionalInformationPages = args.AdditionalInformationPages?.ToList();
             Status = args.Status;
         }
     }
