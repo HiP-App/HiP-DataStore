@@ -1,11 +1,12 @@
-﻿using System;
+﻿using PaderbornUniversity.SILab.Hip.EventSourcing;
+using System;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 {
     // Version info: As a consequence of a flat page hierarchy, pages no longer belong to exactly one exhibit
     public class ExhibitPageDeleted2 : UserActivityBaseEvent, IDeleteEvent
     {
-        public override ResourceType GetEntityType() => ResourceType.ExhibitPage;
+        public override ResourceType GetEntityType() => ResourceTypes.ExhibitPage;
     }
 
     [Obsolete]
@@ -17,6 +18,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 
         public int ExhibitId { get; set; }
 
-        public ResourceType GetEntityType() => ResourceType.ExhibitPage;
+        public ResourceType GetEntityType() => ResourceTypes.ExhibitPage;
     }
 }

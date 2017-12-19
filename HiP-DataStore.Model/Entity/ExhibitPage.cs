@@ -56,5 +56,22 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
             AdditionalInformationPages = args.AdditionalInformationPages?.ToList();
             Status = args.Status;
         }
+
+        public ExhibitPageArgs2 CreateExhibitPageArgs()
+        {
+            var args = new ExhibitPageArgs2();
+            args.Type = Type;
+            args.Title = Title;
+            args.Text = Text;
+            args.Description = Description;
+            args.FontFamily = FontFamily;
+            args.Audio = Audio.Id.AsNullableInt32;
+            args.Image = Image.Id.AsNullableInt32;
+            args.Images = Images?.Select(i => new SliderPageImageArgs() { Date = i.Date, Image = i.Image.Id.AsInt32 }).ToList();
+            args.HideYearNumbers = HideYearNumbers;
+            args.AdditionalInformationPages = AdditionalInformationPages?.Ids.Select(i => i.AsInt32).ToList();
+            args.Status = Status;
+            return args;
+        }
     }
 }

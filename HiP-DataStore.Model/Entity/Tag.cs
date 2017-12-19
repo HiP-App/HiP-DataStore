@@ -23,5 +23,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
             Image = args.Image;
             Status = args.Status;
         }
+
+        public TagArgs CreateTagArgs()
+        {
+            var args = new TagArgs();
+            args.Title = Title;
+            args.Description = Description;
+            args.Image = Image.Id.AsNullableInt32;
+            args.Status = Status;
+            return args;
+        }
     }
 }

@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using PaderbornUniversity.SILab.Hip.DataStore.Controllers;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using System.Linq;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using System.Security.Principal;
-using ResourceType = PaderbornUniversity.SILab.Hip.DataStore.Model.ResourceType; // TODO: Remove after architectural changes
+using PaderbornUniversity.SILab.Hip.EventSourcing.Events;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 {
@@ -73,7 +73,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                     .AsQueryable()
                     .FilterIf(!isAllowedGetAll, x =>
                         ((status == ContentStatus.All) && (x.Value.Status == ContentStatus.Published)) || (x.Value.UserId == userId))
-                    .FilterIf(status == ContentStatus.All,x => x.Value.Status != ContentStatus.Deleted)
+                    .FilterIf(status == ContentStatus.All, x => x.Value.Status != ContentStatus.Deleted)
                      .Where(x => status == ContentStatus.All || x.Value.Status == status)
                     .Select(x => x.Key)
                     .ToList();
@@ -91,36 +91,36 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                 return info.Entities.TryGetValue(id, out var entity) && entity.Status != ContentStatus.Deleted;
             }
         }
-        
+
         public void ApplyEvent(IEvent e)
         {
             switch (e)
             {
-                case ICreateEvent ev:
-                    lock (_lockObject)
-                    {
-                        var owner = (ev as UserActivityBaseEvent)?.UserId;
-                        var info = GetOrCreateEntityTypeInfo(ev.GetEntityType());
-                        info.MaximumId = Math.Max(info.MaximumId, ev.Id);
-                        info.Entities.Add(ev.Id, new EntityInfo { Status = ev.GetStatus(), UserId = owner });
-                    }
-                    break;
-
-                case IUpdateEvent ev:
-                    lock (_lockObject)
-                    {
-                        var info2 = GetOrCreateEntityTypeInfo(ev.GetEntityType());
-                        if (info2.Entities.TryGetValue(ev.Id, out var entity))
-                            entity.Status = ev.GetStatus();
-                    }
-                    break;
-
-                case IDeleteEvent ev:
+                case DeletedEvent ev:
                     lock (_lockObject)
                     {
                         var info3 = GetOrCreateEntityTypeInfo(ev.GetEntityType());
                         if (info3.Entities.TryGetValue(ev.Id, out var entity))
                             entity.Status = ContentStatus.Deleted;
+                    }
+                    break;
+                case CreatedEvent ev:
+                    lock (_lockObject)
+                    {
+                        var owner = ev.UserId;
+                        var info = GetOrCreateEntityTypeInfo(ev.GetEntityType());
+                        info.MaximumId = Math.Max(info.MaximumId, ev.Id);
+                        info.Entities.Add(ev.Id, new EntityInfo { UserId = owner });
+                    }
+                    break;
+                case PropertyChangedEvent ev:
+                    lock (_lockObject)
+                    {
+                        var info2 = GetOrCreateEntityTypeInfo(ev.GetEntityType());
+                        if (info2.Entities.TryGetValue(ev.Id, out var entity) && ev.PropertyName == nameof(IContentArgs.Status) && ev.Value is ContentStatus status)
+                        {
+                            entity.Status = status;
+                        }
                     }
                     break;
             }

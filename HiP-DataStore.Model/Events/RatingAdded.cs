@@ -1,4 +1,6 @@
-﻿namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
+﻿using PaderbornUniversity.SILab.Hip.EventSourcing;
+
+namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 {
     public class RatingAdded : UserActivityBaseEvent
     {
@@ -9,7 +11,7 @@
 
         public ResourceType RatedType { get; set; }
 
-        public override ResourceType GetEntityType() => ResourceType.Rating;
-        
+        public override ResourceType GetEntityType() => ResourceTypes.Rating;
+
     }
 }

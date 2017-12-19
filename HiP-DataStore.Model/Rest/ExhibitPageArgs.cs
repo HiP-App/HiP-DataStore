@@ -8,7 +8,7 @@ using System.Linq;
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 {
     // Version info: 'Images' now stores not just a list of IDs, but a list of pairs (Date, Image ID)
-    public class ExhibitPageArgs2
+    public class ExhibitPageArgs2 : IContentArgs
     {
         [Required]
         public PageType Type { get; set; }
@@ -22,33 +22,22 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 
         public string FontFamily { get; set; }
 
+        [Reference(nameof(ResourceTypes.Media))]
         public int? Audio { get; set; }
 
+        [Reference(nameof(ResourceTypes.Media))]
         public int? Image { get; set; }
 
+        [Reference(nameof(ResourceTypes.Media))]
         public IReadOnlyCollection<SliderPageImageArgs> Images { get; set; }
 
         public bool? HideYearNumbers { get; set; }
 
+        [Reference(nameof(ResourceTypes.ExhibitPage))]
         public IReadOnlyCollection<int> AdditionalInformationPages { get; set; }
 
         [AllowedStatuses]
         public ContentStatus Status { get; set; }
-
-        public IEnumerable<EntityId> GetReferences()
-        {
-            if (Audio != null)
-                yield return (ResourceType.Media, Audio.Value);
-
-            if (Image != null)
-                yield return (ResourceType.Media, Image.Value);
-
-            foreach (var img in Images?.Select(i => i.Image).Distinct() ?? Enumerable.Empty<int>())
-                yield return (ResourceType.Media, img);
-
-            foreach (var id in AdditionalInformationPages?.Distinct() ?? Enumerable.Empty<int>())
-                yield return (ResourceType.ExhibitPage, id);
-        }
     }
 
     public class ExhibitPageArgs : IMigratable<ExhibitPageArgs2>

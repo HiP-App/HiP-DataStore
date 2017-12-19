@@ -2,20 +2,20 @@
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 {
     /// <summary>
     /// Model for creating new exhibits.
     /// </summary>
-    public class ExhibitArgs
+    public class ExhibitArgs : IContentArgs
     {
         [Required]
         public string Name { get; set; }
 
         public string Description { get; set; }
 
+        [Reference(nameof(ResourceTypes.Media))]
         public int? Image { get; set; }
 
         [Range(-90, 90)]
@@ -27,8 +27,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         [AllowedStatuses]
         public ContentStatus Status { get; set; }
 
+        [Reference(nameof(ResourceTypes.Tag))]
         public List<int> Tags { get; set; }
 
+        [Reference(nameof(ResourceTypes.ExhibitPage))]
         public List<int> Pages { get; set; }
 
         /// <summary>
@@ -36,17 +38,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         /// </summary>
         [Range(0.001, 1000)]
         public float AccessRadius { get; set; } = 1000;
-
-        public IEnumerable<EntityId> GetReferences()
-        {
-            if (Image != null)
-                yield return (ResourceType.Media, Image.Value);
-
-            foreach (var pageId in Pages?.Distinct() ?? Enumerable.Empty<int>())
-                yield return (ResourceType.ExhibitPage, pageId);
-
-            foreach (var tagId in Tags?.Distinct() ?? Enumerable.Empty<int>())
-                yield return (ResourceType.Tag, tagId);
-        }
+       
     }
 }

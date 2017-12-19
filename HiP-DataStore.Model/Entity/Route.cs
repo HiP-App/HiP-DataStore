@@ -48,5 +48,20 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
             Status = args.Status;
             Tags = args.Tags;
         }
+
+        public RouteArgs CreateRouteArgs()
+        {
+            var args = new RouteArgs();
+            args.Title = Title;
+            args.Description = Description;
+            args.Duration = Duration;
+            args.Distance = Distance;
+            args.Image = Image.Id.AsNullableInt32;
+            args.Audio = Audio.Id.AsNullableInt32;
+            args.Exhibits = Exhibits.Ids.Select(i => i.AsInt32).ToList();
+            args.Tags = Tags.Ids.Select(i => i.AsInt32).ToList();
+            args.Status = Status;
+            return args;
+        }
     }
 }

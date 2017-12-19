@@ -9,7 +9,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
     {
         public MediaArgs Properties { get; set; }
 
-        public override ResourceType GetEntityType() => ResourceType.Media;
+        public override ResourceType GetEntityType() => ResourceTypes.Media;
 
         public ContentStatus GetStatus() => Properties.Status;
 

@@ -21,7 +21,6 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
-using ResourceType = PaderbornUniversity.SILab.Hip.DataStore.Model.ResourceType; // TODO: Remove after architectural changes
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
@@ -64,7 +63,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
                 return Forbid();
 
-            return Ok(_entityIndex.AllIds(ResourceType.Media, status, User.Identity));
+            return Ok(_entityIndex.AllIds(ResourceTypes.Media, status, User.Identity));
         }
 
         [HttpPost]
@@ -78,17 +77,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (!UserPermissions.IsAllowedToCreate(User.Identity, args.Status))
                 return Forbid();
-
-            var ev = new MediaCreated
-            {
-                Id = _entityIndex.NextId(ResourceType.Media),
-                UserId = User.Identity.GetUserIdentity(),
-                Properties = args,
-                Timestamp = DateTimeOffset.Now
-            };
-
-            await _eventStore.AppendEventAsync(ev);
-            return Created($"{Request.Scheme}://{Request.Host}/api/Media/{ev.Id}", ev.Id);
+            int id = _entityIndex.NextId(ResourceTypes.Media);
+            await EntityManager.CreateEntityAsync(_eventStore, args, ResourceTypes.Media, id, User.Identity.GetUserIdentity());
+            return Created($"{Request.Scheme}://{Request.Host}/api/Media/{id}", id);
         }
 
         [HttpGet]
@@ -123,7 +114,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                     .PaginateAndSelect(args.Page, args.PageSize, x => new MediaResult(x)
                     {
                         File = GenerateFileUrl(x),
-                        Timestamp = _referencesIndex.LastModificationCascading(ResourceType.Media, x.Id)
+                        Timestamp = _referencesIndex.LastModificationCascading(ResourceTypes.Media, x.Id)
                     });
 
                 return Ok(medias);
@@ -146,8 +137,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var status = _entityIndex.Status(ResourceType.Media, id) ?? ContentStatus.Published;
-            if (!UserPermissions.IsAllowedToGet(User.Identity, status, _entityIndex.Owner(ResourceType.Media, id)))
+            var status = _entityIndex.Status(ResourceTypes.Media, id) ?? ContentStatus.Published;
+            if (!UserPermissions.IsAllowedToGet(User.Identity, status, _entityIndex.Owner(ResourceTypes.Media, id)))
                 return Forbid();
 
             var media = _db.Get<MediaElement>((ResourceType.Media, id));
@@ -162,7 +153,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             var result = new MediaResult(media)
             {
                 File = GenerateFileUrl(media),
-                Timestamp = _referencesIndex.LastModificationCascading(ResourceType.Media, id)
+                Timestamp = _referencesIndex.LastModificationCascading(ResourceTypes.Media, id)
             };
 
             return Ok(result);
@@ -178,20 +169,20 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!_entityIndex.Exists(ResourceType.Media, id))
+            if (!_entityIndex.Exists(ResourceTypes.Media, id))
                 return NotFound();
 
-            var status = _entityIndex.Status(ResourceType.Media, id).GetValueOrDefault();
-            if (!UserPermissions.IsAllowedToDelete(User.Identity, status, _entityIndex.Owner(ResourceType.Media, id)))
+            var status = _entityIndex.Status(ResourceTypes.Media, id).GetValueOrDefault();
+            if (!UserPermissions.IsAllowedToDelete(User.Identity, status, _entityIndex.Owner(ResourceTypes.Media, id)))
                 return Forbid();
 
-            if (!UserPermissions.IsAllowedToDelete(User.Identity, status, _entityIndex.Owner(ResourceType.Media, id)))
-                return BadRequest(ErrorMessages.CannotBeDeleted(ResourceType.Media, id));
+            if (!UserPermissions.IsAllowedToDelete(User.Identity, status, _entityIndex.Owner(ResourceTypes.Media, id)))
+                return BadRequest(ErrorMessages.CannotBeDeleted(ResourceTypes.Media, id));
 
             if (status == ContentStatus.Published)
-                return BadRequest(ErrorMessages.CannotBeDeleted(ResourceType.Media, id));
+                return BadRequest(ErrorMessages.CannotBeDeleted(ResourceTypes.Media, id));
 
-            if (_referencesIndex.IsUsed(ResourceType.Media, id))
+            if (_referencesIndex.IsUsed(ResourceTypes.Media, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
 
             // Remove file
@@ -199,14 +190,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (directoryPath != null && Directory.Exists(directoryPath))
                 Directory.Delete(directoryPath, true);
 
-            var ev = new MediaDeleted
-            {
-                Id = id,
-                UserId = User.Identity.GetUserIdentity(),
-                Timestamp = DateTimeOffset.Now
-            };
-
-            await _eventStore.AppendEventAsync(ev);
+            await EntityManager.DeleteEntityAsync(_eventStore, ResourceTypes.Media, id, User.Identity.GetUserIdentity());
             await InvalidateThumbnailCacheAsync(id);
             return StatusCode(204);
         }
@@ -221,25 +205,18 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!_entityIndex.Exists(ResourceType.Media, id))
+            if (!_entityIndex.Exists(ResourceTypes.Media, id))
                 return NotFound();
-            
-            if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, _entityIndex.Owner(ResourceType.Media, id)))
+
+            if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, _entityIndex.Owner(ResourceTypes.Media, id)))
                 return Forbid();
 
-            var oldStatus = _entityIndex.Status(ResourceType.Media, id).GetValueOrDefault();
+            var oldStatus = _entityIndex.Status(ResourceTypes.Media, id).GetValueOrDefault();
             if (args.Status == ContentStatus.Unpublished && oldStatus != ContentStatus.Published)
-                return BadRequest(ErrorMessages.CannotBeUnpublished(ResourceType.Media));
+                return BadRequest(ErrorMessages.CannotBeUnpublished(ResourceTypes.Media));
 
-            var ev = new MediaUpdate
-            {
-                Id = id,
-                UserId = User.Identity.GetUserIdentity(),
-                Properties = args,
-                Timestamp = DateTimeOffset.Now,
-            };
-
-            await _eventStore.AppendEventAsync(ev);
+            var currentArgs = await EventStreamExtensions.GetCurrentEntityAsync<MediaArgs>(_eventStore.EventStream, ResourceTypes.Media, id);
+            await EntityManager.UpdateEntityAsync(_eventStore, currentArgs, args, ResourceTypes.Media, id, User.Identity.GetUserIdentity());
             return StatusCode(204);
         }
 
@@ -253,11 +230,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var status = _entityIndex.Status(ResourceType.Media, id) ?? ContentStatus.Published;
-            if (!UserPermissions.IsAllowedToGet(User.Identity, status, _entityIndex.Owner(ResourceType.Media, id)))
+            var status = _entityIndex.Status(ResourceTypes.Media, id) ?? ContentStatus.Published;
+            if (!UserPermissions.IsAllowedToGet(User.Identity, status, _entityIndex.Owner(ResourceTypes.Media, id)))
                 return Forbid();
 
-            if (!_entityIndex.Exists(ResourceType.Media, id))
+            if (!_entityIndex.Exists(ResourceTypes.Media, id))
                 return NotFound();
 
             var media = _db.Get<MediaElement>((ResourceType.Media, id));
@@ -281,11 +258,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!_entityIndex.Exists(ResourceType.Media, id))
+            if (!_entityIndex.Exists(ResourceTypes.Media, id))
                 return NotFound();
 
-            var status = _entityIndex.Status(ResourceType.Media, id).GetValueOrDefault();
-            if (!UserPermissions.IsAllowedToEdit(User.Identity, status, _entityIndex.Owner(ResourceType.Media, id)))
+            var status = _entityIndex.Status(ResourceTypes.Media, id).GetValueOrDefault();
+            if (!UserPermissions.IsAllowedToEdit(User.Identity, status, _entityIndex.Owner(ResourceTypes.Media, id)))
                 return Forbid();
 
             var extension = file.FileName.Split('.').Last();
@@ -340,10 +317,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!UserPermissions.IsAllowedToGet(User.Identity, _entityIndex.Owner(ResourceType.Media, id)))
+            if (!UserPermissions.IsAllowedToGet(User.Identity, _entityIndex.Owner(ResourceTypes.Media, id)))
                 return Forbid();
 
-            return ReferenceInfoHelper.GetReferenceInfo(ResourceType.Media, id, _entityIndex, _referencesIndex);
+            return ReferenceInfoHelper.GetReferenceInfo(ResourceTypes.Media, id, _entityIndex, _referencesIndex);
         }
 
 

@@ -26,6 +26,18 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
             Type = args.Type;
             Status = args.Status;
         }
+
+        public MediaArgs CreateMediaArgs()
+        {
+            var args = new MediaArgs
+            {
+                Title = Title,
+                Description = Description,
+                Type = Type,
+                Status = Status
+            };
+            return args;
+        }
     }
 
     public enum MediaType

@@ -11,7 +11,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 
         public ContentStatus GetStatus() => Properties.Status;
 
-        public override ResourceType GetEntityType() => ResourceType.Media;
+        public override ResourceType GetEntityType() => ResourceTypes.Media;
 
         public IEnumerable<EntityId> GetReferences() => Enumerable.Empty<EntityId>();
     }

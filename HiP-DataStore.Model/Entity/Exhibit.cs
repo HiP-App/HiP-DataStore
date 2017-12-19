@@ -45,5 +45,22 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
             Pages = args.Pages;
             AccessRadius = args.AccessRadius;
         }
+
+        public ExhibitArgs CreateExhibitArgs()
+        {
+            var args = new ExhibitArgs
+            {
+                Name = Name,
+                Description = Description,
+                Image = Image.Id.AsNullableInt32,
+                Latitude = Latitude,
+                Longitude = Longitude,
+                Status = Status,
+                Tags = Tags?.Ids.Select(id => id.AsInt32).ToList(),
+                Pages = Pages?.Ids.Select(id => id.AsInt32).ToList(),
+                AccessRadius = AccessRadius
+            };
+            return args;
+        }
     }
 }
