@@ -12,7 +12,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         [BsonElement]
         public DocRef<MediaElement> Image { get; private set; } =
-            new DocRef<MediaElement>(ResourceType.Media.Name);
+            new DocRef<MediaElement>(ResourceTypes.Media.Name);
 
         public Tag()
         {
@@ -24,6 +24,16 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
             Description = args.Description;
             Image.Id = args.Image;
             Status = args.Status;
+        }
+
+        public TagArgs CreateTagArgs()
+        {
+            var args = new TagArgs();
+            args.Title = Title;
+            args.Description = Description;
+            args.Image = Image.Id.AsNullableInt32;
+            args.Status = Status;
+            return args;
         }
     }
 }

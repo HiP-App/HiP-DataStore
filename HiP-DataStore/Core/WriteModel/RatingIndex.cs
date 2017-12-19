@@ -3,7 +3,6 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using System;
 using System.Collections.Generic;
-using ResourceType = PaderbornUniversity.SILab.Hip.DataStore.Model.ResourceType; // TODO: Remove after architectural changes
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 {
@@ -39,7 +38,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
             switch (e)
             {
                 case RatingAdded ev:
-
                     var ratedType = GetOrCreateRatingTypeInfo(ev.RatedType);
                     ratedType.MaximumId = Math.Max(ratedType.MaximumId, ev.Id);
 

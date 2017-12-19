@@ -102,7 +102,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
             // (Regarding additional information pages, nothing needs to be changed.)
             foreach (var exhibit in exhibits)
                 foreach (var page in exhibit.Value.Pages)
-                    e.AppendEvent(new ReferenceAdded(ResourceType.Exhibit, exhibit.Key, ResourceType.ExhibitPage, page));
+                    e.AppendEvent(new ReferenceAdded(ResourceTypes.Exhibit, exhibit.Key, ResourceTypes.ExhibitPage, page));
 
         }
     }

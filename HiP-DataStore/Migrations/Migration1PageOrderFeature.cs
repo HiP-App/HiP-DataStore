@@ -28,8 +28,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
             {
                 switch (events.Current)
                 {
-                    case ReferenceAdded ev when ev.SourceType == ResourceType.ExhibitPage && ev.TargetType == ResourceType.Exhibit:
-                    case ReferenceRemoved ev2 when ev2.SourceType == ResourceType.ExhibitPage && ev2.TargetType == ResourceType.Exhibit:
+                    case ReferenceAdded ev when ev.SourceType == ResourceTypes.ExhibitPage && ev.TargetType == ResourceTypes.Exhibit:
+                    case ReferenceRemoved ev2 when ev2.SourceType == ResourceTypes.ExhibitPage && ev2.TargetType == ResourceTypes.Exhibit:
                         // pages no longer reference the containing exhibit => ignore such references
                         break;
 

@@ -1,8 +1,7 @@
 ﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Migrations;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 {
@@ -11,11 +10,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
     {
         public ExhibitPageArgs2 Properties { get; set; }
 
-        public override ResourceType GetEntityType() => ResourceType.ExhibitPage;
+        public override ResourceType GetEntityType() => ResourceTypes.ExhibitPage;
 
         public ContentStatus GetStatus() => Properties.Status;
-
-        public IEnumerable<EntityId> GetReferences() => Properties?.GetReferences() ?? Enumerable.Empty<EntityId>();
     }
 
     [Obsolete]
@@ -29,11 +26,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 
         public DateTimeOffset Timestamp { get; set; }
 
-        public ResourceType GetEntityType() => ResourceType.ExhibitPage;
+        public ResourceType GetEntityType() => ResourceTypes.ExhibitPage;
 
         public ContentStatus GetStatus() => Properties.Status;
-
-        public IEnumerable<EntityId> GetReferences() => throw new NotSupportedException();
     }
 
     [Obsolete]
@@ -47,11 +42,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 
         public DateTimeOffset Timestamp { get; set; }
 
-        public ResourceType GetEntityType() => ResourceType.ExhibitPage;
+        public ResourceType GetEntityType() => ResourceTypes.ExhibitPage;
 
         public ContentStatus GetStatus() => Properties.Status;
-
-        public IEnumerable<EntityId> GetReferences() => throw new NotSupportedException();
 
         public ExhibitPageCreated2 Migrate() => new ExhibitPageCreated2
         {
