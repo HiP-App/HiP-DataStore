@@ -25,17 +25,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         public string FontFamily { get; set; }
 
-        [ResourceReference(nameof(ResourceType.Media))]
+        [ResourceReference(nameof(ResourceTypes.Media))]
         public int? Audio { get; set; }
         
-        [ResourceReference(nameof(ResourceType.Media))]
+        [ResourceReference(nameof(ResourceTypes.Media))]
         public int? Image { get; set; }
 
         public List<SliderPageImage> Images { get; private set; }
 
         public bool HideYearNumbers { get; set; }
 
-        [ResourceReference(nameof(ResourceType.ExhibitPage))]
+        [ResourceReference(nameof(ResourceTypes.ExhibitPage))]
         public List<int> AdditionalInformationPages { get; set; }
 
         public ExhibitPage()
@@ -65,11 +65,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
             args.Text = Text;
             args.Description = Description;
             args.FontFamily = FontFamily;
-            args.Audio = Audio.Id.AsNullableInt32;
-            args.Image = Image.Id.AsNullableInt32;
-            args.Images = Images?.Select(i => new SliderPageImageArgs() { Date = i.Date, Image = i.Image.Id.AsInt32 }).ToList();
+            args.Audio = Audio;
+            args.Image = Image;
+            args.Images = Images?.Select(i => new SliderPageImageArgs() { Date = i.Date, Image = i.Image }).ToList();
             args.HideYearNumbers = HideYearNumbers;
-            args.AdditionalInformationPages = AdditionalInformationPages?.Ids.Select(i => i.AsInt32).ToList();
+            args.AdditionalInformationPages = AdditionalInformationPages;
             args.Status = Status;
             return args;
         }

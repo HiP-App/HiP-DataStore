@@ -2,16 +2,15 @@
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
 using MongoDB.Driver;
-using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
-using PaderbornUniversity.SILab.Hip.DataStore.MongoTemp;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
+using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -74,7 +73,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 var routeIds = args.OnlyRoutes?.Select(id => (BsonValue)id).ToList();
 
                 var exhibits = _db
-                    .GetCollection<Exhibit>(ResourceType.Exhibit)
+                    .GetCollection<Exhibit>(ResourceTypes.Exhibit)
                     .FilterByIds(args.Exclude, args.IncludeOnly)
                     .FilterByLocation(args.Latitude, args.Longitude)
                     .FilterByUser(args.Status, User.Identity)
@@ -84,7 +83,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                         x.Name.ToLower().Contains(args.Query.ToLower()) ||
                         x.Description.ToLower().Contains(args.Query.ToLower()))
                     .FilterIf(args.OnlyRoutes != null, x => x.Referencers
-                        .Any(r => r.Collection == ResourceTypes.Route.Name && routeIds.Contains(r.Id)))
+                        .Any(r => r.Type == ResourceTypes.Route && routeIds.Contains(r.Id)))
                     .Sort(args.OrderBy,
                         ("id", x => x.Id),
                         ("name", x => x.Name),
@@ -118,7 +117,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!UserPermissions.IsAllowedToGet(User.Identity, status, _entityIndex.Owner(ResourceTypes.Exhibit, id)))
                 return Forbid();
 
-            var exhibit = _db.Get<Exhibit>((ResourceType.Exhibit, id));
+            var exhibit = _db.Get<Exhibit>((ResourceTypes.Exhibit, id));
 
             if (exhibit == null)
                 return NotFound();

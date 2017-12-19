@@ -1,10 +1,7 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
-using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 {
@@ -20,16 +17,16 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         public double Distance { get; set; }
 
-        [ResourceReference(nameof(ResourceType.Media))]
+        [ResourceReference(nameof(ResourceTypes.Media))]
         public int? Image { get; set; }
 
-        [ResourceReference(nameof(ResourceType.Media))]
+        [ResourceReference(nameof(ResourceTypes.Media))]
         public int? Audio { get; set; }
 
-        [ResourceReference(nameof(ResourceType.Exhibit))]
+        [ResourceReference(nameof(ResourceTypes.Exhibit))]
         public List<int> Exhibits { get; set; }
 
-        [ResourceReference(nameof(ResourceType.Tag))]
+        [ResourceReference(nameof(ResourceTypes.Tag))]
         public List<int> Tags { get; set; }
 
         public Route()
@@ -56,10 +53,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
             args.Description = Description;
             args.Duration = Duration;
             args.Distance = Distance;
-            args.Image = Image.Id.AsNullableInt32;
-            args.Audio = Audio.Id.AsNullableInt32;
-            args.Exhibits = Exhibits.Ids.Select(i => i.AsInt32).ToList();
-            args.Tags = Tags.Ids.Select(i => i.AsInt32).ToList();
+            args.Image = Image;
+            args.Audio = Audio;
+            args.Exhibits = Exhibits;
+            args.Tags = Tags;
             args.Status = Status;
             return args;
         }

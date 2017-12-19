@@ -9,7 +9,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         public string Description { get; set; }
 
-        [ResourceReference(nameof(ResourceType.Media))]
+        [ResourceReference(nameof(ResourceTypes.Media))]
         public int? Image { get; set; }
 
         public Tag()
@@ -29,7 +29,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
             var args = new TagArgs();
             args.Title = Title;
             args.Description = Description;
-            args.Image = Image.Id.AsNullableInt32;
+            args.Image = Image;
             args.Status = Status;
             return args;
         }

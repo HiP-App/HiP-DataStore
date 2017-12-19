@@ -5,16 +5,15 @@ using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
-using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
-using PaderbornUniversity.SILab.Hip.DataStore.MongoTemp;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
+using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -97,7 +96,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             try
             {
                 var medias = _db
-                    .GetCollection<MediaElement>(ResourceType.Media)
+                    .GetCollection<MediaElement>(ResourceTypes.Media)
                     .FilterByIds(args.Exclude, args.IncludeOnly)
                     .FilterByUser(args.Status, User.Identity)
                     .FilterByStatus(args.Status, User.Identity)
@@ -141,7 +140,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!UserPermissions.IsAllowedToGet(User.Identity, status, _entityIndex.Owner(ResourceTypes.Media, id)))
                 return Forbid();
 
-            var media = _db.Get<MediaElement>((ResourceType.Media, id));
+            var media = _db.Get<MediaElement>((ResourceTypes.Media, id));
 
             if (media == null)
                 return NotFound();
@@ -237,7 +236,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceTypes.Media, id))
                 return NotFound();
 
-            var media = _db.Get<MediaElement>((ResourceType.Media, id));
+            var media = _db.Get<MediaElement>((ResourceTypes.Media, id));
 
             if (media?.File == null || !System.IO.File.Exists(media.File))
                 return NotFound();

@@ -1,8 +1,5 @@
-﻿using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
-using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -20,13 +17,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         public float AccessRadius { get; set; }
 
-        [ResourceReference(nameof(ResourceType.Media))]
+        [ResourceReference(nameof(ResourceTypes.Media))]
         public int? Image { get; set; }
 
-        [ResourceReference(nameof(ResourceType.Tag))]
+        [ResourceReference(nameof(ResourceTypes.Tag))]
         public List<int> Tags { get; set; }
 
-        [ResourceReference(nameof(ResourceType.ExhibitPage))]
+        [ResourceReference(nameof(ResourceTypes.ExhibitPage))]
         public List<int> Pages { get; private set; }
 
         public Exhibit()
@@ -52,12 +49,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
             {
                 Name = Name,
                 Description = Description,
-                Image = Image.Id.AsNullableInt32,
+                Image = Image,
                 Latitude = Latitude,
                 Longitude = Longitude,
                 Status = Status,
-                Tags = Tags?.Ids.Select(id => id.AsInt32).ToList(),
-                Pages = Pages?.Ids.Select(id => id.AsInt32).ToList(),
+                Tags = Tags,
+                Pages = Pages,
                 AccessRadius = AccessRadius
             };
             return args;

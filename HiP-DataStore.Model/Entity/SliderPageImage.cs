@@ -9,7 +9,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
     {
         public string Date { get; set; }
 
-        [ResourceReference(nameof(ResourceType.Media))]
+        [ResourceReference(nameof(ResourceTypes.Media))]
         public int Image { get; set; }
 
         public SliderPageImage()

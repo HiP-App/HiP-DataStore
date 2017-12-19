@@ -1,16 +1,15 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
-using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
-using PaderbornUniversity.SILab.Hip.DataStore.MongoTemp;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
+using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -61,10 +60,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_board.AllRecords().Any(x => x.UserId == id))
                 return NotFound();
 
-            var query = _db.GetCollection<ScoreRecord>(ResourceType.ScoreRecord);
-            var allRecords = new ScoreResults(query.Where(x => x.UserId == id)
-                                                   .OrderByDescending(x => x.Timestamp)
-                                                   .PaginateAndSelect(null, null, x => new ScoreResult(x))); 
+            var query = _db.GetCollection<ScoreRecord>(ResourceTypes.ScoreRecord);
+
+            var allRecords = new ScoreResults(query
+                .Where(x => x.UserId == id)
+                .OrderByDescending(x => x.Timestamp)
+                .PaginateAndSelect(null, null, x => new ScoreResult(x))); 
 
             allRecords.Rank = _board.AllRecords().ToList().FindIndex(x => x.UserId == id) + 1;
         

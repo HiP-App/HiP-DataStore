@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
@@ -11,12 +10,8 @@ using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Events;
 using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
-using System;
-using System.Collections.Generic;
 using System.Linq;
 using Tag = PaderbornUniversity.SILab.Hip.DataStore.Model.Entity.Tag;
-using ResourceType = PaderbornUniversity.SILab.Hip.DataStore.Model.ResourceType; // TODO: Remove after architectural changes
-using PaderbornUniversity.SILab.Hip.DataStore.MongoTemp;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 {
@@ -57,10 +52,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
             switch (ev)
             {
                 case MediaFileUpdated e:
-                    var fileDocBson = e.ToBsonDocument();
-                    fileDocBson.Remove("_id");
-                    var bsonDoc = new BsonDocument("$set", fileDocBson);
-                    _db.GetCollection<MediaElement>(ResourceTypes.Media.Name).UpdateOne(x => x.Id == e.Id, bsonDoc);
+
+
+                    //var fileDocBson = e.ToBsonDocument();
+                    //fileDocBson.Remove("_id");
+                    //var bsonDoc = new BsonDocument("$set", fileDocBson);
+                    //_db.GetCollection<MediaElement>(ResourceTypes.Media).UpdateOne(x => x.Id == e.Id, bsonDoc);
                     break;
 
                 case ScoreAdded e:
@@ -79,13 +76,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     switch (resourceType)
                     {
                         case ResourceType _ when resourceType == ResourceTypes.Exhibit:
-                            var newExhibit2 = new Exhibit(new ExhibitArgs())
+                            var newExhibit = new Exhibit(new ExhibitArgs())
                             {
                                 Id = e.Id,
                                 UserId = e.UserId,
                                 Timestamp = e.Timestamp
                             };
-                            _db.GetCollection<Exhibit>(ResourceTypes.Exhibit.Name).InsertOne(newExhibit2);
+                            _db.Add(ResourceTypes.Exhibit, newExhibit);
                             break;
 
                         case ResourceType _ when resourceType == ResourceTypes.ExhibitPage:
@@ -95,7 +92,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                                 UserId = e.UserId,
                                 Timestamp = e.Timestamp
                             };
-                            _db.GetCollection<ExhibitPage>(ResourceTypes.ExhibitPage.Name).InsertOne(newExhibitPage);
+                            _db.Add(ResourceTypes.ExhibitPage, newExhibitPage);
                             break;
 
                         case ResourceType _ when resourceType == ResourceTypes.Media:
@@ -105,7 +102,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                                 UserId = e.UserId,
                                 Timestamp = e.Timestamp
                             };
-                            _db.GetCollection<MediaElement>(ResourceTypes.Media.Name).InsertOne(newMedium);
+                            _db.Add(ResourceTypes.Media, newMedium);
                             break;
 
                         case ResourceType _ when resourceType == ResourceTypes.Route:
@@ -115,7 +112,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                                 UserId = e.UserId,
                                 Timestamp = e.Timestamp
                             };
-                            _db.GetCollection<Route>(ResourceTypes.Route.Name).InsertOne(newRoute);
+                            _db.Add(ResourceTypes.Route, newRoute);
                             break;
                         case ResourceType _ when resourceType == ResourceTypes.Tag:
                             var newTag = new Tag(new TagArgs())
@@ -124,7 +121,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                                 UserId = e.UserId,
                                 Timestamp = e.Timestamp
                             };
-                            _db.GetCollection<Tag>(ResourceTypes.Tag.Name).InsertOne(newTag);
+                            _db.Add(ResourceTypes.Tag, newTag);
                             break;
                     }
                     break;
@@ -134,7 +131,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     switch (resourceType)
                     {
                         case ResourceType _ when resourceType == ResourceTypes.Exhibit:
-                            var originalExhibit = _db.GetCollection<Exhibit>(ResourceTypes.Exhibit.Name).AsQueryable().First(x => x.Id == e.Id);
+                            var originalExhibit = _db.Get<Exhibit>((ResourceTypes.Exhibit, e.Id));
                             var exhibitArgs = originalExhibit.CreateExhibitArgs();
                             var propertyInfo = typeof(ExhibitArgs).GetProperty(e.PropertyName);
                             oldValue = propertyInfo.GetValue(exhibitArgs);
@@ -142,16 +139,16 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                             var updatedExhibit = new Exhibit(exhibitArgs)
                             {
                                 Id = e.Id,
-                                UserId = e.UserId,
+                                UserId = originalExhibit.UserId,
                                 Timestamp = e.Timestamp
                             };
                             updatedExhibit.References.AddRange(originalExhibit.References);
                             updatedExhibit.Referencers.AddRange(originalExhibit.Referencers);
-                            _db.GetCollection<Exhibit>(ResourceTypes.Exhibit.Name).ReplaceOne(x => x.Id == e.Id, updatedExhibit);
+                            _db.Replace((ResourceTypes.Exhibit, e.Id), updatedExhibit);
                             break;
 
                         case ResourceType _ when resourceType == ResourceTypes.ExhibitPage:
-                            var originalExhibitPage = _db.GetCollection<ExhibitPage>(ResourceTypes.ExhibitPage.Name).AsQueryable().First(x => x.Id == e.Id);
+                            var originalExhibitPage = _db.Get<ExhibitPage>((ResourceTypes.ExhibitPage, e.Id));
                             var pageArgs = originalExhibitPage.CreateExhibitPageArgs();
                             propertyInfo = typeof(ExhibitPageArgs2).GetProperty(e.PropertyName);
                             oldValue = propertyInfo.GetValue(pageArgs);
@@ -159,16 +156,16 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                             var updatedExhibitPage = new ExhibitPage(pageArgs)
                             {
                                 Id = e.Id,
-                                UserId = e.UserId,
+                                UserId = originalExhibitPage.UserId,
                                 Timestamp = e.Timestamp
                             };
                             updatedExhibitPage.References.AddRange(originalExhibitPage.References);
                             updatedExhibitPage.Referencers.AddRange(originalExhibitPage.Referencers);
-                            _db.GetCollection<ExhibitPage>(ResourceTypes.ExhibitPage.Name).ReplaceOne(p => p.Id == e.Id, updatedExhibitPage);
+                            _db.Replace((ResourceTypes.ExhibitPage, e.Id), updatedExhibitPage);
                             break;
 
                         case ResourceType _ when resourceType == ResourceTypes.Media:
-                            var originalMedium = _db.GetCollection<MediaElement>(ResourceTypes.Media.Name).AsQueryable().First(x => x.Id == e.Id);
+                            var originalMedium = _db.Get<MediaElement>((ResourceTypes.Media, e.Id));
                             var mediaArgs = originalMedium.CreateMediaArgs();
                             propertyInfo = typeof(MediaArgs).GetProperty(e.PropertyName);
                             oldValue = propertyInfo.GetValue(mediaArgs);
@@ -176,17 +173,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                             var updatedMedium = new MediaElement(mediaArgs)
                             {
                                 Id = e.Id,
-                                UserId = e.UserId,
+                                UserId = originalMedium.UserId,
                                 Timestamp = e.Timestamp
                             };
                             updatedMedium.File = originalMedium.File;
                             updatedMedium.References.AddRange(originalMedium.References);
                             updatedMedium.Referencers.AddRange(originalMedium.Referencers);
-                            _db.GetCollection<MediaElement>(ResourceTypes.Media.Name).ReplaceOne(p => p.Id == e.Id, updatedMedium);
+                            _db.Replace((ResourceTypes.Media, e.Id), updatedMedium);
                             break;
 
                         case ResourceType _ when resourceType == ResourceTypes.Route:
-                            var originalRoute = _db.GetCollection<Route>(ResourceTypes.Route.Name).AsQueryable().First(x => x.Id == e.Id);
+                            var originalRoute = _db.Get<Route>((ResourceTypes.Route, e.Id));
                             var routeArgs = originalRoute.CreateRouteArgs();
                             propertyInfo = typeof(RouteArgs).GetProperty(e.PropertyName);
                             oldValue = propertyInfo.GetValue(routeArgs);
@@ -194,16 +191,16 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                             var updatedRoute = new Route(routeArgs)
                             {
                                 Id = e.Id,
-                                UserId = e.UserId,
+                                UserId = originalRoute.UserId,
                                 Timestamp = e.Timestamp
                             };
                             updatedRoute.References.AddRange(originalRoute.References);
                             updatedRoute.Referencers.AddRange(originalRoute.Referencers);
-                            _db.GetCollection<Route>(ResourceTypes.Route.Name).ReplaceOne(p => p.Id == e.Id, updatedRoute);
+                            _db.Replace((ResourceTypes.Route, e.Id), updatedRoute);
                             break;
 
                         case ResourceType _ when resourceType == ResourceTypes.Tag:
-                            var originalTag = _db.GetCollection<Tag>(ResourceTypes.Tag.Name).AsQueryable().First(x => x.Id == e.Id);
+                            var originalTag = _db.Get<Tag>((ResourceTypes.Tag, e.Id));
                             var tagArgs = originalTag.CreateTagArgs();
                             propertyInfo = typeof(TagArgs).GetProperty(e.PropertyName);
                             oldValue = propertyInfo.GetValue(tagArgs);
@@ -211,12 +208,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                             var updatedTag = new Tag(tagArgs)
                             {
                                 Id = e.Id,
-                                UserId = e.UserId,
+                                UserId = originalTag.UserId,
                                 Timestamp = e.Timestamp
                             };
                             updatedTag.References.AddRange(originalTag.References);
                             updatedTag.Referencers.AddRange(originalTag.Referencers);
-                            _db.GetCollection<Tag>(ResourceTypes.Tag.Name).ReplaceOne(p => p.Id == e.Id, updatedTag);
+                            _db.Replace((ResourceTypes.Tag, e.Id), updatedTag);
                             break;
                     }
                     break;
@@ -226,20 +223,19 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     switch (resourceType)
                     {
                         case ResourceType _ when resourceType == ResourceTypes.Exhibit:
-                            MarkDeleted<Exhibit>(resourceType, e.Id);
+                            MarkDeleted((resourceType, e.Id));
                             break;
                         case ResourceType _ when resourceType == ResourceTypes.ExhibitPage:
-                            MarkDeleted<ExhibitPage>(resourceType, e.Id);
+                            MarkDeleted((resourceType, e.Id));
                             break;
-
                         case ResourceType _ when resourceType == ResourceTypes.Media:
-                            MarkDeleted<MediaElement>(resourceType, e.Id);
+                            MarkDeleted((resourceType, e.Id));
                             break;
                         case ResourceType _ when resourceType == ResourceTypes.Route:
-                            MarkDeleted<Route>(resourceType, e.Id);
+                            MarkDeleted((resourceType, e.Id));
                             break;
                         case ResourceType _ when resourceType == ResourceTypes.Tag:
-                            MarkDeleted<Tag>(resourceType, e.Id);
+                            MarkDeleted((resourceType, e.Id));
                             break;
                     }
                     break;
@@ -251,17 +247,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 
                 foreach (var remove in removedReferences)
                 {
-                    RemoveReference((propEvent.GetEntityType(), propEvent.Id), remove);
+                    _db.RemoveReference((propEvent.GetEntityType(), propEvent.Id), remove);
                 }
 
                 if (addedReferences.Any())
-                    AddReferences((propEvent.GetEntityType(), propEvent.Id), addedReferences);
+                    _db.AddReferences((propEvent.GetEntityType(), propEvent.Id), addedReferences);
             }
         }
 
         private void MarkDeleted(EntityId entity)
         {
-            var result = _db.Update<ContentBase>(entity, update => update.Set(o => o.Status, ContentStatus.Published));
+            _db.Update<ContentBase>(entity, update => update.Set(o => o.Status, ContentStatus.Published));
         }
 
 
