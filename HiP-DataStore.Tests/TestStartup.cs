@@ -1,30 +1,38 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization.Policy;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using NSwag.AspNetCore;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
+using PaderbornUniversity.SILab.Hip.EventSourcing.DummyStore;
 using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
+using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo.Test;
 using PaderbornUniversity.SILab.Hip.Webservice;
+using System.Collections.Generic;
 
-namespace PaderbornUniversity.SILab.Hip.DataStore
+namespace PaderbornUniversity.SILab.Hip.DataStore.Tests
 {
-    public class Startup
+    public class TestStartup
     {
-        public Startup(IHostingEnvironment env)
+        private static readonly Dictionary<string, string> _appsettings = new Dictionary<string, string>
+        {
+            { "EventStore:Host", "" },
+            { "EventStore:Stream", "test" }
+        };
+
+        public TestStartup(IHostingEnvironment env)
         {
             var builder = new ConfigurationBuilder()
+                .AddInMemoryCollection(_appsettings)
                 .SetBasePath(env.ContentRootPath)
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
                 .AddEnvironmentVariables();
             Configuration = builder.Build();
 
@@ -49,15 +57,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             var serviceProvider = services.BuildServiceProvider(); // allows us to actually get the configured services           
             var authConfig = serviceProvider.GetService<IOptions<AuthConfig>>();
 
-            // Configure authentication
-            services
-                .AddAuthentication(options => options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(options =>
-                {
-                    options.Audience = authConfig.Value.Audience;
-                    options.Authority = authConfig.Value.Authority;
-                });
-
             // Configure authorization
             var domain = authConfig.Value.Authority;
             services.AddAuthorization(options =>
@@ -74,8 +73,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             services.AddMvc();
 
             services
-                .AddSingleton<IEventStore, EventSourcing.EventStoreLlp.EventStore>()
-                .AddSingleton<IMongoDbContext, MongoDbContext>()
+                .AddSingleton<IEventStore, DummyEventStore>()
+                .AddSingleton<IMongoDbContext, FakeMongoDbContext>()
                 .AddSingleton<EventStoreService>()
                 .AddSingleton<CacheDatabaseManager>()
                 .AddSingleton<InMemoryCache>()
@@ -90,7 +89,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory,
-            IOptions<CorsConfig> corsConfig)
+            IOptions<EndpointConfig> endpointConfig)
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"))
                          .AddDebug();
@@ -99,23 +98,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             // something), so we manually request an instance here
             app.ApplicationServices.GetService<CacheDatabaseManager>();
 
-            // Ensures that "Request.Scheme" is correctly set to "https" in our nginx-environment
-            app.UseRequestSchemeFixer();
-
-            // Use CORS (important: must be before app.UseMvc())
-            app.UseCors(builder =>
-            {
-                var corsEnvConf = corsConfig.Value.Cors[env.EnvironmentName];
-                builder
-                    .WithOrigins(corsEnvConf.Origins)
-                    .WithMethods(corsEnvConf.Methods)
-                    .WithHeaders(corsEnvConf.Headers)
-                    .WithExposedHeaders(corsEnvConf.ExposedHeaders);
-            });
-
+            app.Use(TestUserInjector.InvokeAsync);
             app.UseAuthentication();
             app.UseMvc();
-            app.UseSwaggerUiHip();
         }
     }
 }
