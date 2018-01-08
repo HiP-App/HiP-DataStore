@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PaderbornUniversity.SILab.Hip.EventSourcing;
+using System;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model
 {
@@ -33,7 +34,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
 
         public bool Equals(EntityId other) => Type == other.Type && Id == other.Id;
 
-        
+
         public static bool operator ==(EntityId a, EntityId b) => Equals(a, b);
 
         public static bool operator !=(EntityId a, EntityId b) => !Equals(a, b);

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PaderbornUniversity.SILab.Hip.EventSourcing;
+using System;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 {

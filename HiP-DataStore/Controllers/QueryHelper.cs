@@ -8,6 +8,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using System.Security.Principal;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using static System.Math;
+using PaderbornUniversity.SILab.Hip.EventSourcing;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {

@@ -2,6 +2,7 @@
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
+using PaderbornUniversity.SILab.Hip.EventSourcing.Events;
 using System;
 using System.Threading.Tasks;
 
@@ -34,15 +35,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
 
             while (await enumerator.MoveNextAsync())
             {
-                if (enumerator.Current is ICrudEvent crudEvent &&
-                    crudEvent.GetEntityType() == entityId.Type && crudEvent.Id == entityId.Id)
+                if (enumerator.Current is BaseEvent baseEvent &&
+                    baseEvent.GetEntityType() == entityId.Type && baseEvent.Id == entityId.Id)
                 {
-                    var timestamp = crudEvent.Timestamp;
-                    var user = (crudEvent as IUserActivityEvent)?.UserId;
+                    var timestamp = baseEvent.Timestamp;
+                    var user = baseEvent.UserId;
 
-                    switch (crudEvent)
+                    switch (baseEvent)
                     {
-                        case ICreateEvent _:
+                        case CreatedEvent _:
                             if (summary.Created.HasValue)
                             {
                                 // assumption: entity was deleted before and is now recreated (we don't check if there
@@ -56,12 +57,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
                             summary.Changes.Add(new HistorySummary.Change(timestamp, "Created", user));
                             break;
 
-                        case IUpdateEvent _:
+                        case PropertyChangedEvent ev:
                             summary.LastModified = timestamp;
-                            summary.Changes.Add(new HistorySummary.Change(timestamp, "Updated", user));
+                            summary.Changes.Add(new HistorySummary.Change(timestamp, "Updated", user, ev.PropertyName, ev.Value));
                             break;
 
-                        case IDeleteEvent _:
+                        case DeletedEvent _:
                             summary.LastModified = timestamp;
                             summary.Deleted = timestamp;
                             summary.Changes.Add(new HistorySummary.Change(timestamp, "Deleted", user));

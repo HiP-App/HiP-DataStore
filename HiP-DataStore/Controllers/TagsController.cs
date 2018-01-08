@@ -4,7 +4,6 @@ using MongoDB.Driver;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
@@ -14,7 +13,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Tag = PaderbornUniversity.SILab.Hip.DataStore.Model.Entity.Tag;
-using ResourceType = PaderbornUniversity.SILab.Hip.DataStore.Model.ResourceType; // TODO: Remove after architectural changes
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
@@ -51,7 +49,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
                 return Forbid();
 
-            return Ok(_entityIndex.AllIds(ResourceType.Tag, status, User.Identity));
+            return Ok(_entityIndex.AllIds(ResourceTypes.Tag, status, User.Identity));
         }
 
         [HttpGet]
@@ -67,7 +65,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (args.Status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
                 return Forbid();
 
-            var query = _db.Database.GetCollection<Tag>(ResourceType.Tag.Name).AsQueryable();
+            var query = _db.Database.GetCollection<Tag>(ResourceTypes.Tag.Name).AsQueryable();
 
             try
             {
@@ -86,7 +84,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                         ("timestamp", x => x.Timestamp))
                     .PaginateAndSelect(args.Page, args.PageSize, x => new TagResult(x)
                     {
-                        Timestamp = _referencesIndex.LastModificationCascading(ResourceType.Tag, x.Id)
+                        Timestamp = _referencesIndex.LastModificationCascading(ResourceTypes.Tag, x.Id)
                     });
 
 
@@ -110,11 +108,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var status = _entityIndex.Status(ResourceType.Tag, id) ?? ContentStatus.Published;
-            if (!UserPermissions.IsAllowedToGet(User.Identity, status, _entityIndex.Owner(ResourceType.Tag, id)))
+            var status = _entityIndex.Status(ResourceTypes.Tag, id) ?? ContentStatus.Published;
+            if (!UserPermissions.IsAllowedToGet(User.Identity, status, _entityIndex.Owner(ResourceTypes.Tag, id)))
                 return Forbid();
 
-            var tag = _db.Database.GetCollection<Tag>(ResourceType.Tag.Name)
+            var tag = _db.Database.GetCollection<Tag>(ResourceTypes.Tag.Name)
                 .AsQueryable()
                 .FirstOrDefault(x => x.Id == id);
 
@@ -126,7 +124,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             var tagResult = new TagResult(tag)
             {
-                Timestamp = _referencesIndex.LastModificationCascading(ResourceType.Tag, id)
+                Timestamp = _referencesIndex.LastModificationCascading(ResourceTypes.Tag, id)
             };
 
             return Ok(tagResult);
@@ -151,19 +149,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (_tagIndex.IsTitleExist(args.Title))
                 return StatusCode(409);
 
-            int id = _entityIndex.NextId(ResourceType.Tag);
-
-            var ev = new TagCreated
-            {
-                Id = id,
-                UserId = User.Identity.GetUserIdentity(),
-                Properties = args,
-                Timestamp = DateTimeOffset.Now
-            };
-
-            await _eventStore.AppendEventAsync(ev);
+            int id = _entityIndex.NextId(ResourceTypes.Tag);
+            await EntityManager.CreateEntityAsync(_eventStore, args, ResourceTypes.Tag, id, User.Identity.GetUserIdentity());
             return Created($"{Request.Scheme}://{Request.Host}/api/Tags/{id}", id);
-
         }
 
         [HttpPut("{id}")]
@@ -179,30 +167,23 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!_entityIndex.Exists(ResourceType.Tag, id))
+            if (!_entityIndex.Exists(ResourceTypes.Tag, id))
                 return NotFound();
 
-            if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, _entityIndex.Owner(ResourceType.Tag, id)))
+            if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, _entityIndex.Owner(ResourceTypes.Tag, id)))
                 return Forbid();
 
-            var oldStatus = _entityIndex.Status(ResourceType.Tag, id).GetValueOrDefault();
+            var oldStatus = _entityIndex.Status(ResourceTypes.Tag, id).GetValueOrDefault();
             if (args.Status == ContentStatus.Unpublished && oldStatus != ContentStatus.Published)
-                return BadRequest(ErrorMessages.CannotBeUnpublished(ResourceType.Tag));
-            
+                return BadRequest(ErrorMessages.CannotBeUnpublished(ResourceTypes.Tag));
+
             var tagIdWithSameTitle = _tagIndex.GetIdByTagTitle(args.Title);
 
             if (tagIdWithSameTitle != null && tagIdWithSameTitle != id)
                 return StatusCode(409, ErrorMessages.TagNameAlreadyUsed);
 
-            var ev = new TagUpdated
-            {
-                Id = id,
-                UserId = User.Identity.GetUserIdentity(),
-                Properties = args,
-                Timestamp = DateTimeOffset.Now,
-            };
-
-            await _eventStore.AppendEventAsync(ev);
+            var oldArgs = await EventStreamExtensions.GetCurrentEntityAsync<TagArgs>(_eventStore.EventStream, ResourceTypes.Tag, id);
+            await EntityManager.UpdateEntityAsync(_eventStore, oldArgs, args, ResourceTypes.Tag, id, User.Identity.GetUserIdentity());
             return NoContent();
         }
 
@@ -216,27 +197,20 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!_entityIndex.Exists(ResourceType.Tag, id))
+            if (!_entityIndex.Exists(ResourceTypes.Tag, id))
                 return NotFound();
 
-            var status = _entityIndex.Status(ResourceType.Tag, id).GetValueOrDefault();
-            if (!UserPermissions.IsAllowedToDelete(User.Identity, status, _entityIndex.Owner(ResourceType.Tag, id)))
+            var status = _entityIndex.Status(ResourceTypes.Tag, id).GetValueOrDefault();
+            if (!UserPermissions.IsAllowedToDelete(User.Identity, status, _entityIndex.Owner(ResourceTypes.Tag, id)))
                 return Forbid();
 
             if (status == ContentStatus.Published)
-                return BadRequest(ErrorMessages.CannotBeDeleted(ResourceType.Route, id));
+                return BadRequest(ErrorMessages.CannotBeDeleted(ResourceTypes.Route, id));
 
-            if (_referencesIndex.IsUsed(ResourceType.Tag, id))
+            if (_referencesIndex.IsUsed(ResourceTypes.Tag, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
 
-            var ev = new TagDeleted
-            {
-                Id = id,
-                UserId = User.Identity.GetUserIdentity(),
-                Timestamp = DateTimeOffset.Now
-            };
-
-            await _eventStore.AppendEventAsync(ev);
+            await EntityManager.DeleteEntityAsync(_eventStore, ResourceTypes.Tag, id, User.Identity.GetUserIdentity());
             return NoContent();
         }
 
@@ -250,10 +224,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!UserPermissions.IsAllowedToGet(User.Identity, _entityIndex.Owner(ResourceType.Tag, id)))
+            if (!UserPermissions.IsAllowedToGet(User.Identity, _entityIndex.Owner(ResourceTypes.Tag, id)))
                 return Forbid();
 
-            return ReferenceInfoHelper.GetReferenceInfo(ResourceType.Tag, id, _entityIndex, _referencesIndex);
+            return ReferenceInfoHelper.GetReferenceInfo(ResourceTypes.Tag, id, _entityIndex, _referencesIndex);
         }
 
 

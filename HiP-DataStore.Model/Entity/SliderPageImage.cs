@@ -10,7 +10,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         [BsonElement]
         public DocRef<MediaElement> Image { get; private set; } =
-            new DocRef<MediaElement>(ResourceType.Media.Name);
+            new DocRef<MediaElement>(ResourceTypes.Media.Name);
 
         public SliderPageImage()
         {

@@ -14,7 +14,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using ResourceType = PaderbornUniversity.SILab.Hip.DataStore.Model.ResourceType; // TODO: Remove after architectural changes
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
@@ -51,7 +50,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
                 return Forbid();
 
-            return Ok(_entityIndex.AllIds(ResourceType.Route, status, User.Identity));
+            return Ok(_entityIndex.AllIds(ResourceTypes.Route, status, User.Identity));
         }
 
         [HttpGet]
@@ -68,7 +67,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (args.Status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
                 return Forbid();
 
-            var query = _db.Database.GetCollection<Route>(ResourceType.Route.Name).AsQueryable();
+            var query = _db.Database.GetCollection<Route>(ResourceTypes.Route.Name).AsQueryable();
 
             try
             {
@@ -86,7 +85,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                         ("timestamp", x => x.Timestamp))
                     .PaginateAndSelect(args.Page, args.PageSize, x => new RouteResult(x)
                     {
-                        Timestamp = _referencesIndex.LastModificationCascading(ResourceType.Route, x.Id)
+                        Timestamp = _referencesIndex.LastModificationCascading(ResourceTypes.Route, x.Id)
                     });
 
                 return Ok(routes);
@@ -109,11 +108,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var status = _entityIndex.Status(ResourceType.Route, id) ?? ContentStatus.Published;
-            if (!UserPermissions.IsAllowedToGet(User.Identity, status, _entityIndex.Owner(ResourceType.Route, id)))
+            var status = _entityIndex.Status(ResourceTypes.Route, id) ?? ContentStatus.Published;
+            if (!UserPermissions.IsAllowedToGet(User.Identity, status, _entityIndex.Owner(ResourceTypes.Route, id)))
                 return Forbid();
 
-            var route = _db.Database.GetCollection<Route>(ResourceType.Route.Name)
+            var route = _db.Database.GetCollection<Route>(ResourceTypes.Route.Name)
                 .AsQueryable()
                 .FirstOrDefault(x => x.Id == id);
 
@@ -126,7 +125,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             var result = new RouteResult(route)
             {
-                Timestamp = _referencesIndex.LastModificationCascading(ResourceType.Route, id)
+                Timestamp = _referencesIndex.LastModificationCascading(ResourceTypes.Route, id)
             };
 
             return Ok(result);
@@ -147,16 +146,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return Forbid();
 
             // validation passed, emit event
-            var ev = new RouteCreated
-            {
-                Id = _entityIndex.NextId(ResourceType.Route),
-                UserId = User.Identity.GetUserIdentity(),
-                Properties = args,
-                Timestamp = DateTimeOffset.Now
-            };
+            var id = _entityIndex.NextId(ResourceTypes.Route);
+            await EntityManager.CreateEntityAsync(_eventStore, args, ResourceTypes.Route, id, User.Identity.GetUserIdentity());
 
-            await _eventStore.AppendEventAsync(ev);
-            return Created($"{Request.Scheme}://{Request.Host}/api/Routes/{ev.Id}", ev.Id);
+            return Created($"{Request.Scheme}://{Request.Host}/api/Routes/{id}", id);
         }
 
         [HttpPut("{id}")]
@@ -171,26 +164,19 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!_entityIndex.Exists(ResourceType.Route, id))
+            if (!_entityIndex.Exists(ResourceTypes.Route, id))
                 return NotFound();
-            
-            if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, _entityIndex.Owner(ResourceType.Route, id)))
+
+            if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, _entityIndex.Owner(ResourceTypes.Route, id)))
                 return Forbid();
 
-            var oldStatus = _entityIndex.Status(ResourceType.Route, id).GetValueOrDefault();
+            var oldStatus = _entityIndex.Status(ResourceTypes.Route, id).GetValueOrDefault();
             if (args.Status == ContentStatus.Unpublished && oldStatus != ContentStatus.Published)
-                return BadRequest(ErrorMessages.CannotBeUnpublished(ResourceType.Route));
+                return BadRequest(ErrorMessages.CannotBeUnpublished(ResourceTypes.Route));
 
             // validation passed, emit event
-            var ev = new RouteUpdated
-            {
-                Id = id,
-                UserId = User.Identity.GetUserIdentity(),
-                Properties = args,
-                Timestamp = DateTimeOffset.Now,
-            };
-
-            await _eventStore.AppendEventAsync(ev);
+            var oldArgs = await EventStreamExtensions.GetCurrentEntityAsync<RouteArgs>(_eventStore.EventStream, ResourceTypes.Route, _entityIndex.NextId(ResourceTypes.Route));
+            await EntityManager.UpdateEntityAsync(_eventStore, oldArgs, args, ResourceTypes.Route, id, User.Identity.GetUserIdentity());
             return StatusCode(204);
         }
 
@@ -204,28 +190,21 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!_entityIndex.Exists(ResourceType.Route, id))
+            if (!_entityIndex.Exists(ResourceTypes.Route, id))
                 return NotFound();
 
-            var status = _entityIndex.Status(ResourceType.Route, id).GetValueOrDefault();
-            if (!UserPermissions.IsAllowedToDelete(User.Identity, status, _entityIndex.Owner(ResourceType.Route, id)))
+            var status = _entityIndex.Status(ResourceTypes.Route, id).GetValueOrDefault();
+            if (!UserPermissions.IsAllowedToDelete(User.Identity, status, _entityIndex.Owner(ResourceTypes.Route, id)))
                 return Forbid();
 
             if (status == ContentStatus.Published)
-                return BadRequest(ErrorMessages.CannotBeDeleted(ResourceType.Route, id));
+                return BadRequest(ErrorMessages.CannotBeDeleted(ResourceTypes.Route, id));
 
-            if (_referencesIndex.IsUsed(ResourceType.Route, id))
+            if (_referencesIndex.IsUsed(ResourceTypes.Route, id))
                 return BadRequest(ErrorMessages.ResourceInUse);
 
             // validation passed, emit event
-            var ev = new RouteDeleted
-            {
-                Id = id,
-                UserId = User.Identity.GetUserIdentity(),
-                Timestamp = DateTimeOffset.Now
-            };
-
-            await _eventStore.AppendEventAsync(ev);
+            await EntityManager.DeleteEntityAsync(_eventStore, ResourceTypes.Route, id, User.Identity.GetUserIdentity());
             return NoContent();
         }
 
@@ -239,10 +218,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!UserPermissions.IsAllowedToGet(User.Identity, _entityIndex.Owner(ResourceType.Route, id)))
+            if (!UserPermissions.IsAllowedToGet(User.Identity, _entityIndex.Owner(ResourceTypes.Route, id)))
                 return Forbid();
 
-            return ReferenceInfoHelper.GetReferenceInfo(ResourceType.Route, id, _entityIndex, _referencesIndex);
+            return ReferenceInfoHelper.GetReferenceInfo(ResourceTypes.Route, id, _entityIndex, _referencesIndex);
         }
 
         [HttpGet("Rating/{id}")]
@@ -255,15 +234,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!_entityIndex.Exists(ResourceType.Route, id))
-                return NotFound(ErrorMessages.ContentNotFound(ResourceType.Route, id));
+            if (!_entityIndex.Exists(ResourceTypes.Route, id))
+                return NotFound(ErrorMessages.ContentNotFound(ResourceTypes.Route, id));
 
             var result = new RatingResult()
             {
                 Id = id,
-                Average = _ratingIndex.Average(ResourceType.Route, id),
-                Count = _ratingIndex.Count(ResourceType.Route, id),
-                RatingTable = _ratingIndex.Table(ResourceType.Route, id)
+                Average = _ratingIndex.Average(ResourceTypes.Route, id),
+                Count = _ratingIndex.Count(ResourceTypes.Route, id),
+                RatingTable = _ratingIndex.Table(ResourceTypes.Route, id)
             };
 
             return Ok(result);
@@ -278,16 +257,19 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!_entityIndex.Exists(ResourceType.Route, id))
-                return NotFound(ErrorMessages.ContentNotFound(ResourceType.Route,id));
+            if (!_entityIndex.Exists(ResourceTypes.Route, id))
+                return NotFound(ErrorMessages.ContentNotFound(ResourceTypes.Route, id));
+
+            if (User.Identity.GetUserIdentity() == null)
+                return Unauthorized();          
 
             var ev = new RatingAdded()
             {
-                Id = _ratingIndex.NextId(ResourceType.Route),
+                Id = _ratingIndex.NextId(ResourceTypes.Route),
                 EntityId = id,
                 UserId = User.Identity.GetUserIdentity(),
                 Value = args.Rating.GetValueOrDefault(),
-                RatedType = ResourceType.Route,
+                RatedType = ResourceTypes.Route,
                 Timestamp = DateTimeOffset.Now
             };
 
@@ -315,24 +297,24 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (args.Exhibits != null)
             {
                 var invalidIds = args.Exhibits
-                    .Where(id => !_entityIndex.Exists(ResourceType.Exhibit, id))
+                    .Where(id => !_entityIndex.Exists(ResourceTypes.Exhibit, id))
                     .ToList();
 
                 foreach (var id in invalidIds)
                     ModelState.AddModelError(nameof(args.Exhibits),
-                        ErrorMessages.ContentNotFound(ResourceType.Exhibit,id));
+                        ErrorMessages.ContentNotFound(ResourceTypes.Exhibit, id));
             }
 
             // ensure referenced tags exist
             if (args.Tags != null)
             {
                 var invalidIds = args.Tags
-                    .Where(id => !_entityIndex.Exists(ResourceType.Tag, id))
+                    .Where(id => !_entityIndex.Exists(ResourceTypes.Tag, id))
                     .ToList();
 
                 foreach (var id in invalidIds)
                     ModelState.AddModelError(nameof(args.Tags),
-                        ErrorMessages.ContentNotFound(ResourceType.Tag,id));
+                        ErrorMessages.ContentNotFound(ResourceTypes.Tag, id));
             }
         }
     }

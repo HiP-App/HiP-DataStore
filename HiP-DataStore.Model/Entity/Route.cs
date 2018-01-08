@@ -9,7 +9,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
     public class Route : ContentBase
     {
         // TODO: What about waypoints?
-        
+
         public string Title { get; set; }
 
         public string Description { get; set; }
@@ -20,19 +20,19 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         [BsonElement]
         public DocRef<MediaElement> Image { get; private set; } =
-            new DocRef<MediaElement>(ResourceType.Media.Name);
+            new DocRef<MediaElement>(ResourceTypes.Media.Name);
 
         [BsonElement]
         public DocRef<MediaElement> Audio { get; private set; } =
-            new DocRef<MediaElement>(ResourceType.Media.Name);
+            new DocRef<MediaElement>(ResourceTypes.Media.Name);
 
         [BsonElement]
         public DocRefList<Exhibit> Exhibits { get; private set; } =
-            new DocRefList<Exhibit>(ResourceType.Exhibit.Name);
+            new DocRefList<Exhibit>(ResourceTypes.Exhibit.Name);
 
         [BsonElement]
         public DocRefList<Tag> Tags { get; private set; } =
-            new DocRefList<Tag>(ResourceType.Tag.Name);
+            new DocRefList<Tag>(ResourceTypes.Tag.Name);
 
         public Route()
         {
@@ -49,6 +49,21 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
             Exhibits.Add(args.Exhibits?.Select(id => (BsonValue)id));
             Status = args.Status;
             Tags.Add(args.Tags?.Select(id => (BsonValue)id));
+        }
+
+        public RouteArgs CreateRouteArgs()
+        {
+            var args = new RouteArgs();
+            args.Title = Title;
+            args.Description = Description;
+            args.Duration = Duration;
+            args.Distance = Distance;
+            args.Image = Image.Id.AsNullableInt32;
+            args.Audio = Audio.Id.AsNullableInt32;
+            args.Exhibits = Exhibits.Ids.Select(i => i.AsInt32).ToList();
+            args.Tags = Tags.Ids.Select(i => i.AsInt32).ToList();
+            args.Status = Status;
+            return args;
         }
     }
 }
