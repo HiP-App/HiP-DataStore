@@ -28,6 +28,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\HiP-WebserviceLib\HiP-WebserviceLib.csproj" />
     <ProjectReference Include="..\HiP-DataStore.Sdk\HiP-DataStore.Sdk.csproj" />
     <ProjectReference Include="..\HiP-DataStore\HiP-DataStore.csproj" />
   </ItemGroup>
