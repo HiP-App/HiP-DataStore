@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
-using System;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -15,11 +14,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests
 
             var client = new ExhibitsClient("")
             {
-                CreateHttpClient = server.CreateClient
+                CreateHttpClient = server.CreateClient,
+                Authorization = "Admin-Administrator"
             };
-
-            TestUserInjector.Name = "Administrator";
-            TestUserInjector.Role = "Administrator";
 
             var id = await client.PostAsync(new ExhibitArgs
             {
@@ -28,10 +25,18 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests
                 AccessRadius = .001
             });
 
-            TestUserInjector.Name = "Student";
-            TestUserInjector.Role = "Student";
-
+            // Same user should be able to get the content she created
             var exhibit = await client.GetByIdAsync(id);
+
+            // Anonymous access should be forbidden
+            client.Authorization = "";
+            var exception = await Assert.ThrowsAsync<SwaggerException>(async () => await client.GetByIdAsync(id));
+            Assert.True(exception.StatusCode == "401");
+
+            // Access by another (non-admin) user should be forbidden
+            client.Authorization = "SomeUser-Student";
+            exception = await Assert.ThrowsAsync<SwaggerException>(async () => await client.GetByIdAsync(id));
+            Assert.True(exception.StatusCode == "403");
         }
     }
 }

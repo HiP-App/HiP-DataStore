@@ -51,7 +51,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
 
             // Configure authentication
             services
-                .AddAuthentication(options => options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme)
+                .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
                     options.Audience = authConfig.Value.Audience;

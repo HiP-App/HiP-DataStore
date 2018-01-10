@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization.Policy;
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,8 +9,8 @@ using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
-using PaderbornUniversity.SILab.Hip.EventSourcing.DummyStore;
 using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
+using PaderbornUniversity.SILab.Hip.EventSourcing.FakeStore;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo.Test;
 using PaderbornUniversity.SILab.Hip.Webservice;
@@ -57,6 +55,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests
             var serviceProvider = services.BuildServiceProvider(); // allows us to actually get the configured services           
             var authConfig = serviceProvider.GetService<IOptions<AuthConfig>>();
 
+            // Configure authentication
+            services
+                .AddAuthentication(FakeAuthentication.AuthenticationScheme)
+                .AddFakeAuthenticationScheme();
+
             // Configure authorization
             var domain = authConfig.Value.Authority;
             services.AddAuthorization(options =>
@@ -73,7 +76,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests
             services.AddMvc();
 
             services
-                .AddSingleton<IEventStore, DummyEventStore>()
+                .AddSingleton<IEventStore, FakeEventStore>()
                 .AddSingleton<IMongoDbContext, FakeMongoDbContext>()
                 .AddSingleton<EventStoreService>()
                 .AddSingleton<CacheDatabaseManager>()
@@ -98,7 +101,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests
             // something), so we manually request an instance here
             app.ApplicationServices.GetService<CacheDatabaseManager>();
 
-            app.Use(TestUserInjector.InvokeAsync);
             app.UseAuthentication();
             app.UseMvc();
         }
