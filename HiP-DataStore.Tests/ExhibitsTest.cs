@@ -9,7 +9,7 @@ using Xunit;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Tests
 {
-    public class UnitTest1
+    public class ExhibitsTest
     {
         [Fact]
         public async Task Test1()
