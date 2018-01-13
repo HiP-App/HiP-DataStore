@@ -76,8 +76,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests
             services.AddMvc();
 
             services
-                .AddSingleton<IEventStore, FakeEventStore>()
-                .AddSingleton<IMongoDbContext, FakeMongoDbContext>()
+                .AddSingleton<IEventStore>(FakeEventStore.Instance)
+                .AddSingleton<IMongoDbContext>(FakeMongoDbContext.Instance)
                 .AddSingleton<EventStoreService>()
                 .AddSingleton<CacheDatabaseManager>()
                 .AddSingleton<InMemoryCache>()
