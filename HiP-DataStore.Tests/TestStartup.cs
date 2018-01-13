@@ -29,8 +29,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests
         public TestStartup(IHostingEnvironment env)
         {
             var builder = new ConfigurationBuilder()
-                .AddInMemoryCollection(_appsettings)
                 .SetBasePath(env.ContentRootPath)
+                .AddInMemoryCollection(_appsettings)
                 .AddEnvironmentVariables();
             Configuration = builder.Build();
 
@@ -91,8 +91,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory,
-            IOptions<EndpointConfig> endpointConfig)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"))
                          .AddDebug();
