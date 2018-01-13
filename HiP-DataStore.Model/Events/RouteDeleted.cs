@@ -1,7 +1,9 @@
-﻿namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
+﻿using PaderbornUniversity.SILab.Hip.EventSourcing;
+
+namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 {
     public class RouteDeleted : UserActivityBaseEvent, IDeleteEvent
     {
-         public override ResourceType GetEntityType() => ResourceType.Route;
+         public override ResourceType GetEntityType() => ResourceTypes.Route;
     }
 }

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
+using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
@@ -12,7 +13,7 @@ using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using ResourceType = PaderbornUniversity.SILab.Hip.DataStore.Model.ResourceType; // TODO: Remove after architectural changes
+
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
@@ -59,7 +60,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_board.AllRecords().Any(x => x.UserId == id))
                 return NotFound();
 
-            var query = _db.Database.GetCollection<ScoreRecord>(ResourceType.ScoreRecord.Name).AsQueryable();
+            var query = _db.Database.GetCollection<ScoreRecord>(ResourceTypes.ScoreRecord.Name).AsQueryable();
             var allRecords = new ScoreResults(query.Where(x => x.UserId == id)
                                                    .OrderByDescending(x => x.Timestamp)
                                                    .PaginateAndSelect(null, null, x => new ScoreResult(x))); 

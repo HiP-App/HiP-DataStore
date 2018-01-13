@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 using NSwag.AspNetCore;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
+using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
@@ -25,6 +26,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
                 .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
                 .AddEnvironmentVariables();
             Configuration = builder.Build();
+
+            //Initialize ResourceTypes
+            ResourceTypes.Initialize();
         }
 
         public IConfigurationRoot Configuration { get; }
@@ -40,7 +44,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
                 .Configure<AuthConfig>(Configuration.GetSection("Auth"))
                 .Configure<CorsConfig>(Configuration);
 
-            var serviceProvider = services.BuildServiceProvider(); // allows us to actually get the configured services
+            var serviceProvider = services.BuildServiceProvider(); // allows us to actually get the configured services           
             var authConfig = serviceProvider.GetService<IOptions<AuthConfig>>();
 
             // Configure authentication
@@ -105,6 +109,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
                     .WithHeaders(corsEnvConf.Headers)
                     .WithExposedHeaders(corsEnvConf.ExposedHeaders);
             });
+
 
             app.UseAuthentication();
             app.UseMvc();

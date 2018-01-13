@@ -1,4 +1,5 @@
 ﻿using PaderbornUniversity.SILab.Hip.DataStore.Model;
+using PaderbornUniversity.SILab.Hip.EventSourcing;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
@@ -30,7 +31,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         public static string CannotBeUnpublished(ResourceType type) => $"Only published {type.Name.ToLower()} can be set to unpublished";
 
-        public static string CannotBeDeleted(ResourceType res, int id) => 
+        public static string CannotBeDeleted(ResourceType res, int id) =>
             $"{res.Name.ToLower()} with id {id} has status Published. It can not be deleted";
 
         public static string CannotAddReviewToContentWithWrongStatus() => 

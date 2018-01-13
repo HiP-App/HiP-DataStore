@@ -1,6 +1,5 @@
 ﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
-using System.Collections.Generic;
-using System.Linq;
+using PaderbornUniversity.SILab.Hip.EventSourcing;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
 {
@@ -8,10 +7,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Events
     {
         public TagArgs Properties { get; set; }
 
-        public override ResourceType GetEntityType() => ResourceType.Tag;
+        public override ResourceType GetEntityType() => ResourceTypes.Tag;
 
         public ContentStatus GetStatus() => Properties.Status;
-
-        public IEnumerable<EntityId> GetReferences() => Properties?.GetReferences() ?? Enumerable.Empty<EntityId>();
     }
 }

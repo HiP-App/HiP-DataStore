@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 {
-    public class MediaArgs
+    public class MediaArgs : IContentArgs
     {
         [Required]
         public string Title { get; set; }
