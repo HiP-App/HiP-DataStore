@@ -20,17 +20,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests
 {
     public class TestStartup
     {
-        private static readonly Dictionary<string, string> _appsettings = new Dictionary<string, string>
-        {
-            { "EventStore:Host", "" },
-            { "EventStore:Stream", "test" }
-        };
-
         public TestStartup(IHostingEnvironment env)
         {
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
-                .AddInMemoryCollection(_appsettings)
+                .AddInMemoryCollection(new Dictionary<string, string>
+                {
+                    { "EventStore:Host", "" },
+                    { "EventStore:Stream", "test" }
+                })
                 .AddEnvironmentVariables();
             Configuration = builder.Build();
 
