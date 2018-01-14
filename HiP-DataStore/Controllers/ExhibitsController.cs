@@ -15,6 +15,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using static PaderbornUniversity.SILab.Hip.DataStore.Model.Rest.ReviewResult;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
@@ -297,23 +298,23 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!_entityIndex.Exists(ResourceType.Exhibit, id))
-                return NotFound(ErrorMessages.ContentNotFound(ResourceType.Exhibit, id));
+            if (!_entityIndex.Exists(ResourceTypes.Exhibit, id))
+                return NotFound(ErrorMessages.ContentNotFound(ResourceTypes.Exhibit, id));
 
-            if (!_reviewIndex.Exists(ResourceType.Exhibit, id))
-                return NotFound(ErrorMessages.ReviewNotFound(ResourceType.Exhibit, id));
+            if (!_reviewIndex.Exists(ResourceTypes.Exhibit, id))
+                return NotFound(ErrorMessages.ReviewNotFound(ResourceTypes.Exhibit, id));
 
-            if (!_reviewIndex.ReviewableByStudents(ResourceType.Exhibit, id) && !UserPermissions.IsSupervisorOrAdmin(User.Identity))
+            if (!_reviewIndex.ReviewableByStudents(ResourceTypes.Exhibit, id) && !UserPermissions.IsSupervisorOrAdmin(User.Identity))
                 return Forbid();
 
             var result = new ReviewResult()
             {
                 Id = id,
-                Description = _reviewIndex.Description(ResourceType.Exhibit, id),
-                Approved = _reviewIndex.Approved(ResourceType.Exhibit, id),
-                Reviewers = _reviewIndex.Reviewers(ResourceType.Exhibit, id),
-                Comments = _reviewIndex.Comments(ResourceType.Exhibit, id),
-                Timestamp = _reviewIndex.Timestamp(ResourceType.Exhibit, id)
+                Description = _reviewIndex.Description(ResourceTypes.Exhibit, id),
+                Approved = _reviewIndex.Approved(ResourceTypes.Exhibit, id),
+                Reviewers = _reviewIndex.Reviewers(ResourceTypes.Exhibit, id),
+                Comments = _reviewIndex.Comments(ResourceTypes.Exhibit, id),
+                Timestamp = _reviewIndex.Timestamp(ResourceTypes.Exhibit, id)
             };
 
             return Ok(result);
@@ -329,33 +330,32 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!_entityIndex.Exists(ResourceType.Exhibit, id))
-                return NotFound(ErrorMessages.ContentNotFound(ResourceType.Exhibit, id));
+            if (!_entityIndex.Exists(ResourceTypes.Exhibit, id))
+                return NotFound(ErrorMessages.ContentNotFound(ResourceTypes.Exhibit, id));
 
-            if (!_entityIndex.Status(ResourceType.Exhibit, id).Equals(ContentStatus.In_Review))
+            if (!_entityIndex.Status(ResourceTypes.Exhibit, id).Equals(ContentStatus.In_Review))
                 return BadRequest(ErrorMessages.CannotAddReviewToContentWithWrongStatus());
 
-            if (_reviewIndex.Exists(ResourceType.Exhibit, id))
-                return BadRequest(ErrorMessages.ContentAlreadyHasReview(ResourceType.Exhibit, id));
+            if (_reviewIndex.Exists(ResourceTypes.Exhibit, id))
+                return BadRequest(ErrorMessages.ContentAlreadyHasReview(ResourceTypes.Exhibit, id));
 
-            if (!UserPermissions.IsAllowedToCreateReview(User.Identity, _reviewIndex.Owner(ResourceType.Exhibit, id)))
+            if (!UserPermissions.IsAllowedToCreateReview(User.Identity, _reviewIndex.Owner(ResourceTypes.Exhibit, id)))
                 return Forbid();
 
-            var ev = new ReviewCreated()
+            var newReview = new ReviewArgs2()
             {
-                Id = _reviewIndex.NextId(ResourceType.Exhibit),
-                EntityId = id,
-                StudentsToApprove = args.StudentsToApprove,
-                ReviewableByStudents = args.ReviewableByStudents,
                 Description = args.Description,
                 Reviewers = args.Reviewers,
-                UserId = User.Identity.GetUserIdentity(),
-                ReviewType = ResourceType.Exhibit,
-                Timestamp = DateTimeOffset.Now
+                StudentsToApprove = args.StudentsToApprove,
+                ReviewableByStudents = args.ReviewableByStudents,
             };
 
-            await _eventStore.AppendEventAsync(ev);
-            return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Review/{ev.Id}", ev.Id);
+            var reviewId = _reviewIndex.NextId(ResourceTypes.Exhibit);
+
+            await EntityManager.CreateEntityAsync(_eventStore, new ReviewArgs2(), ResourceTypes.ExhibitReview, reviewId, User.Identity.GetUserIdentity());
+            await EntityManager.UpdateEntityAsync(_eventStore, new ReviewArgs2(), newReview, ResourceTypes.ExhibitReview, id, User.Identity.GetUserIdentity());
+
+            return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Review/{reviewId}", reviewId);
         }
 
         [HttpPut("Review/{id}")]
@@ -368,42 +368,49 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!_entityIndex.Exists(ResourceType.Exhibit, id))
-                return NotFound(ErrorMessages.ContentNotFound(ResourceType.Exhibit, id));
+            if (!_entityIndex.Exists(ResourceTypes.Exhibit, id))
+                return NotFound(ErrorMessages.ContentNotFound(ResourceTypes.Exhibit, id));
 
-            if (!_reviewIndex.Exists(ResourceType.Exhibit, id))
-                return NotFound(ErrorMessages.ReviewNotFound(ResourceType.Exhibit, id));
+            if (!_reviewIndex.Exists(ResourceTypes.Exhibit, id))
+                return NotFound(ErrorMessages.ReviewNotFound(ResourceTypes.Exhibit, id));
 
-            if (!_reviewIndex.ReviewableByStudents(ResourceType.Exhibit, id) && !UserPermissions.IsSupervisorOrAdmin(User.Identity))
+            if (!_reviewIndex.ReviewableByStudents(ResourceTypes.Exhibit, id) && !UserPermissions.IsSupervisorOrAdmin(User.Identity))
                 return Forbid();
 
             // Only reviewers, owner and admins/supervisors are allowed to comment
-            if (!UserPermissions.IsAllowedToCommentReview(User.Identity, args.Reviewers, 
-                _reviewIndex.Owner(ResourceType.Exhibit, id)))
+            if (!UserPermissions.IsAllowedToCommentReview(User.Identity, args.Reviewers,
+                _reviewIndex.Owner(ResourceTypes.Exhibit, id)))
                 return Forbid();
 
-            if (args.StudentsToApprove != _reviewIndex.StudentsToApprove(ResourceType.Exhibit, id)
+            if (args.StudentsToApprove != _reviewIndex.StudentsToApprove(ResourceTypes.Exhibit, id)
                 && !UserPermissions.IsSupervisorOrAdmin(User.Identity))
                 return Forbid();
 
-            if (_reviewIndex.ReviewableByStudents(ResourceType.Exhibit, id) && !UserPermissions.IsSupervisorOrAdmin(User.Identity))
+            if (_reviewIndex.ReviewableByStudents(ResourceTypes.Exhibit, id) && !UserPermissions.IsSupervisorOrAdmin(User.Identity))
                 args.ReviewableByStudents = true;
 
-            var ev = new ReviewUpdated()
+            var oldReview = new ReviewArgs2()
             {
-                Approved = _reviewIndex.ReviewApproved(ResourceType.Exhibit, id, User.Identity, args.Approved),
-                ApprovedComment = args.Approved,
-                Comment = args.Comment,
-                StudentsToApprove = args.StudentsToApprove,
-                ReviewableByStudents = args.ReviewableByStudents,
-                EntityId = id,
-                Reviewers = args.Reviewers,
-                UserId = User.Identity.GetUserIdentity(),
-                ReviewType = ResourceType.Exhibit,
-                Timestamp = DateTimeOffset.Now
+                Reviewers = _reviewIndex.Reviewers(ResourceTypes.Exhibit, id),
+                Approved = _reviewIndex.Approved(ResourceTypes.Exhibit, id),
+                StudentsToApprove = _reviewIndex.StudentsToApprove(ResourceTypes.Exhibit, id),
+                ReviewableByStudents = _reviewIndex.ReviewableByStudents(ResourceTypes.Exhibit, id)
             };
 
-            await _eventStore.AppendEventAsync(ev);
+            if (args.Reviewers == null)
+                args.Reviewers = oldReview.Reviewers;
+
+            var updatedReview = new ReviewArgs2()
+            {
+                Reviewers = args.Reviewers,
+                Approved = _reviewIndex.ReviewApproved(ResourceTypes.Exhibit, id, User.Identity, args.Approved),
+                Comment = new Comment(args.Comment, DateTimeOffset.Now, User.Identity.GetUserIdentity(), args.Approved),
+                StudentsToApprove = args.StudentsToApprove,
+                ReviewableByStudents = args.ReviewableByStudents
+            };
+
+            await EntityManager.UpdateEntityAsync(_eventStore, oldReview, updatedReview, ResourceTypes.ExhibitReview, id,
+                User.Identity.GetUserIdentity());
             return StatusCode(204);
         }
 

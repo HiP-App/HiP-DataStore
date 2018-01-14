@@ -12,6 +12,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
         public static ResourceType Media { get; private set; }
         public static ResourceType Tag { get; private set; }
         public static ResourceType ScoreRecord { get; private set; }
+        public static ResourceType ExhibitReview { get; private set; }
+        public static ResourceType ExhibitPageReview { get; private set; }
+        public static ResourceType RouteReview { get; private set; }
 
 
         /// <summary>
@@ -26,6 +29,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
             Tag = ResourceType.Register(nameof(Tag), typeof(TagArgs));
             ScoreRecord = ResourceType.Register(nameof(ScoreRecord), typeof(ScoreBoardArgs));
             Rating = ResourceType.Register(nameof(Rating), typeof(RatingArgs));
+            ExhibitReview = ResourceType.Register(nameof(ExhibitReview), typeof(ReviewArgs));
+            ExhibitPageReview = ResourceType.Register(nameof(ExhibitPageReview), typeof(ReviewArgs));
+            RouteReview = ResourceType.Register(nameof(RouteReview), typeof(ReviewArgs));
         }
     }
 }

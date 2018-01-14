@@ -96,10 +96,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
             switch (ev)
             {
                 case PropertyChangedEvent e:
-                    ClearReferences(source, e.PropertyName);
-                    var references = e.GetReferences();
-                    AddReferences(source, references, e.PropertyName);
-
+                    if(e.GetEntityType() != ResourceTypes.ExhibitReview && e.GetEntityType() != ResourceTypes.ExhibitPageReview 
+                        && e.GetEntityType() != ResourceTypes.RouteReview)
+                    {
+                        ClearReferences(source, e.PropertyName);
+                        var references = e.GetReferences();
+                        AddReferences(source, references, e.PropertyName);
+                    }
                     break;
 
                 case DeletedEvent _:

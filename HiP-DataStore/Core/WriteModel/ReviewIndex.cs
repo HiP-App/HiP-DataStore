@@ -2,6 +2,7 @@
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
+using PaderbornUniversity.SILab.Hip.EventSourcing.Events;
 using System;
 using System.Collections.Generic;
 using System.Security.Principal;
@@ -12,149 +13,234 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
     public class ReviewIndex : IDomainIndex
     {
         private readonly Dictionary<ResourceType, ReviewTypeInfo> _reviewDictionary = new Dictionary<ResourceType, ReviewTypeInfo>();
+        private readonly object _lockObject = new object();
 
         public int NextId(ResourceType entityType)
         {
-            var info = GetOrCreateReviewTypeInfo(entityType);
-            return ++info.MaximumId;
+            lock (_lockObject)
+            {
+                var info = GetOrCreateReviewTypeInfo(entityType);
+                return ++info.MaximumId;
+            }
         }
 
         public string Owner(ResourceType entityType, int id)
         {
-            var info = GetOrCreateReviewTypeInfo(entityType);
+            lock (_lockObject)
+            {
+                var info = GetOrCreateReviewTypeInfo(entityType);
 
-            if (info.Reviews.TryGetValue(id, out var review))
-                return review.UserId;
+                if (info.Reviews.TryGetValue(id, out var review))
+                    return review.UserId;
 
-            return null;
+                return null;
+            }
         }
 
         public bool Approved(ResourceType entityType, int id)
         {
-            var info = GetOrCreateReviewTypeInfo(entityType);
+            lock (_lockObject)
+            {
+                var info = GetOrCreateReviewTypeInfo(entityType);
 
-            if (info.Reviews.TryGetValue(id, out var review))
-                return review.Approved;
+                if (info.Reviews.TryGetValue(id, out var review))
+                    return review.Approved;
 
-            return false;
+                return false;
+            }
         }
 
         public bool ReviewApproved(ResourceType entityType, int id, IIdentity identity, bool approve)
         {
-            var info = GetOrCreateReviewTypeInfo(entityType);
-
-            if (info.Reviews.TryGetValue(id, out var review))
+            lock (_lockObject)
             {
-                var count = 0;
-                foreach (Comment comment in review.Comments)
+                var info = GetOrCreateReviewTypeInfo(entityType);
+
+                if (info.Reviews.TryGetValue(id, out var review))
                 {
-                    if (comment.Approved)
+                    var count = 0;
+                    foreach (Comment comment in review.Comments)
+                    {
+                        if (comment.Approved)
+                            count++;
+                    }
+
+                    if (approve)
                         count++;
+
+                    var studentsToApprove = StudentsToApprove(entityType, id);
+                    // amount of students (if permitted) or one supervisor need to approve, to approve the review
+                    if ((count >= studentsToApprove && studentsToApprove > 0)
+                        || (approve && UserPermissions.IsSupervisorOrAdmin(identity)))
+                        return true;
                 }
-
-                if (approve)
-                    count++;
-
-                var studentsToApprove = StudentsToApprove(entityType, id);
-                // amount of students (if permitted) or one supervisor need to approve, to approve the review
-                if ((count >= studentsToApprove && studentsToApprove > 0)
-                    || (approve && UserPermissions.IsSupervisorOrAdmin(identity)))
-                    return true;
+                return false;
             }
-            return false;
         }
 
         public string Description(ResourceType entityType, int id)
         {
-            var info = GetOrCreateReviewTypeInfo(entityType);
+            lock (_lockObject)
+            {
+                var info = GetOrCreateReviewTypeInfo(entityType);
 
-            if (info.Reviews.TryGetValue(id, out var review))
-                return review.Description;
+                if (info.Reviews.TryGetValue(id, out var review))
+                    return review.Description;
 
-            return null;
+                return null;
+            }
         }
 
         public List<string> Reviewers(ResourceType entityType, int id)
         {
-            var info = GetOrCreateReviewTypeInfo(entityType);
+            lock (_lockObject)
+            {
+                var info = GetOrCreateReviewTypeInfo(entityType);
 
-            if (info.Reviews.TryGetValue(id, out var review))
-                return review.Reviewers;
+                if (info.Reviews.TryGetValue(id, out var review))
+                    return review.Reviewers;
 
-            return null;
+                return null;
+            }
         }
 
         public List<Comment> Comments(ResourceType entityType, int id)
         {
-            var info = GetOrCreateReviewTypeInfo(entityType);
+            lock (_lockObject)
+            {
+                var info = GetOrCreateReviewTypeInfo(entityType);
 
-            if (info.Reviews.TryGetValue(id, out var review))
-                return review.Comments;
+                if (info.Reviews.TryGetValue(id, out var review))
+                    return review.Comments;
 
-            return null;
+                return null;
+            }
         }
 
         public DateTimeOffset Timestamp(ResourceType entityType, int id)
         {
-            var info = GetOrCreateReviewTypeInfo(entityType);
+            lock (_lockObject)
+            {
+                var info = GetOrCreateReviewTypeInfo(entityType);
 
-            if (info.Reviews.TryGetValue(id, out var review))
-                return review.Timestamp;
+                if (info.Reviews.TryGetValue(id, out var review))
+                    return review.Timestamp;
 
-            return DateTimeOffset.MaxValue;
+                return DateTimeOffset.MaxValue;
+            }
         }
 
         public bool Exists(ResourceType entityType, int id)
         {
-            var info = GetOrCreateReviewTypeInfo(entityType);
+            lock (_lockObject)
+            {
+                var info = GetOrCreateReviewTypeInfo(entityType);
 
-            if (info.Reviews.ContainsKey(id))
-                return true;
+                if (info.Reviews.ContainsKey(id))
+                    return true;
 
-            return false;
+                return false;
+            }
         }
 
-        public int StudentsToApprove (ResourceType entityType, int id)
+        public int StudentsToApprove(ResourceType entityType, int id)
         {
-            var info = GetOrCreateReviewTypeInfo(entityType);
+            lock (_lockObject)
+            {
+                var info = GetOrCreateReviewTypeInfo(entityType);
 
-            if (info.Reviews.TryGetValue(id, out var review))
-                return review.StudentsToApprove;
+                if (info.Reviews.TryGetValue(id, out var review))
+                    return review.StudentsToApprove;
 
-            return -1;
+                return -1;
+            }
         }
 
-        public bool ReviewableByStudents (ResourceType entityType, int id)
+        public bool ReviewableByStudents(ResourceType entityType, int id)
         {
+            lock (_lockObject)
+            {
+                var info = GetOrCreateReviewTypeInfo(entityType);
 
-            var info = GetOrCreateReviewTypeInfo(entityType);
+                if (info.Reviews.TryGetValue(id, out var review))
+                    return review.ReviewableByStudents;
 
-            if (info.Reviews.TryGetValue(id, out var review))
-                return review.ReviewableByStudents;
-
-            return false;
+                return false;
+            }
         }
 
         public void ApplyEvent(IEvent e)
         {
-            switch(e)
+            switch (e)
             {
-                case ReviewCreated ev:
-                    var infoCreate = GetOrCreateReviewTypeInfo(ev.ReviewType);
-                    infoCreate.MaximumId = Math.Max(infoCreate.MaximumId, ev.Id);
-                    infoCreate.Reviews.Add(ev.EntityId, new ReviewEntityInfo { UserId = ev.UserId, Description = ev.Description,
-                        Reviewers = ev.Reviewers, Timestamp = ev.Timestamp, StudentsToApprove = ev.StudentsToApprove,
-                        ReviewableByStudents = ev.ReviewableByStudents});
-                    break;
-                case ReviewUpdated ev:
-                    var infoUpdate = GetOrCreateReviewTypeInfo(ev.ReviewType);
-                    if (infoUpdate.Reviews.TryGetValue(ev.EntityId, out var review))
+                case CreatedEvent ev:
+                    if (ev.GetEntityType() == ResourceTypes.ExhibitReview || ev.GetEntityType() == ResourceTypes.ExhibitPageReview
+                        || ev.GetEntityType() == ResourceTypes.RouteReview)
                     {
-                        review.StudentsToApprove = ev.StudentsToApprove;
-                        review.Approved = ev.Approved;
-                        review.Comments.Add(new Comment(ev.Comment, ev.Timestamp, ev.UserId, ev.Approved));
-                        if (ev.Reviewers != null)
-                            review.Reviewers = ev.Reviewers;
+                        lock (_lockObject)
+                        {
+                            var resourceType = ev.GetEntityType();
+                            var infoCreate = new ReviewTypeInfo();
+                            switch (resourceType)
+                            {
+                                case ResourceType _ when resourceType == ResourceTypes.ExhibitReview:
+                                    infoCreate = GetOrCreateReviewTypeInfo(ResourceTypes.Exhibit);
+                                    break;
+
+                                case ResourceType _ when resourceType == ResourceTypes.ExhibitPageReview:
+                                    infoCreate = GetOrCreateReviewTypeInfo(ResourceTypes.ExhibitPage);
+                                    break;
+
+                                case ResourceType _ when resourceType == ResourceTypes.RouteReview:
+                                    infoCreate = GetOrCreateReviewTypeInfo(ResourceTypes.Route);
+                                    break;
+                            }
+                            infoCreate.MaximumId = Math.Max(infoCreate.MaximumId, ev.Id);
+                        }
+                    }
+                    break;
+
+                case PropertyChangedEvent ev:
+                    if (ev.GetEntityType() == ResourceTypes.ExhibitReview || ev.GetEntityType() == ResourceTypes.ExhibitPageReview
+                        || ev.GetEntityType() == ResourceTypes.RouteReview)
+                    {
+                        lock (_lockObject)
+                        {
+                            var resourceType = ev.GetEntityType();
+                            var infoUpdate = new ReviewTypeInfo();
+                            switch (resourceType)
+                            {
+                                case ResourceType _ when resourceType == ResourceTypes.ExhibitReview:
+                                    infoUpdate = GetOrCreateReviewTypeInfo(ResourceTypes.Exhibit);
+                                    break;
+
+                                case ResourceType _ when resourceType == ResourceTypes.ExhibitPageReview:
+                                    infoUpdate = GetOrCreateReviewTypeInfo(ResourceTypes.ExhibitPage);
+                                    break;
+
+                                case ResourceType _ when resourceType == ResourceTypes.RouteReview:
+                                    infoUpdate = GetOrCreateReviewTypeInfo(ResourceTypes.Route);
+                                    break;
+                            }
+
+                            if (!infoUpdate.Reviews.TryGetValue(ev.Id, out var review))
+                            {
+                                infoUpdate.Reviews.Add(ev.Id, new ReviewEntityInfo { UserId = ev.UserId, Timestamp = ev.Timestamp });
+                                infoUpdate.Reviews.TryGetValue(ev.Id, out review);
+                                
+                            }
+
+                            if (ev.PropertyName == nameof(Comment))
+                            {
+                                review.Comments.Add(ev.Value as Comment);
+                            }
+                            else
+                            {
+                                ev.ApplyTo(review);
+                                infoUpdate.Reviews[ev.Id] = review;
+                            }
+
+                        }
                     }
                     break;
             }

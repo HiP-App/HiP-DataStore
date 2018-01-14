@@ -14,6 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using static PaderbornUniversity.SILab.Hip.DataStore.Model.Rest.ReviewResult;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
@@ -290,23 +291,23 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!_entityIndex.Exists(ResourceType.Route, id))
-                return NotFound(ErrorMessages.ContentNotFound(ResourceType.Route, id));
+            if (!_entityIndex.Exists(ResourceTypes.Route, id))
+                return NotFound(ErrorMessages.ContentNotFound(ResourceTypes.Route, id));
 
-            if (!_reviewIndex.Exists(ResourceType.Route, id))
-                return NotFound(ErrorMessages.ReviewNotFound(ResourceType.Route, id));
+            if (!_reviewIndex.Exists(ResourceTypes.Route, id))
+                return NotFound(ErrorMessages.ReviewNotFound(ResourceTypes.Route, id));
 
-            if (!_reviewIndex.ReviewableByStudents(ResourceType.Route, id) && !UserPermissions.IsSupervisorOrAdmin(User.Identity))
+            if (!_reviewIndex.ReviewableByStudents(ResourceTypes.Route, id) && !UserPermissions.IsSupervisorOrAdmin(User.Identity))
                 return Forbid();
 
             var result = new ReviewResult()
             {
                 Id = id,
-                Description = _reviewIndex.Description(ResourceType.Route, id),
-                Approved = _reviewIndex.Approved(ResourceType.Route, id),
-                Reviewers = _reviewIndex.Reviewers(ResourceType.Route, id),
-                Comments = _reviewIndex.Comments(ResourceType.Route, id),
-                Timestamp = _reviewIndex.Timestamp(ResourceType.Route, id)
+                Description = _reviewIndex.Description(ResourceTypes.Route, id),
+                Approved = _reviewIndex.Approved(ResourceTypes.Route, id),
+                Reviewers = _reviewIndex.Reviewers(ResourceTypes.Route, id),
+                Comments = _reviewIndex.Comments(ResourceTypes.Route, id),
+                Timestamp = _reviewIndex.Timestamp(ResourceTypes.Route, id)
             };
 
             return Ok(result);
@@ -322,33 +323,31 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!_entityIndex.Exists(ResourceType.Route, id))
-                return NotFound(ErrorMessages.ContentNotFound(ResourceType.Route, id));
+            if (!_entityIndex.Exists(ResourceTypes.Route, id))
+                return NotFound(ErrorMessages.ContentNotFound(ResourceTypes.Route, id));
 
-            if (!_entityIndex.Status(ResourceType.Route, id).Equals(ContentStatus.In_Review))
+            if (!_entityIndex.Status(ResourceTypes.Route, id).Equals(ContentStatus.In_Review))
                 return BadRequest(ErrorMessages.CannotAddReviewToContentWithWrongStatus());
 
-            if (_reviewIndex.Exists(ResourceType.Route, id))
-                return BadRequest(ErrorMessages.ContentAlreadyHasReview(ResourceType.Route, id));
+            if (_reviewIndex.Exists(ResourceTypes.Route, id))
+                return BadRequest(ErrorMessages.ContentAlreadyHasReview(ResourceTypes.Route, id));
 
-            if (!UserPermissions.IsAllowedToCreateReview(User.Identity, _reviewIndex.Owner(ResourceType.Exhibit, id)))
+            if (!UserPermissions.IsAllowedToCreateReview(User.Identity, _reviewIndex.Owner(ResourceTypes.Route, id)))
                 return Forbid();
 
-            var ev = new ReviewCreated()
+            var newReview = new ReviewArgs2()
             {
-                Id = _reviewIndex.NextId(ResourceType.Route),
-                EntityId = id,
-                StudentsToApprove = args.StudentsToApprove,
-                ReviewableByStudents = args.ReviewableByStudents,
                 Description = args.Description,
                 Reviewers = args.Reviewers,
-                UserId = User.Identity.GetUserIdentity(),
-                ReviewType = ResourceType.Route,
-                Timestamp = DateTimeOffset.Now
+                StudentsToApprove = args.StudentsToApprove,
+                ReviewableByStudents = args.ReviewableByStudents,
             };
 
-            await _eventStore.AppendEventAsync(ev);
-            return Created($"{Request.Scheme}://{Request.Host}/api/Route/Review/{ev.Id}", ev.Id);
+            var reviewId = _reviewIndex.NextId(ResourceTypes.Route);
+
+            await EntityManager.CreateEntityAsync(_eventStore, new ReviewArgs2(), ResourceTypes.RouteReview, reviewId, User.Identity.GetUserIdentity());
+            await EntityManager.UpdateEntityAsync(_eventStore, new ReviewArgs2(), newReview, ResourceTypes.RouteReview, id, User.Identity.GetUserIdentity());
+            return Created($"{Request.Scheme}://{Request.Host}/api/Route/Review/{reviewId}", reviewId);
         }
 
         [HttpPut("Review/{id}")]
@@ -361,42 +360,49 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!_entityIndex.Exists(ResourceType.Route, id))
-                return NotFound(ErrorMessages.ContentNotFound(ResourceType.Route, id));
+            if (!_entityIndex.Exists(ResourceTypes.Route, id))
+                return NotFound(ErrorMessages.ContentNotFound(ResourceTypes.Route, id));
 
-            if (!_reviewIndex.Exists(ResourceType.Route, id))
-                return NotFound(ErrorMessages.ReviewNotFound(ResourceType.Route, id));
+            if (!_reviewIndex.Exists(ResourceTypes.Route, id))
+                return NotFound(ErrorMessages.ReviewNotFound(ResourceTypes.Route, id));
 
-            if (!_reviewIndex.ReviewableByStudents(ResourceType.Route, id) && !UserPermissions.IsSupervisorOrAdmin(User.Identity))
+            if (!_reviewIndex.ReviewableByStudents(ResourceTypes.Route, id) && !UserPermissions.IsSupervisorOrAdmin(User.Identity))
                 return Forbid();
 
             // Only reviewers, owner and admins/supervisors are allowed to comment
             if (!UserPermissions.IsAllowedToCommentReview(User.Identity, args.Reviewers,
-                _reviewIndex.Owner(ResourceType.Route, id)))
+                _reviewIndex.Owner(ResourceTypes.Route, id)))
                 return Forbid();
 
-            if (args.StudentsToApprove != _reviewIndex.StudentsToApprove(ResourceType.Route, id)
+            if (args.StudentsToApprove != _reviewIndex.StudentsToApprove(ResourceTypes.Route, id)
                 && !UserPermissions.IsSupervisorOrAdmin(User.Identity))
                 return Forbid();
 
-            if (_reviewIndex.ReviewableByStudents(ResourceType.Route, id) && !UserPermissions.IsSupervisorOrAdmin(User.Identity))
+            if (_reviewIndex.ReviewableByStudents(ResourceTypes.Route, id) && !UserPermissions.IsSupervisorOrAdmin(User.Identity))
                 args.ReviewableByStudents = true;
 
-            var ev = new ReviewUpdated()
+            var oldReview = new ReviewArgs2()
             {
-                Approved = _reviewIndex.ReviewApproved(ResourceType.Route, id, User.Identity, args.Approved),
-                ApprovedComment = args.Approved,
-                Comment = args.Comment,
-                StudentsToApprove = args.StudentsToApprove,
-                ReviewableByStudents = args.ReviewableByStudents,
-                EntityId = id,
-                Reviewers = args.Reviewers,
-                UserId = User.Identity.GetUserIdentity(),
-                ReviewType = ResourceType.Route,
-                Timestamp = DateTimeOffset.Now
+                Reviewers = _reviewIndex.Reviewers(ResourceTypes.Route, id),
+                Approved = _reviewIndex.Approved(ResourceTypes.Route, id),
+                StudentsToApprove = _reviewIndex.StudentsToApprove(ResourceTypes.Route, id),
+                ReviewableByStudents = _reviewIndex.ReviewableByStudents(ResourceTypes.Route, id)
             };
 
-            await _eventStore.AppendEventAsync(ev);
+            if (args.Reviewers == null)
+                args.Reviewers = oldReview.Reviewers;
+
+            var updatedReview = new ReviewArgs2()
+            {
+                Reviewers = args.Reviewers,
+                Approved = _reviewIndex.ReviewApproved(ResourceTypes.Route, id, User.Identity, args.Approved),
+                Comment = new Comment(args.Comment, DateTimeOffset.Now, User.Identity.GetUserIdentity(), args.Approved),
+                StudentsToApprove = args.StudentsToApprove,
+                ReviewableByStudents = args.ReviewableByStudents
+            };
+
+            await EntityManager.UpdateEntityAsync(_eventStore, oldReview, updatedReview, ResourceTypes.RouteReview, id,
+                User.Identity.GetUserIdentity());
             return StatusCode(204);
         }
 
