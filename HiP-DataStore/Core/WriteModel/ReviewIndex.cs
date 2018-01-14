@@ -231,7 +231,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 
                             if (ev.PropertyName == nameof(Comment))
                             {
-                                review.Comments.Add(ev.Value as Comment);
+                                if (review.Comments != null)
+                                    review.Comments.Add(ev.Value as Comment);
                             }
                             else
                             {
@@ -264,17 +265,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
         {
             public string UserId { get; set; }
 
-            public bool Approved;
+            public bool Approved { get; set; }
 
-            public string Description;
+            public string Description { get; set; }
 
-            public int StudentsToApprove;
+            public int StudentsToApprove { get; set; }
 
-            public bool ReviewableByStudents;
+            public bool ReviewableByStudents { get; set; }
 
             public DateTimeOffset Timestamp { get; set; }
 
-            public List<string> Reviewers;
+            public List<string> Reviewers { get; set; }
 
             public List<Comment> Comments { get; set; } = new List<Comment>();
         }
