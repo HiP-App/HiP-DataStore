@@ -1,5 +1,4 @@
 ﻿using PaderbornUniversity.SILab.Hip.DataStore.Model;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Events;
@@ -265,17 +264,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
         {
             public string UserId { get; set; }
 
-            public bool Approved { get; set; }
+            public bool Approved;
 
-            public string Description { get; set; }
+            public string Description;
 
-            public int StudentsToApprove { get; set; }
+            public int StudentsToApprove;
 
-            public bool ReviewableByStudents { get; set; }
+            public bool ReviewableByStudents;
 
             public DateTimeOffset Timestamp { get; set; }
 
-            public List<string> Reviewers { get; set; }
+            public List<string> Reviewers;
 
             public List<Comment> Comments { get; set; } = new List<Comment>();
         }
