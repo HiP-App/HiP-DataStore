@@ -231,7 +231,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 
                             if (ev.PropertyName == nameof(Comment))
                             {
-                                if (review.Comments != null)
+                                if (review != null)
                                     review.Comments.Add(ev.Value as Comment);
                             }
                             else
