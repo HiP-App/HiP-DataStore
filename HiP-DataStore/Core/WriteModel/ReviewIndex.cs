@@ -265,19 +265,19 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
         {
             public string UserId { get; set; }
 
-            public bool Approved { get; set; }
+            public bool Approved { get; private set; }
 
-            public string Description { get; set; }
+            public string Description { get; private set; }
 
-            public int StudentsToApprove { get; set; }
+            public int StudentsToApprove { get; private set; }
 
-            public bool ReviewableByStudents { get; set; }
+            public bool ReviewableByStudents { get; private set; }
 
             public DateTimeOffset Timestamp { get; set; }
 
-            public List<string> Reviewers { get; set; }
+            public List<string> Reviewers { get; private set; }
 
-            public List<Comment> Comments { get; set; } = new List<Comment>();
+            public List<Comment> Comments { get; private set; } = new List<Comment>();
         }
     }
 }
