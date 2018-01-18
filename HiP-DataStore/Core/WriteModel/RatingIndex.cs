@@ -3,6 +3,8 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using System;
 using System.Collections.Generic;
+using System.Security.Principal;
+using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 {
@@ -20,6 +22,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
         public Dictionary<int,int> Table(ResourceType res, int id)
         {
             return GetOrCreateRatingTypeInfo(res).Ratings.TryGetValue(id, out var t) ? t.GetRatingTable() : null;
+        }
+
+        public byte? UserRating(ResourceType res, int id, IIdentity identity)
+        {
+            return GetOrCreateRatingTypeInfo(res).Ratings.TryGetValue(id, out var t) ? t.GetUserRating(identity.GetUserIdentity()) : 0;
         }
 
         public double Average(ResourceType res,int id)
@@ -89,6 +96,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                 if(CalculateAverageRating(null, rate))
                     _allRates.Add(userId, rate);
             }
+        }
+
+        public byte? GetUserRating(string userId)
+        {
+            return _allRates.TryGetValue(userId, out var rating) ? (byte?)rating : null;
         }
 
         public Dictionary<int,int> GetRatingTable()
