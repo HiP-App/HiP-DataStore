@@ -2,9 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
-
     <IsPackable>false</IsPackable>
-
     <RootNamespace>PaderbornUniversity.SILab.Hip.DataStore.Tests</RootNamespace>
   </PropertyGroup>
 
@@ -17,7 +15,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\HiP-WebserviceLib\HiP-WebserviceLib.csproj" />
     <ProjectReference Include="..\HiP-DataStore.Sdk\HiP-DataStore.Sdk.csproj" />
     <ProjectReference Include="..\HiP-DataStore\HiP-DataStore.csproj" />
   </ItemGroup>

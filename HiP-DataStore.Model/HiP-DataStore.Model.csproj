@@ -8,12 +8,9 @@
   </PropertyGroup>
   
   <ItemGroup>
+    <PackageReference Include="HiP-EventStoreLib" Version="2.0.0-develop" />
     <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
-    <PackageReference Include="System.ComponentModel.Annotations" Version="4.4.0" />
-  </ItemGroup>
-  
-  <ItemGroup>
-    <ProjectReference Include="..\..\HiP-EventStoreLib\HiP-EventStoreLib\HiP-EventStoreLib.csproj" />
+    <PackageReference Include="System.ComponentModel.Annotations" Version="4.4.1" />
   </ItemGroup>
 
 </Project>
