@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using MongoDB.Driver;
-using PaderbornUniversity.SILab.Hip.DataStore.Model;
+﻿using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
@@ -24,8 +22,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 
         public CacheDatabaseManager(
             IMongoDbContext db,
-            EventStoreService eventStore,
-            ILogger<CacheDatabaseManager> logger)
+            EventStoreService eventStore)
         {
             // For now, the cache database is always created from scratch by replaying all events.
             // This also implies that, for now, the cache database always contains the entire data (not a subset).
@@ -47,15 +44,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
             }
 
             object oldValue = null;
+
             switch (ev)
             {
                 case MediaFileUpdated e:
-
-
-                    //var fileDocBson = e.ToBsonDocument();
-                    //fileDocBson.Remove("_id");
-                    //var bsonDoc = new BsonDocument("$set", fileDocBson);
-                    //_db.GetCollection<MediaElement>(ResourceTypes.Media).UpdateOne(x => x.Id == e.Id, bsonDoc);
+                    _db.Update<MediaElement>((ResourceTypes.Media, e.Id), update =>
+                    {
+                        update.Set(m => m.File, e.File);
+                        update.Set(m => m.Timestamp, e.Timestamp);
+                    });
                     break;
 
                 case ScoreAdded e:
@@ -257,84 +254,5 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
         {
             _db.Update<ContentBase>(entity, update => update.Set(o => o.Status, ContentStatus.Published));
         }
-
-
-        /*
-        private void ClearIncomingReferences(EntityId entity)
-        {
-            var currentReferencers = _db.GetCollection<dynamic>(entity.Type.Name)
-                .Find(Builders<dynamic>.Filter.Eq("_id", entity.Id))
-                .First()
-                .Referencers;
-
-            var filteredReferences = ((IEnumerable<dynamic>)currentReferencers).Distinct();
-
-            foreach (var r in filteredReferences)
-            {
-                // Note: We must use the internal key "_id" here since we use dynamic objects
-                var source = (ResourceType.ResourceTypeDictionary[(string)r.Collection], (int)r._id);
-                RemoveReference(source, entity);
-            }
-        }
-
-
-        private void ClearOutgoingReferences(EntityId entity)
-        {
-            var currentReferencers = _db.GetCollection<dynamic>(entity.Type.Name)
-                .Find(Builders<dynamic>.Filter.Eq("_id", entity.Id))
-                .First()
-                .References;
-
-            var filteredReferencers = ((IEnumerable<dynamic>)currentReferencers).Distinct();
-
-            foreach (var r in filteredReferencers)
-            {
-                // Note: We must use the internal key "_id" here since we use dynamic objects
-                var target = (ResourceType.ResourceTypeDictionary[(string)r.Collection], (int)r._id);
-                RemoveReference(entity, target);
-            }
-        }
-
-        private void AddReferences(EntityId source, IEnumerable<EntityId> targets)
-        {
-            // for each reference (source -> target)...
-
-            // 1) create a new DocRef pointing to the target and add it to the source's references list
-            var targetRefs = targets.Select(target => new DocRef<ContentBase>(target.Id, target.Type.Name));
-            var update = Builders<ContentBase>.Update.AddToSetEach(nameof(ContentBase.References), targetRefs);
-            _db.GetCollection<ContentBase>(source.Type.Name).UpdateOne(x => x.Id == source.Id, update);
-
-            // 2) create a new DocRef pointing to the source and add it to the target's referencers list
-            var sourceRef = new DocRef<ContentBase>(source.Id, source.Type.Name);
-            var update2 = Builders<ContentBase>.Update.AddToSet(nameof(ContentBase.Referencers), sourceRef);
-            foreach (var target in targets)
-            {
-                _db.GetCollection<ContentBase>(target.Type.Name).UpdateOne(x => x.Id == target.Id, update2);
-            }
-        }
-
-        private void RemoveReference(EntityId source, EntityId target)
-        {
-            // 1) delete the DocRef pointing to the target from the source's references list
-            var update = Builders<dynamic>.Update.PullFilter(
-                nameof(ContentBase.References),
-                Builders<dynamic>.Filter.And(
-                    Builders<dynamic>.Filter.Eq(nameof(DocRefBase.Collection), target.Type.Name),
-                    Builders<dynamic>.Filter.Eq("_id", target.Id)));
-
-            _db.GetCollection<dynamic>(source.Type.Name).UpdateOne(
-                Builders<dynamic>.Filter.Eq("_id", source.Id), update);
-
-            // 2) delete the DocRef pointing to the source from the target's referencers list
-            var update2 = Builders<dynamic>.Update.PullFilter(
-                nameof(ContentBase.Referencers),
-                Builders<dynamic>.Filter.And(
-                    Builders<dynamic>.Filter.Eq(nameof(DocRefBase.Collection), source.Type.Name),
-                    Builders<dynamic>.Filter.Eq("_id", source.Id)));
-
-            _db.GetCollection<dynamic>(target.Type.Name).UpdateOne(
-                Builders<dynamic>.Filter.Eq("_id", target.Id), update2);
-        }
-        */
     }
 }

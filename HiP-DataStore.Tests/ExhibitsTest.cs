@@ -42,7 +42,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests
             Assert.Equal(exhibitArgs.AccessRadius, cachedExhibit.AccessRadius, precision: 3);
 
             // Same user should be able to get the content she created
-            var exhibit = await client.GetByIdAsync(id);
+            await client.GetByIdAsync(id);
 
             // Anonymous access should be forbidden
             client.Authorization = "";
