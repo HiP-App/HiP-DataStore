@@ -19,4 +19,14 @@
     <ProjectReference Include="..\HiP-DataStore\HiP-DataStore.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Assets\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Assets\SampleImage.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

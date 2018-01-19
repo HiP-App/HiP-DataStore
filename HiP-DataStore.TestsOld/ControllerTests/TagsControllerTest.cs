@@ -5,10 +5,13 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using System;
-using Xunit;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
 {
+    /// <summary>
+    /// Old unit tests (written with outdated MyTested framework).
+    /// Only for reference, tests can no longer be executed.
+    /// </summary>
     public class TagsControllerTest
     {
         private TagIndex _tagIndex => MvcTestContext.Services.GetService<InMemoryCache>().Index<TagIndex>();
@@ -27,7 +30,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
         /// <summary>
         /// Returns ok if all tag Ids are retrieved.
         /// </summary>
-        [Fact]
+        //[Fact]
         public void GetIdsTest()
         {
             MyMvc
@@ -40,7 +43,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
         /// <summary>
         /// Returns ok if all tags are retrieved.
         /// </summary>
-        [Fact]
+        //[Fact]
         public void GetAllTest()
         {
             var tagQueryArgs = new TagQueryArgs();
@@ -55,7 +58,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
         /// <summary>
         /// Returns ok if tags are retrieved by Id.
         /// </summary>
-        [Fact]
+        //[Fact]
         public void GetByIdTest()
         {
             TagArgs.Title = "Germany";
@@ -78,7 +81,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
         /// <summary>
         /// Returns 404 if tags are not found.
         /// </summary>
-        [Fact]
+        //[Fact]
         public void GetByIdTest404()
         {
             MyMvc
@@ -91,7 +94,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
         /// <summary>
         /// Returns ok if tags are created.
         /// </summary>
-        [Fact]
+        //[Fact]
         public void PostAsyncTest()
         {
             TagArgs.Title = "Uni Paderborn";
@@ -118,7 +121,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
         /// <summary>
         /// Returns 400 if model is invalid.
         /// </summary>
-        [Fact]
+        //[Fact]
         public void PostAsyncTest400()
         {
             var tagArgs = new TagArgs();
@@ -133,7 +136,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
         /// <summary>
         /// Returns 409 if tag already exist.
         /// </summary>
-        [Fact]
+        //[Fact]
         public void PostAsyncTest409()
         {
             TagArgs.Title = "Paderborn";
@@ -154,7 +157,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
         /// <summary>
         /// Returns 204 when tried to update tag without content.
         /// </summary>
-        //[Fact]
+        ////[Fact]
         public void UpdateByIdTest204()
         {
             TagArgs.Title = "Updated";
@@ -169,7 +172,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
         /// <summary>
         /// Returns 404 if tag not found.
         /// </summary>
-        [Fact]
+        //[Fact]
         public void UpdateByIdTest404()
         {
             TagArgs.Title = "Hi";
@@ -184,7 +187,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
         /// <summary>
         /// Returns 400 for bad request.
         /// </summary>
-        [Fact]
+        //[Fact]
         public void UpdateByIdTest400()
         {
             var tagArgs = new TagArgs();
@@ -199,7 +202,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests.ControllerTests
         /// <summary>
         /// Returns 404 when tag does not exist.
         /// </summary>
-        [Fact]
+        //[Fact]
         public void DeleteByIdTest404()
         {
             MyMvc

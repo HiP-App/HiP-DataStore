@@ -27,7 +27,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests
                 .AddInMemoryCollection(new Dictionary<string, string>
                 {
                     { "EventStore:Host", "" },
-                    { "EventStore:Stream", "test" }
+                    { "EventStore:Stream", "test" },
+                    { "UploadingFiles:Path", "Media" },
+                    { "UploadingFiles:SupportedFormats:Image:0", "png" }
                 })
                 .AddEnvironmentVariables();
             Configuration = builder.Build();
