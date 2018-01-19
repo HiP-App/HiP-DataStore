@@ -32,10 +32,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests
             var id = await client.PostAsync(exhibitArgs);
 
             // Verify that the correct number of events was generated and the cache DB was updated
-            var eventStream = FakeEventStore.Instance.Streams["test"];
+            var eventStream = FakeEventStore.Current.Streams["test"];
             Assert.Equal(3, eventStream.Events.Count);
 
-            var mongoDb = FakeMongoDbContext.Instance;
+            var mongoDb = FakeMongoDbContext.Current;
             var cachedExhibit = mongoDb.Get<Exhibit>((ResourceTypes.Exhibit, id));
             Assert.Equal(exhibitArgs.Name, cachedExhibit.Name);
             Assert.Equal(exhibitArgs.Status.ToString(), cachedExhibit.Status.ToString());
