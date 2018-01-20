@@ -1,8 +1,11 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
+using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.FakeStore;
+using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo.Test;
 using System.Threading.Tasks;
 using Xunit;
@@ -15,6 +18,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests
         public async Task Test1()
         {
             var server = new TestServer(new WebHostBuilder().UseStartup<TestStartup>());
+            var eventStore = (FakeEventStore)server.Host.Services.GetService<IEventStore>();
+            var mongoDb = (FakeMongoDbContext)server.Host.Services.GetService<IMongoDbContext>();
 
             var client = new ExhibitsClient("")
             {
@@ -32,10 +37,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests
             var id = await client.PostAsync(exhibitArgs);
 
             // Verify that the correct number of events was generated and the cache DB was updated
-            var eventStream = FakeEventStore.Current.Streams["test"];
+            var eventStream = eventStore.Streams["test"];
             Assert.Equal(3, eventStream.Events.Count);
 
-            var mongoDb = FakeMongoDbContext.Current;
             var cachedExhibit = mongoDb.Get<Exhibit>((ResourceTypes.Exhibit, id));
             Assert.Equal(exhibitArgs.Name, cachedExhibit.Name);
             Assert.Equal(exhibitArgs.Status.ToString(), cachedExhibit.Status.ToString());
