@@ -255,6 +255,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return Ok(result);
         }
 
+        /// <summary>
+        /// Geting rating of the exhibit for the requested user
+        /// </summary>
+        /// <param name="id"> Id of the exhibit </param>
+        /// <returns></returns>
         [HttpGet("Rating/My/{id}")]
         [ProducesResponseType(typeof(byte?), 200)]
         [ProducesResponseType(400)]
