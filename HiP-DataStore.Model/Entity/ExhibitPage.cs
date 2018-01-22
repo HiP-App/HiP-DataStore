@@ -22,14 +22,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
         public string FontFamily { get; set; }
 
         public int? Audio { get; set; }
-        
+
         public int? Image { get; set; }
 
-        public List<SliderPageImage> Images { get; private set; }
+        public List<SliderPageImage> Images { get; private set; } = new List<SliderPageImage>();
 
         public bool HideYearNumbers { get; set; }
 
-        public List<int> AdditionalInformationPages { get; set; }
+        public List<int> AdditionalInformationPages { get; set; } = new List<int>();
 
         public ExhibitPage()
         {
@@ -44,9 +44,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
             FontFamily = args.FontFamily;
             Audio = args.Audio;
             Image = args.Image;
-            Images = args.Images?.Select(img => new SliderPageImage(img)).ToList();
+            Images = args.Images?.Select(img => new SliderPageImage(img)).ToList() ?? new List<SliderPageImage>();
             HideYearNumbers = args.HideYearNumbers ?? false;
-            AdditionalInformationPages = args.AdditionalInformationPages?.ToList();
+            AdditionalInformationPages = args.AdditionalInformationPages?.ToList() ?? new List<int>();
             Status = args.Status;
         }
 

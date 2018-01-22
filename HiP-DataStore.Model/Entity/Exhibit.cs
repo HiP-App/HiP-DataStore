@@ -17,9 +17,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         public int? Image { get; set; }
 
-        public List<int> Tags { get; set; }
+        public List<int> Tags { get; set; } = new List<int>();
 
-        public List<int> Pages { get; private set; }
+        public List<int> Pages { get; private set; } = new List<int>();
 
         public Exhibit()
         {
@@ -33,8 +33,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
             Latitude = args.Latitude;
             Longitude = args.Longitude;
             Status = args.Status;
-            Tags = args.Tags;
-            Pages = args.Pages;
+            Tags = args.Tags ?? new List<int>();
+            Pages = args.Pages ?? new List<int>();
             AccessRadius = args.AccessRadius;
         }
 
