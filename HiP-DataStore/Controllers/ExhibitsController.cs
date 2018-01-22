@@ -284,6 +284,55 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Rating/{ev.Id}", ev.Id);
         }
 
+        [HttpPost("Quiz")]
+        [ProducesResponseType(typeof(int),201)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> PostQuizAsync(ExhibitQuizArgs args)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!_entityIndex.Exists(ResourceTypes.Exhibit, args.ExhibitId))
+                return NotFound(ErrorMessages.ContentNotFound(ResourceTypes.Exhibit, args.ExhibitId));
+
+            if (User.Identity.GetUserIdentity() == null)
+                return Unauthorized();
+
+            var id = _entityIndex.NextId(ResourceTypes.Quiz);
+            await EntityManager.CreateEntityAsync(_eventStore, args, ResourceTypes.Quiz, id, User.Identity.GetUserIdentity());
+            return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Quiz/{id}", id);
+        }
+
+        [HttpDelete("{Quiz/id}")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> DeleteQuizAsync(int id)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!_entityIndex.Exists(ResourceTypes.Exhibit, id))
+                return NotFound();
+
+            var status = _entityIndex.Status(ResourceTypes.Exhibit, id).GetValueOrDefault();
+            if (!UserPermissions.IsAllowedToDelete(User.Identity, status, _entityIndex.Owner(ResourceTypes.Exhibit, id)))
+                return BadRequest(ErrorMessages.CannotBeDeleted(ResourceTypes.Exhibit, id));
+
+            if (status == ContentStatus.Published)
+                return BadRequest(ErrorMessages.CannotBeDeleted(ResourceTypes.Exhibit, id));
+
+            // check if exhibit is in use and can't be deleted (it's in use if and only if it is contained in a route).
+            if (_referencesIndex.IsUsed(ResourceTypes.Exhibit, id))
+                return BadRequest(ErrorMessages.ResourceInUse);
+
+            // remove the exhibit
+            await EntityManager.DeleteEntityAsync(_eventStore, ResourceTypes.Exhibit, id, User.Identity.GetUserIdentity());
+            return NoContent();
+        }
+
         private void ValidateExhibitArgs(ExhibitArgs args)
         {
             if (args == null)
