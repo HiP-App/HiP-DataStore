@@ -117,7 +117,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         case ResourceType _ when resourceType == ResourceTypes.Exhibit:
                             var originalExhibit = _db.Get<Exhibit>((ResourceTypes.Exhibit, e.Id));
                             var exhibitArgs = originalExhibit.CreateExhibitArgs();
-                            var propertyInfo = typeof(ExhibitArgs).GetProperty(e.PropertyName);
                             e.ApplyTo(exhibitArgs);
                             var updatedExhibit = new Exhibit(exhibitArgs)
                             {
@@ -131,7 +130,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         case ResourceType _ when resourceType == ResourceTypes.ExhibitPage:
                             var originalExhibitPage = _db.Get<ExhibitPage>((ResourceTypes.ExhibitPage, e.Id));
                             var pageArgs = originalExhibitPage.CreateExhibitPageArgs();
-                            propertyInfo = typeof(ExhibitPageArgs2).GetProperty(e.PropertyName);
                             e.ApplyTo(pageArgs);
                             var updatedExhibitPage = new ExhibitPage(pageArgs)
                             {
@@ -145,7 +143,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         case ResourceType _ when resourceType == ResourceTypes.Media:
                             var originalMedium = _db.Get<MediaElement>((ResourceTypes.Media, e.Id));
                             var mediaArgs = originalMedium.CreateMediaArgs();
-                            propertyInfo = typeof(MediaArgs).GetProperty(e.PropertyName);
                             e.ApplyTo(mediaArgs);
                             var updatedMedium = new MediaElement(mediaArgs)
                             {
@@ -160,7 +157,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         case ResourceType _ when resourceType == ResourceTypes.Route:
                             var originalRoute = _db.Get<Route>((ResourceTypes.Route, e.Id));
                             var routeArgs = originalRoute.CreateRouteArgs();
-                            propertyInfo = typeof(RouteArgs).GetProperty(e.PropertyName);
                             e.ApplyTo(routeArgs);
                             var updatedRoute = new Route(routeArgs)
                             {
@@ -174,7 +170,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         case ResourceType _ when resourceType == ResourceTypes.Tag:
                             var originalTag = _db.Get<Tag>((ResourceTypes.Tag, e.Id));
                             var tagArgs = originalTag.CreateTagArgs();
-                            propertyInfo = typeof(TagArgs).GetProperty(e.PropertyName);
                             e.ApplyTo(tagArgs);
                             var updatedTag = new Tag(tagArgs)
                             {
