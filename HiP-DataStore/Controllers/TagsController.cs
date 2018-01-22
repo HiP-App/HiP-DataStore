@@ -1,16 +1,14 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using MongoDB.Driver;
-using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
+using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Tag = PaderbornUniversity.SILab.Hip.DataStore.Model.Entity.Tag;
 
@@ -21,13 +19,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
     public class TagsController : Controller
     {
         private readonly EventStoreService _eventStore;
-        private readonly CacheDatabaseManager _db;
+        private readonly IMongoDbContext _db;
         private readonly EntityIndex _entityIndex;
         private readonly MediaIndex _mediaIndex;
         private readonly TagIndex _tagIndex;
         private readonly ReferencesIndex _referencesIndex;
 
-        public TagsController(EventStoreService eventStore, CacheDatabaseManager db, InMemoryCache cache)
+        public TagsController(EventStoreService eventStore, IMongoDbContext db, InMemoryCache cache)
         {
             _eventStore = eventStore;
             _db = db;
@@ -65,11 +63,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (args.Status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
                 return Forbid();
 
-            var query = _db.Database.GetCollection<Tag>(ResourceTypes.Tag.Name).AsQueryable();
-
             try
             {
-                var tags = query
+                var tags = _db
+                    .GetCollection<Tag>(ResourceTypes.Tag)
                     .FilterByIds(args.Exclude, args.IncludeOnly)
                     .FilterByUser(args.Status, User.Identity)
                     .FilterByStatus(args.Status, User.Identity)
@@ -112,9 +109,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!UserPermissions.IsAllowedToGet(User.Identity, status, _entityIndex.Owner(ResourceTypes.Tag, id)))
                 return Forbid();
 
-            var tag = _db.Database.GetCollection<Tag>(ResourceTypes.Tag.Name)
-                .AsQueryable()
-                .FirstOrDefault(x => x.Id == id);
+            var tag = _db.Get<Tag>((ResourceTypes.Tag, id));
 
             if (tag == null)
                 return NotFound();
