@@ -1,6 +1,4 @@
-﻿using MongoDB.Bson.Serialization.Attributes;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
-using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
+﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 {
@@ -10,9 +8,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         public string Description { get; set; }
 
-        [BsonElement]
-        public DocRef<MediaElement> Image { get; private set; } =
-            new DocRef<MediaElement>(ResourceTypes.Media.Name);
+        public int? Image { get; set; }
 
         public Tag()
         {
@@ -22,7 +18,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
         {
             Title = args.Title;
             Description = args.Description;
-            Image.Id = args.Image;
+            Image = args.Image;
             Status = args.Status;
         }
 
@@ -31,7 +27,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
             var args = new TagArgs();
             args.Title = Title;
             args.Description = Description;
-            args.Image = Image.Id.AsNullableInt32;
+            args.Image = Image;
             args.Status = Status;
             return args;
         }
