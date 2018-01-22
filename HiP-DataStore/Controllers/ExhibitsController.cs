@@ -251,6 +251,30 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return Ok(result);
         }
 
+        /// <summary>
+        /// Geting rating of the exhibit for the requested user
+        /// </summary>
+        /// <param name="id"> Id of the exhibit </param>
+        /// <returns></returns>
+        [HttpGet("Rating/My/{id}")]
+        [ProducesResponseType(typeof(byte?), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        public IActionResult GetMyRating(int id)
+        {
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!_entityIndex.Exists(ResourceTypes.Exhibit, id))
+                return NotFound(ErrorMessages.ContentNotFound(ResourceTypes.Exhibit, id));
+
+            var result = _ratingIndex.UserRating(ResourceTypes.Exhibit, id, User.Identity);
+
+            return Ok(result);
+        }
+
         [HttpPost("Rating/{id}")]
         [ProducesResponseType(typeof(int), 201)]
         [ProducesResponseType(400)]
