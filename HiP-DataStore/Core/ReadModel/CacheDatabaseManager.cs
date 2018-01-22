@@ -34,8 +34,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 
         private void ApplyEvent(IEvent ev)
         {
-            object oldValue = null;
-
             switch (ev)
             {
                 case MediaFileUpdated e:
@@ -120,7 +118,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                             var originalExhibit = _db.Get<Exhibit>((ResourceTypes.Exhibit, e.Id));
                             var exhibitArgs = originalExhibit.CreateExhibitArgs();
                             var propertyInfo = typeof(ExhibitArgs).GetProperty(e.PropertyName);
-                            oldValue = propertyInfo.GetValue(exhibitArgs);
                             e.ApplyTo(exhibitArgs);
                             var updatedExhibit = new Exhibit(exhibitArgs)
                             {
@@ -135,7 +132,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                             var originalExhibitPage = _db.Get<ExhibitPage>((ResourceTypes.ExhibitPage, e.Id));
                             var pageArgs = originalExhibitPage.CreateExhibitPageArgs();
                             propertyInfo = typeof(ExhibitPageArgs2).GetProperty(e.PropertyName);
-                            oldValue = propertyInfo.GetValue(pageArgs);
                             e.ApplyTo(pageArgs);
                             var updatedExhibitPage = new ExhibitPage(pageArgs)
                             {
@@ -150,7 +146,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                             var originalMedium = _db.Get<MediaElement>((ResourceTypes.Media, e.Id));
                             var mediaArgs = originalMedium.CreateMediaArgs();
                             propertyInfo = typeof(MediaArgs).GetProperty(e.PropertyName);
-                            oldValue = propertyInfo.GetValue(mediaArgs);
                             e.ApplyTo(mediaArgs);
                             var updatedMedium = new MediaElement(mediaArgs)
                             {
@@ -166,7 +161,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                             var originalRoute = _db.Get<Route>((ResourceTypes.Route, e.Id));
                             var routeArgs = originalRoute.CreateRouteArgs();
                             propertyInfo = typeof(RouteArgs).GetProperty(e.PropertyName);
-                            oldValue = propertyInfo.GetValue(routeArgs);
                             e.ApplyTo(routeArgs);
                             var updatedRoute = new Route(routeArgs)
                             {
@@ -181,7 +175,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                             var originalTag = _db.Get<Tag>((ResourceTypes.Tag, e.Id));
                             var tagArgs = originalTag.CreateTagArgs();
                             propertyInfo = typeof(TagArgs).GetProperty(e.PropertyName);
-                            oldValue = propertyInfo.GetValue(tagArgs);
                             e.ApplyTo(tagArgs);
                             var updatedTag = new Tag(tagArgs)
                             {
