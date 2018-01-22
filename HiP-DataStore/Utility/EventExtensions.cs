@@ -19,7 +19,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Utility
                 return Enumerable.Empty<EntityId>();
 
             var referenceAttribute = propertyInfo.GetCustomAttribute<ReferenceAttribute>();
-            var referenceResourceType = ResourceType.ResourceTypeDictionary[referenceAttribute.ResourceTypeName];
+            var referenceResourceType = ResourceType.Parse(referenceAttribute.ResourceTypeName);
             return GetEntityIdsFromObject(e.Value, referenceResourceType);
         }
 
@@ -34,7 +34,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Utility
             if (hasAttribute)
             {
                 var referenceAttribute = propertyInfo.GetCustomAttribute<ReferenceAttribute>();
-                var referenceResourceType = ResourceType.ResourceTypeDictionary[referenceAttribute.ResourceTypeName];
+                var referenceResourceType = ResourceType.Parse(referenceAttribute.ResourceTypeName);
 
                 if (!Equals(oldValue, e.Value))
                 {

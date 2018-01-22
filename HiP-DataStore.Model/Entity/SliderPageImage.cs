@@ -1,6 +1,4 @@
-﻿using MongoDB.Bson.Serialization.Attributes;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
-using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
+﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 {
@@ -8,9 +6,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
     {
         public string Date { get; set; }
 
-        [BsonElement]
-        public DocRef<MediaElement> Image { get; private set; } =
-            new DocRef<MediaElement>(ResourceTypes.Media.Name);
+        public int Image { get; set; }
 
         public SliderPageImage()
         {
@@ -19,7 +15,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
         public SliderPageImage(SliderPageImageArgs args)
         {
             Date = args.Date;
-            Image.Id = args.Image;
+            Image = args.Image;
         }
     }
 }

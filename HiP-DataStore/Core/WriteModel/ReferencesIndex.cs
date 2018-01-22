@@ -1,5 +1,4 @@
-﻿using PaderbornUniversity.SILab.Hip.DataStore.Model;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
+﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Events;

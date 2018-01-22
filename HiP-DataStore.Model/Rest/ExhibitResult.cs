@@ -2,7 +2,6 @@
 using Newtonsoft.Json.Converters;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using System;
-using System.Linq;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 {
@@ -45,14 +44,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
             Name = x.Name;
             Description = x.Description;
             UserId = x.UserId;
-            Image = (int?)x.Image.Id;
+            Image = x.Image;
             Latitude = x.Latitude;
             Longitude = x.Longitude;
             AccessRadius = x.AccessRadius;
             Used = x.Referencers.Count > 0; // an exhibit is in use if it is contained in (i.e. referenced by) a route
-            Pages = x.Pages.Ids.Select(id => (int)id).ToArray();
+            Pages = x.Pages?.ToArray();
             Status = x.Status;
-            Tags = x.Tags.Ids.Select(id => (int)id).ToArray();
+            Tags = x.Tags?.ToArray();
             Timestamp = x.Timestamp;
         }
     }
