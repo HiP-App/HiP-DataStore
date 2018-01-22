@@ -19,9 +19,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         public int? Audio { get; set; }
 
-        public List<int> Exhibits { get; set; }
+        public List<int> Exhibits { get; set; } = new List<int>();
 
-        public List<int> Tags { get; set; }
+        public List<int> Tags { get; set; } = new List<int>();
 
         public Route()
         {
@@ -35,9 +35,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
             Distance = args.Distance;
             Image = args.Image;
             Audio = args.Audio;
-            Exhibits = args.Exhibits;
+            Exhibits = args.Exhibits ?? new List<int>();
             Status = args.Status;
-            Tags = args.Tags;
+            Tags = args.Tags ?? new List<int>();
         }
 
         public RouteArgs CreateRouteArgs()
