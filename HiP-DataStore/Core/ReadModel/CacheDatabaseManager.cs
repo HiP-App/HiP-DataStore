@@ -36,13 +36,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 
         private void ApplyEvent(IEvent ev)
         {
-            if (ev is DeletedEvent baseEvent)
-            {
-                var entity = (baseEvent.GetEntityType(), baseEvent.Id);
-                _db.ClearIncomingReferences(entity);
-                _db.ClearOutgoingReferences(entity);
-            }
-
             object oldValue = null;
 
             switch (ev)
@@ -137,8 +130,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                                 UserId = originalExhibit.UserId,
                                 Timestamp = e.Timestamp
                             };
-                            updatedExhibit.References.AddRange(originalExhibit.References);
-                            updatedExhibit.Referencers.AddRange(originalExhibit.Referencers);
                             _db.Replace((ResourceTypes.Exhibit, e.Id), updatedExhibit);
                             break;
 
@@ -154,8 +145,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                                 UserId = originalExhibitPage.UserId,
                                 Timestamp = e.Timestamp
                             };
-                            updatedExhibitPage.References.AddRange(originalExhibitPage.References);
-                            updatedExhibitPage.Referencers.AddRange(originalExhibitPage.Referencers);
                             _db.Replace((ResourceTypes.ExhibitPage, e.Id), updatedExhibitPage);
                             break;
 
@@ -172,8 +161,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                                 Timestamp = e.Timestamp
                             };
                             updatedMedium.File = originalMedium.File;
-                            updatedMedium.References.AddRange(originalMedium.References);
-                            updatedMedium.Referencers.AddRange(originalMedium.Referencers);
                             _db.Replace((ResourceTypes.Media, e.Id), updatedMedium);
                             break;
 
@@ -189,8 +176,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                                 UserId = originalRoute.UserId,
                                 Timestamp = e.Timestamp
                             };
-                            updatedRoute.References.AddRange(originalRoute.References);
-                            updatedRoute.Referencers.AddRange(originalRoute.Referencers);
                             _db.Replace((ResourceTypes.Route, e.Id), updatedRoute);
                             break;
 
@@ -206,8 +191,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                                 UserId = originalTag.UserId,
                                 Timestamp = e.Timestamp
                             };
-                            updatedTag.References.AddRange(originalTag.References);
-                            updatedTag.Referencers.AddRange(originalTag.Referencers);
                             _db.Replace((ResourceTypes.Tag, e.Id), updatedTag);
                             break;
                     }
@@ -234,19 +217,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                             break;
                     }
                     break;
-            }
-
-            if (ev is PropertyChangedEvent propEvent)
-            {
-                var (addedReferences, removedReferences) = propEvent.GetReferenceDifferences(oldValue);
-
-                foreach (var remove in removedReferences)
-                {
-                    _db.RemoveReference((propEvent.GetEntityType(), propEvent.Id), remove);
-                }
-
-                if (addedReferences.Any())
-                    _db.AddReferences((propEvent.GetEntityType(), propEvent.Id), addedReferences);
             }
         }
 
