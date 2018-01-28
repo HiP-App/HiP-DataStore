@@ -27,6 +27,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly EntityIndex _entityIndex;
         private readonly ReferencesIndex _referencesIndex;
         private readonly RatingIndex _ratingIndex;
+        private readonly QuizIndex _quizIndex;
 
         public ExhibitsController(EventStoreService eventStore, IMongoDbContext db, InMemoryCache cache)
         {
@@ -36,6 +37,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             _entityIndex = cache.Index<EntityIndex>();
             _referencesIndex = cache.Index<ReferencesIndex>();
             _ratingIndex = cache.Index<RatingIndex>();
+            _quizIndex = cache.Index<QuizIndex>();
         }
 
         [HttpGet("ids")]
@@ -89,6 +91,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                         ("timestamp", x => x.Timestamp))
                     .PaginateAndSelect(args.Page, args.PageSize, x => new ExhibitResult(x)
                     {
+                        Quiz = _quizIndex.GetQuizId(x.Id),
                         Timestamp = _referencesIndex.LastModificationCascading(ResourceTypes.Exhibit, x.Id)
                     });
 
@@ -126,6 +129,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             var result = new ExhibitResult(exhibit)
             {
+                Quiz = _quizIndex.GetQuizId(id),
                 Timestamp = _referencesIndex.LastModificationCascading(ResourceTypes.Exhibit, id)
             };
 
@@ -280,18 +284,51 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Rating/{ev.Id}", ev.Id);
         }
 
-        [HttpPost("Quiz")]
-        [ProducesResponseType(typeof(int),201)]
+        [HttpGet("Quiz/{id}")]
+        [ProducesResponseType(typeof(ExhibitQuizResult), 200)]
+        [ProducesResponseType(304)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> PostQuizAsync(ExhibitQuizArgs args)
+        public IActionResult GetQuizById(int id, DateTimeOffset? timestamp = null)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!_entityIndex.Exists(ResourceTypes.Exhibit, args.ExhibitId))
-                return NotFound(ErrorMessages.ContentNotFound(ResourceTypes.Exhibit, args.ExhibitId));
+            var status = _entityIndex.Status(ResourceTypes.Quiz, id) ?? ContentStatus.Published;
+            if (!UserPermissions.IsAllowedToGet(User.Identity, status, _entityIndex.Owner(ResourceTypes.Quiz, id)))
+                return Forbid();
 
+            var quiz = _db.Get<Quiz>((ResourceTypes.Quiz, id));
+
+            if (quiz == null)
+                return NotFound();
+
+            if (timestamp != null && quiz.Timestamp <= timestamp.Value)
+                return StatusCode(304);
+
+            var result = new ExhibitQuizResult(quiz)
+            {
+                Timestamp = _referencesIndex.LastModificationCascading(ResourceTypes.Quiz, id)
+            };
+
+            return Ok(result);
+        }
+        [HttpPost("Quiz")]
+        [ProducesResponseType(typeof(int),201)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> PostQuizAsync([FromBody]ExhibitQuizArgs args)
+        {
+            ValidateQuizArgs(args);
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+      
+            int? oldQuiz = _quizIndex.GetQuizId(args.ExhibitId.GetValueOrDefault());
+            if (oldQuiz != null)
+                return BadRequest(ErrorMessages.QuizCannotBeCreated(oldQuiz.GetValueOrDefault(), args.ExhibitId.GetValueOrDefault()));
+            
             if (User.Identity.GetUserIdentity() == null)
                 return Unauthorized();
 
@@ -300,7 +337,36 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Quiz/{id}", id);
         }
 
-        [HttpDelete("{Quiz/id}")]
+        [HttpPut("Quiz/{id}")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> UpdateQuizAsync(int id, [FromBody]ExhibitQuizArgs args)
+        {
+            ValidateQuizArgs(args);
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!_entityIndex.Exists(ResourceTypes.Quiz, id))
+                return NotFound();
+
+            if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, _entityIndex.Owner(ResourceTypes.Quiz, id)))
+                return Forbid();
+
+            var oldStatus = _entityIndex.Status(ResourceTypes.Quiz, id).GetValueOrDefault();
+            if (args.Status == ContentStatus.Unpublished && oldStatus != ContentStatus.Published)
+                return BadRequest(ErrorMessages.CannotBeUnpublished(ResourceTypes.Quiz));
+
+            // validation passed, emit event
+            var oldQuizArgs = await EventStreamExtensions.GetCurrentEntityAsync<ExhibitQuizArgs>(_eventStore.EventStream, ResourceTypes.Quiz, id);
+            await EntityManager.UpdateEntityAsync(_eventStore, oldQuizArgs, args, ResourceTypes.Quiz, id, User.Identity.GetUserIdentity());
+
+            return StatusCode(204);
+        }
+
+        [HttpDelete("Quiz/{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(403)]
@@ -310,22 +376,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!_entityIndex.Exists(ResourceTypes.Exhibit, id))
-                return NotFound();
-
-            var status = _entityIndex.Status(ResourceTypes.Exhibit, id).GetValueOrDefault();
-            if (!UserPermissions.IsAllowedToDelete(User.Identity, status, _entityIndex.Owner(ResourceTypes.Exhibit, id)))
-                return BadRequest(ErrorMessages.CannotBeDeleted(ResourceTypes.Exhibit, id));
+            var status = _entityIndex.Status(ResourceTypes.Quiz, id).GetValueOrDefault();
+            if (!UserPermissions.IsAllowedToDelete(User.Identity, status, _entityIndex.Owner(ResourceTypes.Quiz, id)))
+                return BadRequest(ErrorMessages.CannotBeDeleted(ResourceTypes.Quiz, id));
 
             if (status == ContentStatus.Published)
-                return BadRequest(ErrorMessages.CannotBeDeleted(ResourceTypes.Exhibit, id));
+                return BadRequest(ErrorMessages.CannotBeDeleted(ResourceTypes.Quiz, id));
 
-            // check if exhibit is in use and can't be deleted (it's in use if and only if it is contained in a route).
-            if (_referencesIndex.IsUsed(ResourceTypes.Exhibit, id))
-                return BadRequest(ErrorMessages.ResourceInUse);
-
-            // remove the exhibit
-            await EntityManager.DeleteEntityAsync(_eventStore, ResourceTypes.Exhibit, id, User.Identity.GetUserIdentity());
+            // remove the quiz
+            await EntityManager.DeleteEntityAsync(_eventStore, ResourceTypes.Quiz, id, User.Identity.GetUserIdentity());
             return NoContent();
         }
 
@@ -361,6 +420,23 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                     ModelState.AddModelError(nameof(args.Pages),
                         ErrorMessages.ExhibitPageNotFound(id));
             }
+        }
+
+        private void ValidateQuizArgs(ExhibitQuizArgs args)
+        {
+            // ensure images exist
+            var invalidIds = args.Questions.Select(quest => quest.Image)
+                   .Where(imageId => imageId != null && !_mediaIndex.IsImage(imageId.Value))
+                   .ToList();
+
+            foreach (var imageId in invalidIds)
+                ModelState.AddModelError(nameof(args.Questions),
+                    ErrorMessages.ImageNotFound(imageId.Value));
+
+            // ensure exhibit exist
+            if (!_entityIndex.Exists(ResourceTypes.Exhibit, args.ExhibitId.GetValueOrDefault()))
+                ModelState.AddModelError(nameof(args.ExhibitId),
+                ErrorMessages.ContentNotFound(ResourceTypes.Exhibit, args.ExhibitId.GetValueOrDefault()));
         }
     }
 }

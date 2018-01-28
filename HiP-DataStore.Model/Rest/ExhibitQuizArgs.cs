@@ -7,9 +7,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
     public class ExhibitQuizArgs : IContentArgs
     {
         [Required]
-        public int ExhibitId { get; set; }
+        public int? ExhibitId { get; set; }
 
-        /// TODO: add validation: Max 10 quesions is allowed
+        [ListRange(Maximum = 10)]
         [Required]
         public List<ExhibitQuizQuestionArgs> Questions { get; set; }
 
@@ -20,15 +20,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
     public class ExhibitQuizQuestionArgs
     {
         [Required]
-        public string Quistion { get; set; }
+        public string Text { get; set; }
 
-        /// TODO: add validation: Only for options is allowed
         /// First option is by default the right answer
+        [ListRange(Maximum = 4, Minimum = 4 ,ErrorMessage = "Number of options is restricted to 4")]
         [Required]
         public List<string> Options { get; set; }
 
         [Reference(nameof(ResourceTypes.Media))]
         public int? Image { get; set; }
     }
-
 }

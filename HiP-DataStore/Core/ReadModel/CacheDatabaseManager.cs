@@ -125,7 +125,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                                 UserId = e.UserId,
                                 Timestamp = e.Timestamp
                             };
-                            _db.GetCollection<Quiz>(ResourceTypes.Quiz.Name).InsertOne(newQuiz);
+                            _db.Add(ResourceTypes.Quiz,newQuiz);
                             break;
                     }
                     break;
@@ -169,7 +169,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                             break;
 
                         case ResourceType _ when resourceType == ResourceTypes.Quiz:
-                            var originalQuiz = _db.GetCollection<Quiz>(ResourceTypes.Quiz.Name).AsQueryable().First(x => x.Id == e.Id);
+                            var originalQuiz = _db.Get<Quiz>((ResourceTypes.Quiz, e.Id));
                             var quizArgs = originalQuiz.CreateQuizArgs();
                             propertyInfo = typeof(ExhibitQuizArgs).GetProperty(e.PropertyName);
                             oldValue = propertyInfo.GetValue(quizArgs);
@@ -182,7 +182,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                             };
                             updatedQuiz.References.AddRange(originalQuiz.References);
                             updatedQuiz.Referencers.AddRange(originalQuiz.Referencers);
-                            _db.GetCollection<Quiz>(ResourceTypes.Quiz.Name).ReplaceOne(p => p.Id == e.Id, updatedQuiz);
+                            _db.Replace((ResourceTypes.Quiz, e.Id), updatedQuiz);
                             break;
 
                         case ResourceType _ when resourceType == ResourceTypes.Media:
@@ -259,7 +259,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                             MarkDeleted((resourceType, e.Id));
                             break;
                         case ResourceType _ when resourceType == ResourceTypes.Quiz:
-                            MarkDeleted<Quiz>(resourceType, e.Id);
+                            MarkDeleted((resourceType, e.Id));
                             break;
                     }
                     break;

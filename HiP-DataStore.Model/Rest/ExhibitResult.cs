@@ -32,6 +32,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 
         public int[] Tags { get; set; }
 
+        public int? Quiz { get; set; }
+
         public DateTimeOffset Timestamp { get; set; }
 
         public ExhibitResult()

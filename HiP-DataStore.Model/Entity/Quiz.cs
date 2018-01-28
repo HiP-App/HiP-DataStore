@@ -1,11 +1,7 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
-using Newtonsoft.Json.Converters;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
-using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 {
@@ -19,50 +15,48 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
         
         public Quiz(ExhibitQuizArgs args)
         {
-            ExhibitId = args.ExhibitId;
+            ExhibitId = args.ExhibitId.GetValueOrDefault();
             Status = args.Status;
-            args.Questions.ForEach(x => Questions.Add(new QuizQuestion(x)));
+            args.Questions?.ForEach(x => Questions.Add(new QuizQuestion(x)));
         }
 
         public ExhibitQuizArgs CreateQuizArgs()
         {
             var args = new ExhibitQuizArgs()
             {
-                ExhibitId = ExhibitId,
+                ExhibitId = this.ExhibitId,
                 Questions = new List<ExhibitQuizQuestionArgs>(this.Questions.Select(x => x.CreateQuizQuestionArgs())),
-                Status = Status
+                Status = this.Status
             };
             return args;
         }
-
     }
 
     public class QuizQuestion
     {
-        public string Question { get; set; }
+        public string Text { get; set; }
 
         public List<string> Options { get; set; }
 
         [BsonElement]
-        public DocRef<MediaElement> Image { get; private set; } =
-            new DocRef<MediaElement>(ResourceTypes.Media.Name);
+        public int? Image { get; private set; } 
 
         public QuizQuestion() { }
 
         public QuizQuestion(ExhibitQuizQuestionArgs args)
         {
-            Question = args.Quistion;
+            Text = args.Text;
             Options = args.Options;
-            Image.Id = args.Image;
+            Image = args.Image;
         }
 
         public ExhibitQuizQuestionArgs CreateQuizQuestionArgs()
         {
             var args = new ExhibitQuizQuestionArgs()
             {
-                Quistion = Question,
+                Text = Text,
                 Options = Options,
-                Image = Image.Id.AsNullableInt32
+                Image = Image
             };
             return args;
         }
