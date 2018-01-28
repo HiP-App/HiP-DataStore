@@ -152,8 +152,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         case ResourceType _ when resourceType == ResourceTypes.Quiz:
                             var originalQuiz = _db.Get<Quiz>((ResourceTypes.Quiz, e.Id));
                             var quizArgs = originalQuiz.CreateQuizArgs();
-                            propertyInfo = typeof(ExhibitQuizArgs).GetProperty(e.PropertyName);
-                            oldValue = propertyInfo.GetValue(quizArgs);
                             e.ApplyTo(quizArgs);
                             var updatedQuiz = new Quiz(quizArgs)
                             {
