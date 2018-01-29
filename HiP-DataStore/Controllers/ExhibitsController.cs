@@ -455,7 +455,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             foreach (var imageId in invalidIds)
                 ModelState.AddModelError(nameof(args.Questions),
-                    ErrorMessages.ImageNotFound(imageId.Value));
+                    ErrorMessages.ImageNotFound(imageId.GetValueOrDefault()));
 
             // ensure exhibit exist
             if (!_entityIndex.Exists(ResourceTypes.Exhibit, args.ExhibitId.GetValueOrDefault()))

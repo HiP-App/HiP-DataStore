@@ -24,9 +24,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
         {
             var args = new ExhibitQuizArgs()
             {
-                ExhibitId = this.ExhibitId,
-                Questions = new List<ExhibitQuizQuestionArgs>(this.Questions.Select(x => x.CreateQuizQuestionArgs())),
-                Status = this.Status
+                ExhibitId = ExhibitId,
+                Questions = new List<ExhibitQuizQuestionArgs>(Questions.Select(x => x.CreateQuizQuestionArgs())),
+                Status = Status
             };
             return args;
         }

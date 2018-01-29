@@ -11,23 +11,21 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Utility
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
     class ListRange : ValidationAttribute
     {
-        private int _min = 0;
+        private int _min;
         private int _max = int.MaxValue;
         private string _errorMessage;
-        private bool ErrorMessageWasReplaced = false;
+        private bool _errorMessageWasReplaced;
 
-        public int Minimum { get { return _min; } set { _min = value; if (!ErrorMessageWasReplaced) genNewErrorMessage(); } }
-        public int Maximum { get { return _max; } set { _max = value; if (!ErrorMessageWasReplaced) genNewErrorMessage(); } }
+        public int Minimum { get { return _min; } set { _min = value; if (!_errorMessageWasReplaced) GenNewErrorMessage(); } }
+        public int Maximum { get { return _max; } set { _max = value; if (!_errorMessageWasReplaced) GenNewErrorMessage(); } }
 
-        public string ErrorMessage
+        public new string ErrorMessage
         {
             get { return _errorMessage; }
-            set { _errorMessage = value; ErrorMessageWasReplaced = true;}
+            set { _errorMessage = value; _errorMessageWasReplaced = true;}
         }
   
-        public ListRange() {   }
-
-        private void genNewErrorMessage()
+        private void GenNewErrorMessage()
         {
             ErrorMessage = $"List can have from {Minimum} to {Maximum} number of objects"; 
         }

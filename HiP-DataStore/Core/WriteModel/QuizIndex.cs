@@ -34,11 +34,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
             switch (e)
             {
                 case DeletedEvent ev when ev.GetEntityType() == ResourceTypes.Quiz:
-                    int ExhibitId=-1;
-                    _exhibitQuizDict.ToList().ForEach(x => { if (x.Value == ev.Id) ExhibitId = x.Key; });
+                    int exhibitId=-1;
                     lock (_lockObject)
-                        if (ExhibitId != -1)
-                            _exhibitQuizDict.Remove(ExhibitId);
+                    {
+                        _exhibitQuizDict.ToList().ForEach(x => { if (x.Value == ev.Id) exhibitId = x.Key; });
+                        if (exhibitId != -1)
+                            _exhibitQuizDict.Remove(exhibitId);
+                    }
                     break;
 
                 case PropertyChangedEvent ev when ev.GetEntityType() == ResourceTypes.Quiz:
