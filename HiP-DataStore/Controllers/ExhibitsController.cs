@@ -412,6 +412,83 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return NoContent();
         }
 
+        [HttpGet("Quiz/Rating/{id}")]
+        [ProducesResponseType(typeof(RatingResult), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        public IActionResult GetQuizRating(int id)
+        {
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!_entityIndex.Exists(ResourceTypes.Quiz, id))
+                return NotFound(ErrorMessages.ContentNotFound(ResourceTypes.Quiz, id));
+
+            var result = new RatingResult()
+            {
+                Id = id,
+                Average = _ratingIndex.Average(ResourceTypes.Quiz, id),
+                Count = _ratingIndex.Count(ResourceTypes.Quiz, id),
+                RatingTable = _ratingIndex.Table(ResourceTypes.Quiz, id)
+            };
+
+            return Ok(result);
+        }
+        /// <summary>
+        /// Geting rating of the quiz for the requested user
+        /// </summary>
+        /// <param name="id"> Id of the quiz </param>
+        /// <returns></returns>
+        [HttpGet("Quiz/Rating/My/{id}")]
+        [ProducesResponseType(typeof(byte?), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        public IActionResult GetMyQuizRating(int id)
+        {
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!_entityIndex.Exists(ResourceTypes.Quiz, id))
+                return NotFound(ErrorMessages.ContentNotFound(ResourceTypes.Quiz, id));
+
+            var result = _ratingIndex.UserRating(ResourceTypes.Quiz, id, User.Identity);
+
+            return Ok(result);
+        }
+
+        [HttpPost("Quiz/Rating/{id}")]
+        [ProducesResponseType(typeof(int), 201)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> PostQuizRatingAsync(int id, RatingArgs args)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!_entityIndex.Exists(ResourceTypes.Quiz, id))
+                return NotFound(ErrorMessages.ContentNotFound(ResourceTypes.Quiz, id));
+
+            if (User.Identity.GetUserIdentity() == null)
+                return Unauthorized();
+
+            var ev = new RatingAdded()
+            {
+                Id = _ratingIndex.NextId(ResourceTypes.Quiz),
+                EntityId = id,
+                UserId = User.Identity.GetUserIdentity(),
+                Value = args.Rating.GetValueOrDefault(),
+                RatedType = ResourceTypes.Quiz,
+                Timestamp = DateTimeOffset.Now
+            };
+
+            await _eventStore.AppendEventAsync(ev);
+            return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Quiz/Rating/{ev.Id}", ev.Id);
+        }
+
         private void ValidateExhibitArgs(ExhibitArgs args)
         {
             if (args == null)
