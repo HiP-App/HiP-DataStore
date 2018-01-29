@@ -85,6 +85,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests
                 .AddSingleton<IDomainIndex, EntityIndex>()
                 .AddSingleton<IDomainIndex, ReferencesIndex>()
                 .AddSingleton<IDomainIndex, TagIndex>()
+                .AddSingleton<IDomainIndex, QuizIndex>()
                 .AddSingleton<IDomainIndex, ExhibitPageIndex>()
                 .AddSingleton<IDomainIndex, ScoreBoardIndex>()
                 .AddSingleton<IDomainIndex, RatingIndex>();
