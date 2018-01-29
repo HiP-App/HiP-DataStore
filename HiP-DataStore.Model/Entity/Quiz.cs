@@ -59,6 +59,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
                 Image = Image
             };
             return args;
-        }
+        }             
     }
 }
