@@ -12,6 +12,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
+using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
 using PaderbornUniversity.SILab.Hip.Webservice;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore
@@ -27,7 +28,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
                 .AddEnvironmentVariables();
             Configuration = builder.Build();
 
-            //Initialize ResourceTypes
+            // Initialize ResourceTypes
             ResourceTypes.Initialize();
         }
 
@@ -38,6 +39,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
         {
             services
                 .Configure<EndpointConfig>(Configuration.GetSection("Endpoints"))
+                .Configure<MongoDbConfig>(Configuration.GetSection("Endpoints"))
                 .Configure<EventStoreConfig>(Configuration.GetSection("EventStore"))
                 .Configure<UploadFilesConfig>(Configuration.GetSection("UploadingFiles"))
                 .Configure<ExhibitPagesConfig>(Configuration.GetSection("ExhibitPages"))
@@ -49,7 +51,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
 
             // Configure authentication
             services
-                .AddAuthentication(options => options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme)
+                .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
                     options.Audience = authConfig.Value.Audience;
@@ -72,6 +74,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             services.AddMvc();
 
             services
+                .AddSingleton<IEventStore, EventSourcing.EventStoreLlp.EventStore>()
+                .AddSingleton<IMongoDbContext, MongoDbContext>()
                 .AddSingleton<EventStoreService>()
                 .AddSingleton<CacheDatabaseManager>()
                 .AddSingleton<InMemoryCache>()
@@ -87,7 +91,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory,
-            IOptions<AuthConfig> authConfig, IOptions<CorsConfig> corsConfig, IOptions<EndpointConfig> endpointConfig)
+            IOptions<CorsConfig> corsConfig)
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"))
                          .AddDebug();
@@ -109,7 +113,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
                     .WithHeaders(corsEnvConf.Headers)
                     .WithExposedHeaders(corsEnvConf.ExposedHeaders);
             });
-
 
             app.UseAuthentication();
             app.UseMvc();

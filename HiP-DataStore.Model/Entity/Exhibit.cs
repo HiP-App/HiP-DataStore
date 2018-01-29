@@ -1,8 +1,5 @@
-﻿using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
-using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
-using System.Linq;
+﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using System.Collections.Generic;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 {
@@ -18,17 +15,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         public float AccessRadius { get; set; }
 
-        [BsonElement]
-        public DocRef<MediaElement> Image { get; private set; } =
-            new DocRef<MediaElement>(ResourceTypes.Media.Name);
+        public int? Image { get; set; }
 
-        [BsonElement]
-        public DocRefList<Tag> Tags { get; private set; } =
-            new DocRefList<Tag>(ResourceTypes.Tag.Name);
+        public List<int> Tags { get; set; } = new List<int>();
 
-        [BsonElement]
-        public DocRefList<ExhibitPage> Pages { get; private set; } =
-            new DocRefList<ExhibitPage>(ResourceTypes.ExhibitPage.Name);
+        public List<int> Pages { get; private set; } = new List<int>();
 
         public Exhibit()
         {
@@ -38,12 +29,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
         {
             Name = args.Name;
             Description = args.Description;
-            Image.Id = args.Image;
+            Image = args.Image;
             Latitude = args.Latitude;
             Longitude = args.Longitude;
             Status = args.Status;
-            Tags.Add(args.Tags?.Select(id => (BsonValue)id));
-            Pages.Add(args.Pages?.Select(id => (BsonValue)id));
+            Tags = args.Tags ?? new List<int>();
+            Pages = args.Pages ?? new List<int>();
             AccessRadius = args.AccessRadius;
         }
 
@@ -53,12 +44,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
             {
                 Name = Name,
                 Description = Description,
-                Image = Image.Id.AsNullableInt32,
+                Image = Image,
                 Latitude = Latitude,
                 Longitude = Longitude,
                 Status = Status,
-                Tags = Tags?.Ids.Select(id => id.AsInt32).ToList(),
-                Pages = Pages?.Ids.Select(id => id.AsInt32).ToList(),
+                Tags = Tags,
+                Pages = Pages,
                 AccessRadius = AccessRadius
             };
             return args;

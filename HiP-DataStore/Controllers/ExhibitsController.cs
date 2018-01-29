@@ -1,8 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
-using MongoDB.Driver;
-using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
@@ -11,6 +9,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
+using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,14 +23,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
     public class ExhibitsController : Controller
     {
         private readonly EventStoreService _eventStore;
-        private readonly CacheDatabaseManager _db;
+        private readonly IMongoDbContext _db;
         private readonly MediaIndex _mediaIndex;
         private readonly EntityIndex _entityIndex;
         private readonly ReferencesIndex _referencesIndex;
         private readonly RatingIndex _ratingIndex;
         private readonly ReviewIndex _reviewIndex;
 
-        public ExhibitsController(EventStoreService eventStore, CacheDatabaseManager db, InMemoryCache cache)
+        public ExhibitsController(EventStoreService eventStore, IMongoDbContext db, InMemoryCache cache)
         {
             _eventStore = eventStore;
             _db = db;
@@ -71,13 +70,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (args.Status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
                 return Forbid();
 
-            var query = _db.Database.GetCollection<Exhibit>(ResourceTypes.Exhibit.Name).AsQueryable();
-
             try
             {
                 var routeIds = args.OnlyRoutes?.Select(id => (BsonValue)id).ToList();
 
-                var exhibits = query
+                var exhibits = _db
+                    .GetCollection<Exhibit>(ResourceTypes.Exhibit)
                     .FilterByIds(args.Exclude, args.IncludeOnly)
                     .FilterByLocation(args.Latitude, args.Longitude)
                     .FilterByUser(args.Status, User.Identity)
@@ -87,7 +85,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                         x.Name.ToLower().Contains(args.Query.ToLower()) ||
                         x.Description.ToLower().Contains(args.Query.ToLower()))
                     .FilterIf(args.OnlyRoutes != null, x => x.Referencers
-                        .Any(r => r.Collection == ResourceTypes.Route.Name && routeIds.Contains(r.Id)))
+                        .Any(r => r.Type == ResourceTypes.Route && routeIds.Contains(r.Id)))
                     .Sort(args.OrderBy,
                         ("id", x => x.Id),
                         ("name", x => x.Name),
@@ -121,9 +119,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!UserPermissions.IsAllowedToGet(User.Identity, status, _entityIndex.Owner(ResourceTypes.Exhibit, id)))
                 return Forbid();
 
-            var exhibit = _db.Database.GetCollection<Exhibit>(ResourceTypes.Exhibit.Name)
-                .AsQueryable()
-                .FirstOrDefault(x => x.Id == id);
+            var exhibit = _db.Get<Exhibit>((ResourceTypes.Exhibit, id));
 
             if (exhibit == null)
                 return NotFound();
@@ -254,6 +250,30 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 Count = _ratingIndex.Count(ResourceTypes.Exhibit, id),
                 RatingTable = _ratingIndex.Table(ResourceTypes.Exhibit, id)
             };
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Geting rating of the exhibit for the requested user
+        /// </summary>
+        /// <param name="id"> Id of the exhibit </param>
+        /// <returns></returns>
+        [HttpGet("Rating/My/{id}")]
+        [ProducesResponseType(typeof(byte?), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        public IActionResult GetMyRating(int id)
+        {
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!_entityIndex.Exists(ResourceTypes.Exhibit, id))
+                return NotFound(ErrorMessages.ContentNotFound(ResourceTypes.Exhibit, id));
+
+            var result = _ratingIndex.UserRating(ResourceTypes.Exhibit, id, User.Identity);
 
             return Ok(result);
         }

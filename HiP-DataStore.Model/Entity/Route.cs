@@ -1,8 +1,5 @@
-﻿using System.Linq;
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
-using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
+﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+using System.Collections.Generic;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 {
@@ -18,21 +15,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         public double Distance { get; set; }
 
-        [BsonElement]
-        public DocRef<MediaElement> Image { get; private set; } =
-            new DocRef<MediaElement>(ResourceTypes.Media.Name);
+        public int? Image { get; set; }
 
-        [BsonElement]
-        public DocRef<MediaElement> Audio { get; private set; } =
-            new DocRef<MediaElement>(ResourceTypes.Media.Name);
+        public int? Audio { get; set; }
 
-        [BsonElement]
-        public DocRefList<Exhibit> Exhibits { get; private set; } =
-            new DocRefList<Exhibit>(ResourceTypes.Exhibit.Name);
+        public List<int> Exhibits { get; set; } = new List<int>();
 
-        [BsonElement]
-        public DocRefList<Tag> Tags { get; private set; } =
-            new DocRefList<Tag>(ResourceTypes.Tag.Name);
+        public List<int> Tags { get; set; } = new List<int>();
 
         public Route()
         {
@@ -44,11 +33,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
             Description = args.Description;
             Duration = args.Duration;
             Distance = args.Distance;
-            Image.Id = args.Image;
-            Audio.Id = args.Audio;
-            Exhibits.Add(args.Exhibits?.Select(id => (BsonValue)id));
+            Image = args.Image;
+            Audio = args.Audio;
+            Exhibits = args.Exhibits ?? new List<int>();
             Status = args.Status;
-            Tags.Add(args.Tags?.Select(id => (BsonValue)id));
+            Tags = args.Tags ?? new List<int>();
         }
 
         public RouteArgs CreateRouteArgs()
@@ -58,10 +47,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
             args.Description = Description;
             args.Duration = Duration;
             args.Distance = Distance;
-            args.Image = Image.Id.AsNullableInt32;
-            args.Audio = Audio.Id.AsNullableInt32;
-            args.Exhibits = Exhibits.Ids.Select(i => i.AsInt32).ToList();
-            args.Tags = Tags.Ids.Select(i => i.AsInt32).ToList();
+            args.Image = Image;
+            args.Audio = Audio;
+            args.Exhibits = Exhibits;
+            args.Tags = Tags;
             args.Status = Status;
             return args;
         }
