@@ -1,7 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using MongoDB.Driver;
-using PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
@@ -10,6 +8,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
+using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -22,10 +21,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
     public class ScoreBoardController : Controller
     {
         private readonly EventStoreService _eventStore;
-        private readonly CacheDatabaseManager _db;
+        private readonly IMongoDbContext _db;
         private readonly ScoreBoardIndex _board;
 
-        public ScoreBoardController(EventStoreService ev, CacheDatabaseManager db, InMemoryCache cache)
+        public ScoreBoardController(EventStoreService ev, IMongoDbContext db, InMemoryCache cache)
         {
             _eventStore = ev;
             _db = db;
@@ -60,10 +59,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_board.AllRecords().Any(x => x.UserId == id))
                 return NotFound();
 
-            var query = _db.Database.GetCollection<ScoreRecord>(ResourceTypes.ScoreRecord.Name).AsQueryable();
-            var allRecords = new ScoreResults(query.Where(x => x.UserId == id)
-                                                   .OrderByDescending(x => x.Timestamp)
-                                                   .PaginateAndSelect(null, null, x => new ScoreResult(x))); 
+            var query = _db.GetCollection<ScoreRecord>(ResourceTypes.ScoreRecord);
+
+            var allRecords = new ScoreResults(query
+                .Where(x => x.UserId == id)
+                .OrderByDescending(x => x.Timestamp)
+                .PaginateAndSelect(null, null, x => new ScoreResult(x))); 
 
             allRecords.Rank = _board.AllRecords().ToList().FindIndex(x => x.UserId == id) + 1;
         

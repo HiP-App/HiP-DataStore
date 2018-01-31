@@ -1,7 +1,4 @@
-﻿using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
-using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
+﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -24,22 +21,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         public string FontFamily { get; set; }
 
-        [BsonElement]
-        public DocRef<MediaElement> Audio { get; private set; } =
-            new DocRef<MediaElement>(ResourceTypes.Media.Name);
+        public int? Audio { get; set; }
 
-        [BsonElement]
-        public DocRef<MediaElement> Image { get; private set; } =
-            new DocRef<MediaElement>(ResourceTypes.Media.Name);
+        public int? Image { get; set; }
 
-        [BsonElement]
-        public List<SliderPageImage> Images { get; private set; }
+        public List<SliderPageImage> Images { get; private set; } = new List<SliderPageImage>();
 
         public bool HideYearNumbers { get; set; }
 
-        [BsonElement]
-        public DocRefList<ExhibitPage> AdditionalInformationPages { get; private set; } =
-            new DocRefList<ExhibitPage>(ResourceTypes.ExhibitPage.Name);
+        public List<int> AdditionalInformationPages { get; set; } = new List<int>();
 
         public ExhibitPage()
         {
@@ -52,11 +42,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
             Text = args.Text;
             Description = args.Description;
             FontFamily = args.FontFamily;
-            Audio.Id = args.Audio;
-            Image.Id = args.Image;
-            Images = args.Images?.Select(img => new SliderPageImage(img)).ToList();
+            Audio = args.Audio;
+            Image = args.Image;
+            Images = args.Images?.Select(img => new SliderPageImage(img)).ToList() ?? new List<SliderPageImage>();
             HideYearNumbers = args.HideYearNumbers ?? false;
-            AdditionalInformationPages.Add(args.AdditionalInformationPages?.Select(id => (BsonValue)id));
+            AdditionalInformationPages = args.AdditionalInformationPages?.ToList() ?? new List<int>();
             Status = args.Status;
         }
 
@@ -68,11 +58,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
             args.Text = Text;
             args.Description = Description;
             args.FontFamily = FontFamily;
-            args.Audio = Audio.Id.AsNullableInt32;
-            args.Image = Image.Id.AsNullableInt32;
-            args.Images = Images?.Select(i => new SliderPageImageArgs() { Date = i.Date, Image = i.Image.Id.AsInt32 }).ToList();
+            args.Audio = Audio;
+            args.Image = Image;
+            args.Images = Images?.Select(i => new SliderPageImageArgs() { Date = i.Date, Image = i.Image }).ToList();
             args.HideYearNumbers = HideYearNumbers;
-            args.AdditionalInformationPages = AdditionalInformationPages?.Ids.Select(i => i.AsInt32).ToList();
+            args.AdditionalInformationPages = AdditionalInformationPages;
             args.Status = Status;
             return args;
         }
