@@ -71,37 +71,42 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             try
             {
-                var routeIds = args.OnlyRoutes?.Select(id => (BsonValue)id).ToList();
-
-                var exhibits = _db
-                    .GetCollection<Exhibit>(ResourceTypes.Exhibit)
-                    .FilterByIds(args.Exclude, args.IncludeOnly)
-                    .FilterByLocation(args.Latitude, args.Longitude)
-                    .FilterByUser(args.Status, User.Identity)
-                    .FilterByStatus(args.Status, User.Identity)
-                    .FilterByTimestamp(args.Timestamp)
-                    .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
-                        x.Name.ToLower().Contains(args.Query.ToLower()) ||
-                        x.Description.ToLower().Contains(args.Query.ToLower()))
-                    .FilterIf(args.OnlyRoutes != null, x => x.Referencers
-                        .Any(r => r.Type == ResourceTypes.Route && routeIds.Contains(r.Id)))
-                    .Sort(args.OrderBy,
-                        ("id", x => x.Id),
-                        ("name", x => x.Name),
-                        ("timestamp", x => x.Timestamp))
-                    .PaginateAndSelect(args.Page, args.PageSize, x => new ExhibitResult(x)
-                    {
-                        Quiz = _quizIndex.GetQuizId(x.Id),
-                        Timestamp = _referencesIndex.LastModificationCascading(ResourceTypes.Exhibit, x.Id)
-                    });
-
-                return Ok(exhibits);
+                var result = FilterExhibitsByArgs(args);
+                return Ok(result);
             }
             catch (InvalidSortKeyException e)
             {
                 ModelState.AddModelError(nameof(args.OrderBy), e.Message);
                 return BadRequest(ModelState);
             }
+        }
+
+        private AllItemsResult<ExhibitResult> FilterExhibitsByArgs(ExhibitQueryArgs args, bool onlyGetUserContent = false)
+        {
+            var routeIds = args.OnlyRoutes?.Select(id => (BsonValue)id).ToList();
+
+            return _db
+                .GetCollection<Exhibit>(ResourceTypes.Exhibit)
+                .FilterByIds(args.Exclude, args.IncludeOnly)
+                .FilterByLocation(args.Latitude, args.Longitude)
+                .FilterByUser(args.Status, User.Identity)
+                .FilterByStatus(args.Status, User.Identity)
+                .FilterByTimestamp(args.Timestamp)
+                .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
+                    x.Name.ToLower().Contains(args.Query.ToLower()) ||
+                    x.Description.ToLower().Contains(args.Query.ToLower()))
+                .FilterIf(args.OnlyRoutes != null, x => x.Referencers
+                    .Any(r => r.Type == ResourceTypes.Route && routeIds.Contains(r.Id)))
+                .Sort(args.OrderBy,
+                    ("id", x => x.Id),
+                    ("name", x => x.Name),
+                    ("timestamp", x => x.Timestamp))
+                 .FilterIf(onlyGetUserContent, ex => ex.UserId == User.Identity.GetUserIdentity())
+                .PaginateAndSelect(args.Page, args.PageSize, x => new ExhibitResult(x)
+                {
+                    Quiz = _quizIndex.GetQuizId(x.Id),
+                    Timestamp = _referencesIndex.LastModificationCascading(ResourceTypes.Exhibit, x.Id)
+                });
         }
 
         [HttpGet("{id}")]
@@ -230,6 +235,33 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return ReferenceInfoHelper.GetReferenceInfo(ResourceTypes.Exhibit, id, _entityIndex, _referencesIndex);
         }
 
+        /// <summary>
+        /// Gets the exhibits where the current user is the owner
+        /// </summary>
+        [HttpGet("My")]
+        [ProducesResponseType(typeof(AllItemsResult<ExhibitResult>), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
+        public IActionResult GetMyExhibits(ExhibitQueryArgs args)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (args.Status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
+                return Forbid();
+
+            try
+            {
+                var result = FilterExhibitsByArgs(args, onlyGetUserContent: true);
+                return Ok(result);
+            }
+            catch (InvalidSortKeyException e)
+            {
+                ModelState.AddModelError(nameof(args.OrderBy), e.Message);
+                return BadRequest(ModelState);
+            }
+        }
+
         [HttpGet("Rating/{id}")]
         [ProducesResponseType(typeof(RatingResult), 200)]
         [ProducesResponseType(400)]
@@ -339,7 +371,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return Ok(result);
         }
         [HttpPost("Quiz")]
-        [ProducesResponseType(typeof(int),201)]
+        [ProducesResponseType(typeof(int), 201)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         public async Task<IActionResult> PostQuizAsync([FromBody]ExhibitQuizArgs args)
@@ -348,11 +380,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-      
+
             int? oldQuiz = _quizIndex.GetQuizId(args.ExhibitId.GetValueOrDefault());
             if (oldQuiz != null)
                 return BadRequest(ErrorMessages.QuizCannotBeCreated(oldQuiz.GetValueOrDefault(), args.ExhibitId.GetValueOrDefault()));
-            
+
             if (User.Identity.GetUserIdentity() == null)
                 return Unauthorized();
 
