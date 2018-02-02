@@ -241,10 +241,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet("My")]
         [ProducesResponseType(typeof(AllItemsResult<ExhibitResult>), 200)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
         public IActionResult GetMyExhibits(ExhibitQueryArgs args)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
+            if (args.Status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
+                return Forbid();
+
             try
             {
                 var result = FilterExhibitsByArgs(args, onlyGetUserContent: true);

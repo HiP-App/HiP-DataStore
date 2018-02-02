@@ -219,6 +219,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
+            if (args.Status == ContentStatus.Deleted && !UserPermissions.IsAllowedToGetDeleted(User.Identity))
+                return Forbid();
+
             try
             {
                 var result = FilterRoutesByArgs(args, onlyGetUserContent: true);
