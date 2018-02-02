@@ -68,24 +68,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             try
             {
-                var routes = _db
-                    .GetCollection<Route>(ResourceTypes.Route)
-                    .FilterByIds(args.Exclude, args.IncludeOnly)
-                    .FilterByUser(args.Status, User.Identity)
-                    .FilterByStatus(args.Status, User.Identity)
-                    .FilterByTimestamp(args.Timestamp)
-                    .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
-                        x.Title.ToLower().Contains(args.Query.ToLower()) ||
-                        x.Description.ToLower().Contains(args.Query.ToLower()))
-                    .Sort(args.OrderBy,
-                        ("id", x => x.Id),
-                        ("title", x => x.Title),
-                        ("timestamp", x => x.Timestamp))
-                    .PaginateAndSelect(args.Page, args.PageSize, x => new RouteResult(x)
-                    {
-                        Timestamp = _referencesIndex.LastModificationCascading(ResourceTypes.Route, x.Id)
-                    });
-
+                AllItemsResult<RouteResult> routes = FilterRoutesByArgs(args);
                 return Ok(routes);
             }
             catch (InvalidSortKeyException e)
@@ -93,6 +76,28 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 ModelState.AddModelError(nameof(args.OrderBy), e.Message);
                 return BadRequest(ModelState);
             }
+        }
+
+        private AllItemsResult<RouteResult> FilterRoutesByArgs(RouteQueryArgs args, bool onlyGetUserContent = false)
+        {
+            return _db
+                .GetCollection<Route>(ResourceTypes.Route)
+                .FilterByIds(args.Exclude, args.IncludeOnly)
+                .FilterByUser(args.Status, User.Identity)
+                .FilterByStatus(args.Status, User.Identity)
+                .FilterByTimestamp(args.Timestamp)
+                .FilterIf(!string.IsNullOrEmpty(args.Query), x =>
+                    x.Title.ToLower().Contains(args.Query.ToLower()) ||
+                    x.Description.ToLower().Contains(args.Query.ToLower()))
+                .Sort(args.OrderBy,
+                    ("id", x => x.Id),
+                    ("title", x => x.Title),
+                    ("timestamp", x => x.Timestamp))
+                .FilterIf(onlyGetUserContent, r => r.UserId == User.Identity.GetUserIdentity())
+                .PaginateAndSelect(args.Page, args.PageSize, x => new RouteResult(x)
+                {
+                    Timestamp = _referencesIndex.LastModificationCascading(ResourceTypes.Route, x.Id)
+                });
         }
 
         [HttpGet("{id}")]
@@ -204,6 +209,28 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return NoContent();
         }
 
+        /// <summary>
+        /// Gets the routes where the current user is the owner
+        /// </summary>
+        [HttpGet("My")]
+        [ProducesResponseType(typeof(AllItemsResult<ExhibitResult>), 200)]
+        [ProducesResponseType(400)]
+        public IActionResult GetMyExhibits(RouteQueryArgs args)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            try
+            {
+                var result = FilterRoutesByArgs(args, onlyGetUserContent: true);
+                return Ok(result);
+            }
+            catch (InvalidSortKeyException e)
+            {
+                ModelState.AddModelError(nameof(args.OrderBy), e.Message);
+                return BadRequest(ModelState);
+            }
+        }
+
         [HttpGet("{id}/Refs")]
         [ProducesResponseType(typeof(ReferenceInfoResult), 200)]
         [ProducesResponseType(400)]
@@ -257,7 +284,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return NotFound(ErrorMessages.ContentNotFound(ResourceTypes.Route, id));
 
             if (User.Identity.GetUserIdentity() == null)
-                return Unauthorized();          
+                return Unauthorized();
 
             var ev = new RatingAdded()
             {
