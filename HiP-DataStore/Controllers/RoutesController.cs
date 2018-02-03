@@ -15,7 +15,6 @@ using System.Linq;
 using System.Security.Principal;
 using System.Threading.Tasks;
 using static PaderbornUniversity.SILab.Hip.DataStore.Model.Entity.Review;
-using static PaderbornUniversity.SILab.Hip.DataStore.Model.Rest.ReviewResult;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
@@ -431,7 +430,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 updatedReview.StudentsToApprove = 0;
 
             if (args.Approved)
-                updatedReview.Approved = IsReviewApproved(updatedReview, args.Approved, User.Identity);
+                updatedReview.Approved = IsReviewApproved(updatedReview, args.Approved);
 
             // keep old values if no new ones are specified
             if (args.Description == null)
@@ -473,13 +472,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return NotFound(ErrorMessages.ReviewNotFound(ResourceTypes.Route, id));
 
             var reviewId = _reviewIndex.GetReviewId(ResourceTypes.Route.Name, id);
-            var review = _db.Get<Review>((ResourceTypes.Review, reviewId));
 
             await EntityManager.DeleteEntityAsync(_eventStore, ResourceTypes.Review, reviewId, User.Identity.GetUserIdentity());
             return NoContent();
         }
 
-        private bool IsReviewApproved(Review updatedReview, bool approved, IIdentity identity)
+        private bool IsReviewApproved(Review updatedReview, bool approved)
         {
             if (UserPermissions.IsSupervisorOrAdmin(User.Identity))
             {
@@ -493,7 +491,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                     if (comment.Approved)
                         numberOfApproves++;
                 }
-                return numberOfApproves >= updatedReview.StudentsToApprove ? true : false;
+                return numberOfApproves >= updatedReview.StudentsToApprove;
             }
         }
 
