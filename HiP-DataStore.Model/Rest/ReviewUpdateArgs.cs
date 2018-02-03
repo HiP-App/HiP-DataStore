@@ -12,6 +12,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 
         public string Comment { get; set; }
 
+        /// <summary>
+        /// Amount of students, that need to approve, in order to approve the review
+        /// </summary>
         public int? StudentsToApprove { get; set; }
 
         public bool? ReviewableByStudents { get; set; }

@@ -34,7 +34,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         public static string CannotBeDeleted(ResourceType res, int id) =>
             $"{res.Name.ToLower()} with id {id} has status Published. It can not be deleted";
 
-        public static string CannotAddReviewToContentWithWrongStatus() => 
+        public static string QuizCannotBeCreated(int quizId, int exhibitId) => 
+            $"Exhibit {exhibitId} alrady has a quiz {quizId}";
+
+        public static string CannotAddReviewToContentWithWrongStatus() =>
             $"Reviews can only be added to content, that has status '{ContentStatus.In_Review}'";
 
         public static string ReviewNotFound(ResourceType type, int id) =>

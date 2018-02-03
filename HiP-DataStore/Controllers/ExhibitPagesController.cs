@@ -285,6 +285,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return ReferenceInfoHelper.GetReferenceInfo(ResourceTypes.ExhibitPage, id, _entityIndex, _referencesIndex);
         }
 
+        /// <summary>
+        /// Returns the review to the exhibit page with the given ID
+        /// </summary>
+        /// <param name="id">ID of the exhibit page the review belongs to</param>
         [HttpGet("Pages/Review/{id}")]
         [ProducesResponseType(typeof(ReviewResult), 200)]
         [ProducesResponseType(400)]
@@ -312,6 +316,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return Ok(result);
         }
 
+        /// <summary>
+        /// Creates a review for the exhibit page with the given ID
+        /// </summary>
+        /// <param name="id">ID of the exhibit page the review belongs to</param>
+        /// <param name="args">Arguments for the review</param>
         [HttpPost("Pages/Review/{id}")]
         [ProducesResponseType(typeof(int), 201)]
         [ProducesResponseType(400)]
@@ -347,6 +356,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Review/{reviewId}", reviewId);
         }
 
+        /// <summary>
+        /// Changes the review that belongs to the exhibit page with the given ID
+        /// </summary>
+        /// <param name="id">ID of the exhibit page the review belongs to</param>
+        /// <param name="args">Arguments for the review</param>
         [HttpPut("Pages/Review/{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
@@ -409,7 +423,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return StatusCode(204);
         }
 
-        [HttpDelete("Review/{id}")]
+        /// <summary>
+        /// Deletes the review of the exhibit page with the given ID
+        /// </summary>
+        /// <param name="id">ID of the exhibit page the review belongs to</param>
+        /// <returns></returns>
+        [HttpDelete("Pages/Review/{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(403)]
