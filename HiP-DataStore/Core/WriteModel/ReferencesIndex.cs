@@ -1,4 +1,5 @@
-﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
+﻿using PaderbornUniversity.SILab.Hip.DataStore.Model;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Events;
@@ -95,8 +96,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
             switch (ev)
             {
                 case PropertyChangedEvent e:
-                    if(e.GetEntityType() != ResourceTypes.ExhibitReview && e.GetEntityType() != ResourceTypes.ExhibitPageReview 
-                        && e.GetEntityType() != ResourceTypes.RouteReview)
+                    if (e.GetEntityType() != ResourceTypes.Review)
                     {
                         ClearReferences(source, e.PropertyName);
                         var references = e.GetReferences();

@@ -1,5 +1,7 @@
-﻿using System;
+﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
+using System;
 using System.Collections.Generic;
+using static PaderbornUniversity.SILab.Hip.DataStore.Model.Entity.Review;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 {
@@ -17,23 +19,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 
         public List<Comment> Comments { get; set; }
 
-        public class Comment
+        public ReviewResult(Review review)
         {
-            public string Text { get; set; }
-
-            public DateTimeOffset Timestamp { get; set; }
-
-            public string UserId { get; set; }
-
-            public bool Approved { get; set; }
-
-            public Comment(string text, DateTimeOffset timestamp, string userId, bool approved)
-            {
-                Text = text;
-                Timestamp = timestamp;
-                UserId = userId;
-                Approved = approved;
-            }
+            Id = review.Id;
+            Description = review.Description;
+            Approved = review.Approved;
+            Timestamp = review.Timestamp;
+            Reviewers = review.Reviewers;
+            Comments = review.Comments;
         }
+
     }
 }

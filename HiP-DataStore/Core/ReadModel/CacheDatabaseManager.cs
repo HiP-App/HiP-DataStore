@@ -6,6 +6,8 @@ using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Events;
 using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
+using System;
+using static PaderbornUniversity.SILab.Hip.DataStore.Model.Entity.Review;
 using Tag = PaderbornUniversity.SILab.Hip.DataStore.Model.Entity.Tag;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
@@ -107,6 +109,16 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                             };
                             _db.Add(ResourceTypes.Tag, newTag);
                             break;
+
+                        case ResourceType _ when resourceType == ResourceTypes.Review:
+                            var newReview = new Review(new ReviewArgs())
+                            {
+                                Id = e.Id,
+                                UserId = e.UserId,
+                                Timestamp = e.Timestamp
+                            };
+                            _db.Add(ResourceTypes.Review, newReview);
+                            break;
                     }
                     break;
 
@@ -179,6 +191,20 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                             };
                             _db.Replace((ResourceTypes.Tag, e.Id), updatedTag);
                             break;
+
+                        case ResourceType _ when resourceType == ResourceTypes.Review:
+                            var originalReview = _db.Get<Review>((ResourceTypes.Review, e.Id));
+                            var reviewUpdateArgs = originalReview.CreateReviewUpdateArgs();
+                            e.ApplyTo(reviewUpdateArgs);
+                            var updatedReview = new Review(reviewUpdateArgs)
+                            {
+                                Id = e.Id,
+                                UserId = originalReview.UserId,
+                                Timestamp = e.Timestamp,
+                            };
+
+                            _db.Replace((ResourceTypes.Review, e.Id), updatedReview);
+                            break;
                     }
                     break;
 
@@ -200,6 +226,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                             break;
                         case ResourceType _ when resourceType == ResourceTypes.Tag:
                             MarkDeleted((resourceType, e.Id));
+                            break;
+                        case ResourceType _ when resourceType == ResourceTypes.Review:
+                            _db.Delete((ResourceTypes.Review, e.Id));
                             break;
                     }
                     break;

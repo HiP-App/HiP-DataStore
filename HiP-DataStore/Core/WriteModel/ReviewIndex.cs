@@ -1,170 +1,58 @@
 ﻿using PaderbornUniversity.SILab.Hip.DataStore.Model;
-using PaderbornUniversity.SILab.Hip.DataStore.Utility;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Events;
 using System;
 using System.Collections.Generic;
-using System.Security.Principal;
-using static PaderbornUniversity.SILab.Hip.DataStore.Model.Rest.ReviewResult;
+using System.Linq;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 {
     public class ReviewIndex : IDomainIndex
     {
-        private readonly Dictionary<ResourceType, ReviewTypeInfo> _reviewDictionary = new Dictionary<ResourceType, ReviewTypeInfo>();
+        private readonly Dictionary<int, ReviewEntityInfo> _reviews = new Dictionary<int, ReviewEntityInfo>();
         private readonly object _lockObject = new object();
+
+        private int _maximumId = -1;
 
         public int NextId(ResourceType entityType)
         {
             lock (_lockObject)
             {
-                var info = GetOrCreateReviewTypeInfo(entityType);
-                return ++info.MaximumId;
+                return ++_maximumId;
             }
         }
 
-        public string Owner(ResourceType entityType, int id)
+        public string Owner(int reviewId)
         {
             lock (_lockObject)
             {
-                var info = GetOrCreateReviewTypeInfo(entityType);
-
-                if (info.Reviews.TryGetValue(id, out var review))
+                if (_reviews.TryGetValue(reviewId, out var review))
                     return review.UserId;
 
                 return null;
             }
         }
 
-        public bool Approved(ResourceType entityType, int id)
+        public bool Exists(string entityType, int entityId)
         {
             lock (_lockObject)
             {
-                var info = GetOrCreateReviewTypeInfo(entityType);
-
-                if (info.Reviews.TryGetValue(id, out var review))
-                    return review.Approved;
-
-                return false;
-            }
-        }
-
-        public bool ReviewApproved(ResourceType entityType, int id, IIdentity identity, bool approve)
-        {
-            lock (_lockObject)
-            {
-                var info = GetOrCreateReviewTypeInfo(entityType);
-
-                if (info.Reviews.TryGetValue(id, out var review))
-                {
-                    var count = 0;
-                    foreach (Comment comment in review.Comments)
-                    {
-                        if (comment.Approved)
-                            count++;
-                    }
-
-                    if (approve)
-                        count++;
-
-                    var studentsToApprove = StudentsToApprove(entityType, id);
-                    // amount of students (if permitted) or one supervisor need to approve, to approve the review
-                    if ((count >= studentsToApprove && studentsToApprove > 0)
-                        || (approve && UserPermissions.IsSupervisorOrAdmin(identity)))
-                        return true;
-                }
-                return false;
-            }
-        }
-
-        public string Description(ResourceType entityType, int id)
-        {
-            lock (_lockObject)
-            {
-                var info = GetOrCreateReviewTypeInfo(entityType);
-
-                if (info.Reviews.TryGetValue(id, out var review))
-                    return review.Description;
-
-                return null;
-            }
-        }
-
-        public List<string> Reviewers(ResourceType entityType, int id)
-        {
-            lock (_lockObject)
-            {
-                var info = GetOrCreateReviewTypeInfo(entityType);
-
-                if (info.Reviews.TryGetValue(id, out var review))
-                    return review.Reviewers;
-
-                return null;
-            }
-        }
-
-        public List<Comment> Comments(ResourceType entityType, int id)
-        {
-            lock (_lockObject)
-            {
-                var info = GetOrCreateReviewTypeInfo(entityType);
-
-                if (info.Reviews.TryGetValue(id, out var review))
-                    return review.Comments;
-
-                return null;
-            }
-        }
-
-        public DateTimeOffset Timestamp(ResourceType entityType, int id)
-        {
-            lock (_lockObject)
-            {
-                var info = GetOrCreateReviewTypeInfo(entityType);
-
-                if (info.Reviews.TryGetValue(id, out var review))
-                    return review.Timestamp;
-
-                return DateTimeOffset.MaxValue;
-            }
-        }
-
-        public bool Exists(ResourceType entityType, int id)
-        {
-            lock (_lockObject)
-            {
-                var info = GetOrCreateReviewTypeInfo(entityType);
-
-                if (info.Reviews.ContainsKey(id))
+                var review = _reviews.FirstOrDefault(x => x.Value.EntityId == entityId && x.Value.EntityType == entityType);
+                if (review.Value != null)
                     return true;
-
                 return false;
             }
         }
 
-        public int StudentsToApprove(ResourceType entityType, int id)
+        /// <summary>
+        /// Returns the id of the review that belongs to the entity specified by the given ID and type.
+        /// </summary>
+        public int GetReviewId(string entityType, int entityId)
         {
             lock (_lockObject)
             {
-                var info = GetOrCreateReviewTypeInfo(entityType);
-
-                if (info.Reviews.TryGetValue(id, out var review))
-                    return review.StudentsToApprove;
-
-                return -1;
-            }
-        }
-
-        public bool ReviewableByStudents(ResourceType entityType, int id)
-        {
-            lock (_lockObject)
-            {
-                var info = GetOrCreateReviewTypeInfo(entityType);
-
-                if (info.Reviews.TryGetValue(id, out var review))
-                    return review.ReviewableByStudents;
-
-                return false;
+                return _reviews.FirstOrDefault(x => x.Value.EntityId == entityId && x.Value.EntityType == entityType).Key;
             }
         }
 
@@ -173,111 +61,55 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
             switch (e)
             {
                 case CreatedEvent ev:
-                    if (ev.GetEntityType() == ResourceTypes.ExhibitReview || ev.GetEntityType() == ResourceTypes.ExhibitPageReview
-                        || ev.GetEntityType() == ResourceTypes.RouteReview)
+                    if (ev.GetEntityType() == ResourceTypes.Review)
                     {
                         lock (_lockObject)
                         {
-                            var resourceType = ev.GetEntityType();
-                            var infoCreate = new ReviewTypeInfo();
-                            switch (resourceType)
-                            {
-                                case ResourceType _ when resourceType == ResourceTypes.ExhibitReview:
-                                    infoCreate = GetOrCreateReviewTypeInfo(ResourceTypes.Exhibit);
-                                    break;
-
-                                case ResourceType _ when resourceType == ResourceTypes.ExhibitPageReview:
-                                    infoCreate = GetOrCreateReviewTypeInfo(ResourceTypes.ExhibitPage);
-                                    break;
-
-                                case ResourceType _ when resourceType == ResourceTypes.RouteReview:
-                                    infoCreate = GetOrCreateReviewTypeInfo(ResourceTypes.Route);
-                                    break;
-                            }
-                            infoCreate.MaximumId = Math.Max(infoCreate.MaximumId, ev.Id);
+                            _maximumId = Math.Max(_maximumId, ev.Id);
+                            _reviews.Add(ev.Id, new ReviewEntityInfo { UserId = ev.UserId });
                         }
                     }
                     break;
 
                 case PropertyChangedEvent ev:
-                    if (ev.GetEntityType() == ResourceTypes.ExhibitReview || ev.GetEntityType() == ResourceTypes.ExhibitPageReview
-                        || ev.GetEntityType() == ResourceTypes.RouteReview)
+                    if (ev.GetEntityType() == ResourceTypes.Review)
                     {
                         lock (_lockObject)
                         {
-                            var resourceType = ev.GetEntityType();
-                            var infoUpdate = new ReviewTypeInfo();
-                            switch (resourceType)
+                            if (_reviews.TryGetValue(ev.Id, out var review))
                             {
-                                case ResourceType _ when resourceType == ResourceTypes.ExhibitReview:
-                                    infoUpdate = GetOrCreateReviewTypeInfo(ResourceTypes.Exhibit);
-                                    break;
-
-                                case ResourceType _ when resourceType == ResourceTypes.ExhibitPageReview:
-                                    infoUpdate = GetOrCreateReviewTypeInfo(ResourceTypes.ExhibitPage);
-                                    break;
-
-                                case ResourceType _ when resourceType == ResourceTypes.RouteReview:
-                                    infoUpdate = GetOrCreateReviewTypeInfo(ResourceTypes.Route);
-                                    break;
+                                if (ev.PropertyName == nameof(Review.EntityType) && ev.Value is string entityType)
+                                {
+                                    review.EntityType = entityType;
+                                }
+                                else if (ev.PropertyName == nameof(Review.EntityId) && ev.Value is int entityId)
+                                {
+                                    review.EntityId = entityId;
+                                }
                             }
+                        }
+                    }
+                    break;
 
-                            if (!infoUpdate.Reviews.TryGetValue(ev.Id, out var review))
-                            {
-                                infoUpdate.Reviews.Add(ev.Id, new ReviewEntityInfo { UserId = ev.UserId, Timestamp = ev.Timestamp });
-                                infoUpdate.Reviews.TryGetValue(ev.Id, out review);
-                                
-                            }
-
-                            if (ev.PropertyName == nameof(Comment))
-                            {
-                                if (review != null)
-                                    review.Comments.Add(ev.Value as Comment);
-                            }
-                            else
-                            {
-                                ev.ApplyTo(review);
-                                infoUpdate.Reviews[ev.Id] = review;
-                            }
-
+                case DeletedEvent ev:
+                    if (ev.GetEntityType() == ResourceTypes.Review)
+                    {
+                        lock (_lockObject)
+                        {
+                            _reviews.Remove(ev.Id);
                         }
                     }
                     break;
             }
         }
 
-        private ReviewTypeInfo GetOrCreateReviewTypeInfo(ResourceType entityType)
-        {
-            if (_reviewDictionary.TryGetValue(entityType, out var info))
-                return info;
-
-            return _reviewDictionary[entityType] = new ReviewTypeInfo();
-        }
-
-        class ReviewTypeInfo
-        {
-            public int MaximumId { get; set; } = -1;
-
-            public Dictionary<int, ReviewEntityInfo> Reviews { get; } = new Dictionary<int, ReviewEntityInfo>();
-        }
-
         class ReviewEntityInfo
         {
-            public string UserId { get; set; }
+            public string EntityType { get; set; }
 
-            public bool Approved { get; private set; }
+            public int EntityId { get; set; }
 
-            public string Description { get; private set; }
-
-            public int StudentsToApprove { get; private set; }
-
-            public bool ReviewableByStudents { get; private set; }
-
-            public DateTimeOffset Timestamp { get; set; }
-
-            public List<string> Reviewers { get; private set; }
-
-            public List<Comment> Comments { get; private set; } = new List<Comment>();
+            public String UserId { get; set; }
         }
     }
 }
