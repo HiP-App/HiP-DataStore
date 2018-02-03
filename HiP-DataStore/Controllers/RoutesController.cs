@@ -12,7 +12,6 @@ using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Principal;
 using System.Threading.Tasks;
 using static PaderbornUniversity.SILab.Hip.DataStore.Model.Entity.Review;
 
