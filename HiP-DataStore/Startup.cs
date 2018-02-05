@@ -121,7 +121,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             app.UseMvc();
             app.UseSwaggerUiHip();
 
-            loggerFactory.CreateLogger("ApplicationStartup").LogInformation("DataStore Started Successfully");
+            loggerFactory.CreateLogger("ApplicationStartup").LogInformation("DataStore started successfully");
         }
     }
 }
