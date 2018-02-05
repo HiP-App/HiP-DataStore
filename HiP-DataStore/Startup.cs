@@ -14,6 +14,7 @@ using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
 using PaderbornUniversity.SILab.Hip.Webservice;
+using PaderbornUniversity.SILab.Hip.Webservice.Logging;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore
 {
@@ -44,6 +45,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
                 .Configure<UploadFilesConfig>(Configuration.GetSection("UploadingFiles"))
                 .Configure<ExhibitPagesConfig>(Configuration.GetSection("ExhibitPages"))
                 .Configure<AuthConfig>(Configuration.GetSection("Auth"))
+                .Configure<LoggingConfig> (Configuration.GetSection ("HiPLoggerConfig"))
                 .Configure<CorsConfig>(Configuration);
 
             var serviceProvider = services.BuildServiceProvider(); // allows us to actually get the configured services           
@@ -91,11 +93,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory,
-            IOptions<CorsConfig> corsConfig)
-        {
-            loggerFactory.AddConsole(Configuration.GetSection("Logging"))
-                         .AddDebug();
+            IOptions<CorsConfig> corsConfig,IOptions<LoggingConfig> loggingConfig)
+            {
+            loggerFactory.AddConsole (Configuration.GetSection ("Logging"))
+                .AddDebug ()
+                .AddHipLogger (loggingConfig.Value);
 
+            loggerFactory.CreateLogger("ApplicationStartup").LogInformation("HiPDataStore Configured Successfully");
             // CacheDatabaseManager should start up immediately (not only when injected into a controller or
             // something), so we manually request an instance here
             app.ApplicationServices.GetService<CacheDatabaseManager>();
@@ -117,6 +121,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             app.UseAuthentication();
             app.UseMvc();
             app.UseSwaggerUiHip();
+
+            
         }
     }
 }
