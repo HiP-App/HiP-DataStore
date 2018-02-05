@@ -1,0 +1,3 @@
+[submodule "HiP-ServiceConfig"]
+	path = HiP-ServiceConfig
+	url = git@github.com:HiP-App/HiP-ServiceConfig.git
