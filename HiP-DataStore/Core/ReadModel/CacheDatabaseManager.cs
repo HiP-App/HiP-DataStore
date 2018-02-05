@@ -114,7 +114,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                                 UserId = e.UserId,
                                 Timestamp = e.Timestamp
                             };
-                            _db.Add(ResourceTypes.Quiz,newQuiz);
+                            _db.Add(ResourceTypes.Quiz, newQuiz);
                             break;
 
                         case ResourceType _ when resourceType == ResourceTypes.Review:
@@ -262,7 +262,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 
         private void MarkDeleted(EntityId entity)
         {
-            _db.Update<ContentBase>(entity, update => update.Set(o => o.Status, ContentStatus.Published));
+            _db.Update<ContentBase>(entity, update => update.Set(o => o.Status, ContentStatus.Deleted));
         }
     }
 }
