@@ -410,6 +410,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (User.Identity.GetUserIdentity() == null)
                 return Unauthorized();
 
+            var exhibit = await _eventStore.EventStream.GetCurrentEntityAsync<Exhibit>(ResourceTypes.Exhibit, exhibitId);
+            if (exhibit.Questions.Count == 10)
+                return BadRequest(ErrorMessages.QuestionCannotBeCreated(exhibitId));
+
             var question = new QuizQuestion(args) { ExhibitId = exhibitId };
             var id = _entityIndex.NextId(ResourceTypes.Quiz);
             await EntityManager.CreateEntityAsync(_eventStore, question, ResourceTypes.Quiz, id, User.Identity.GetUserIdentity());
@@ -588,10 +592,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                     ErrorMessages.ImageNotFound(args.Image.GetValueOrDefault()));
 
             // ensure exhibit exist
-            if (exhibitId != null && exhibitId.HasValue)
-                if (!_entityIndex.Exists(ResourceTypes.Exhibit, exhibitId.Value))
-                    ModelState.AddModelError(nameof(exhibitId),
-                    ErrorMessages.ContentNotFound(ResourceTypes.Exhibit, exhibitId.Value));
+            if (exhibitId != null && !_entityIndex.Exists(ResourceTypes.Exhibit, exhibitId.Value))
+                ModelState.AddModelError(nameof(exhibitId),
+                ErrorMessages.ContentNotFound(ResourceTypes.Exhibit, exhibitId.Value));
         }
     }
 }

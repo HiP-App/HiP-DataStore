@@ -34,7 +34,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         public static string CannotBeDeleted(ResourceType res, int id) =>
             $"{res.Name.ToLower()} with id {id} has status Published. It can not be deleted";
 
-        public static string QuestionCannotBeCreated(int questionId, int exhibitId) =>
-            $"Exhibit {exhibitId} alrady has a question with id {questionId}";
+        public static string QuestionCannotBeCreated(int exhibitId) =>
+            $"Exhibit {exhibitId} already has the maximum amount of questions";        
     }
 }
