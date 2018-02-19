@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Utility;
+﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Utility;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
