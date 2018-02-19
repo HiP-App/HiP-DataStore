@@ -1,4 +1,5 @@
-﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model
@@ -22,7 +23,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
         {
             Exhibit = ResourceType.Register(nameof(Exhibit), typeof(ExhibitArgs));
             ExhibitPage = ResourceType.Register(nameof(ExhibitPage), typeof(ExhibitPageArgs2));
-            Quiz = ResourceType.Register(nameof(Quiz), typeof(ExhibitQuizArgs));
+            Quiz = ResourceType.Register(nameof(Quiz), typeof(QuizQuestion));
             Route = ResourceType.Register(nameof(Route), typeof(RouteArgs));
             Media = ResourceType.Register(nameof(Media), typeof(MediaArgs));
             Tag = ResourceType.Register(nameof(Tag), typeof(TagArgs));
