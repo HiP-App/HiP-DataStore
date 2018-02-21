@@ -341,7 +341,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         /// </summary>
         /// <param name="exhibitId">Id of the exhibit</param>
         /// <returns></returns>
-        [HttpGet("Questions/{exhibitId}")]
+        [HttpGet("{exhibitId}/Questions/")]
         [ProducesResponseType(typeof(IEnumerable<ExhibitQuizQuestionResult>), 200)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
@@ -360,7 +360,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             var exhibit = _db.Get<Exhibit>((ResourceTypes.Exhibit, exhibitId));
             var results = exhibit.Questions.Select(q =>
              {
-                 var question = _db.Get<QuizQuestion>((ResourceTypes.Quiz, q));
+                 var question = _db.Get<QuizQuestion>((ResourceTypes.QuizQuestion, q));
                  return new ExhibitQuizQuestionResult(question);
              });
 
@@ -377,21 +377,21 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            if (!_entityIndex.Exists(ResourceTypes.Quiz, id))
+            if (!_entityIndex.Exists(ResourceTypes.QuizQuestion, id))
                 return NotFound();
 
-            var status = _entityIndex.Status(ResourceTypes.Quiz, id) ?? ContentStatus.Published;
-            if (!UserPermissions.IsAllowedToGet(User.Identity, status, _entityIndex.Owner(ResourceTypes.Quiz, id)))
+            var status = _entityIndex.Status(ResourceTypes.QuizQuestion, id) ?? ContentStatus.Published;
+            if (!UserPermissions.IsAllowedToGet(User.Identity, status, _entityIndex.Owner(ResourceTypes.QuizQuestion, id)))
                 return Forbid();
 
-            var quiz = _db.Get<QuizQuestion>((ResourceTypes.Quiz, id));
+            var quiz = _db.Get<QuizQuestion>((ResourceTypes.QuizQuestion, id));
 
             if (timestamp != null && quiz.Timestamp <= timestamp.Value)
                 return StatusCode(304);
 
             var result = new ExhibitQuizQuestionResult(quiz)
             {
-                Timestamp = _referencesIndex.LastModificationCascading(ResourceTypes.Quiz, id)
+                Timestamp = _referencesIndex.LastModificationCascading(ResourceTypes.QuizQuestion, id)
             };
 
             return Ok(result);
@@ -399,24 +399,24 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpPost("{exhibitId}/Question")]
         [ProducesResponseType(typeof(int), 201)]
         [ProducesResponseType(400)]
-        [ProducesResponseType(404)]
+        [ProducesResponseType(401)]
         public async Task<IActionResult> PostQuestionAsync(int exhibitId, [FromBody]ExhibitQuizQuestionArgs args)
         {
+            ValidateQuestionArgs(args, exhibitId);
+
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-
-            ValidateQuestionArgs(args, exhibitId);
 
             if (User.Identity.GetUserIdentity() == null)
                 return Unauthorized();
 
-            var exhibit = await _eventStore.EventStream.GetCurrentEntityAsync<Exhibit>(ResourceTypes.Exhibit, exhibitId);
+            var exhibit = _db.Get<Exhibit>((ResourceTypes.Exhibit, exhibitId));
             if (exhibit.Questions.Count == 10)
                 return BadRequest(ErrorMessages.QuestionCannotBeCreated(exhibitId));
 
             var question = new QuizQuestion(args) { ExhibitId = exhibitId };
-            var id = _entityIndex.NextId(ResourceTypes.Quiz);
-            await EntityManager.CreateEntityAsync(_eventStore, question, ResourceTypes.Quiz, id, User.Identity.GetUserIdentity());
+            var id = _entityIndex.NextId(ResourceTypes.QuizQuestion);
+            await EntityManager.CreateEntityAsync(_eventStore, question, ResourceTypes.QuizQuestion, id, User.Identity.GetUserIdentity());
             return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Quiz/{id}", id);
         }
 
@@ -427,27 +427,27 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(404)]
         public async Task<IActionResult> UpdateQuestionAsync(int id, [FromBody]ExhibitQuizQuestionArgs args)
         {
+            ValidateQuestionArgs(args);
+
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            ValidateQuestionArgs(args);
-
-            if (!_entityIndex.Exists(ResourceTypes.Quiz, id))
+            if (!_entityIndex.Exists(ResourceTypes.QuizQuestion, id))
                 return NotFound();
 
-            if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, _entityIndex.Owner(ResourceTypes.Quiz, id)))
+            if (!UserPermissions.IsAllowedToEdit(User.Identity, args.Status, _entityIndex.Owner(ResourceTypes.QuizQuestion, id)))
                 return Forbid();
 
-            var oldStatus = _entityIndex.Status(ResourceTypes.Quiz, id).GetValueOrDefault();
+            var oldStatus = _entityIndex.Status(ResourceTypes.QuizQuestion, id).GetValueOrDefault();
             if (args.Status == ContentStatus.Unpublished && oldStatus != ContentStatus.Published)
-                return BadRequest(ErrorMessages.CannotBeUnpublished(ResourceTypes.Quiz));
+                return BadRequest(ErrorMessages.CannotBeUnpublished(ResourceTypes.QuizQuestion));
 
             // validation passed, emit event
-            var oldQuestion = await _eventStore.EventStream.GetCurrentEntityAsync<QuizQuestion>(ResourceTypes.Quiz, id);
+            var oldQuestion = await _eventStore.EventStream.GetCurrentEntityAsync<QuizQuestion>(ResourceTypes.QuizQuestion, id);
             var newQuestion = new QuizQuestion(args);
             //we need to keep the exhibit id
             newQuestion.ExhibitId = oldQuestion.ExhibitId;
-            await EntityManager.UpdateEntityAsync(_eventStore, oldQuestion, newQuestion, ResourceTypes.Quiz, id, User.Identity.GetUserIdentity());
+            await EntityManager.UpdateEntityAsync(_eventStore, oldQuestion, newQuestion, ResourceTypes.QuizQuestion, id, User.Identity.GetUserIdentity());
 
             return StatusCode(204);
         }
@@ -462,15 +462,18 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var status = _entityIndex.Status(ResourceTypes.Quiz, id).GetValueOrDefault();
-            if (!UserPermissions.IsAllowedToDelete(User.Identity, status, _entityIndex.Owner(ResourceTypes.Quiz, id)))
-                return BadRequest(ErrorMessages.CannotBeDeleted(ResourceTypes.Quiz, id));
+            if (!_entityIndex.Exists(ResourceTypes.QuizQuestion, id))
+                return NotFound();
+
+            var status = _entityIndex.Status(ResourceTypes.QuizQuestion, id).GetValueOrDefault();
+            if (!UserPermissions.IsAllowedToDelete(User.Identity, status, _entityIndex.Owner(ResourceTypes.QuizQuestion, id)))
+                return BadRequest(ErrorMessages.CannotBeDeleted(ResourceTypes.QuizQuestion, id));
 
             if (status == ContentStatus.Published)
-                return BadRequest(ErrorMessages.CannotBeDeleted(ResourceTypes.Quiz, id));
+                return BadRequest(ErrorMessages.CannotBeDeleted(ResourceTypes.QuizQuestion, id));
 
             // remove the quiz
-            await EntityManager.DeleteEntityAsync(_eventStore, ResourceTypes.Quiz, id, User.Identity.GetUserIdentity());
+            await EntityManager.DeleteEntityAsync(_eventStore, ResourceTypes.QuizQuestion, id, User.Identity.GetUserIdentity());
             return NoContent();
         }
 
@@ -478,7 +481,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(typeof(RatingResult), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(403)]
-        [ProducesResponseType(404)]
         public IActionResult GetQuizRating(int exhibitId)
         {
             if (!ModelState.IsValid)
@@ -490,9 +492,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             var result = new RatingResult()
             {
                 Id = exhibitId,
-                Average = _ratingIndex.Average(ResourceTypes.Quiz, exhibitId),
-                Count = _ratingIndex.Count(ResourceTypes.Quiz, exhibitId),
-                RatingTable = _ratingIndex.Table(ResourceTypes.Quiz, exhibitId)
+                Average = _ratingIndex.Average(ResourceTypes.QuizQuestion, exhibitId),
+                Count = _ratingIndex.Count(ResourceTypes.QuizQuestion, exhibitId),
+                RatingTable = _ratingIndex.Table(ResourceTypes.QuizQuestion, exhibitId)
             };
 
             return Ok(result);
@@ -505,7 +507,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet("Questions/Rating/My/{exhibitId}")]
         [ProducesResponseType(typeof(byte?), 200)]
         [ProducesResponseType(400)]
-        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public IActionResult GetMyQuizRating(int exhibitId)
         {
@@ -516,7 +517,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceTypes.Exhibit, exhibitId))
                 return NotFound(ErrorMessages.ContentNotFound(ResourceTypes.Exhibit, exhibitId));
 
-            var result = _ratingIndex.UserRating(ResourceTypes.Quiz, exhibitId, User.Identity);
+            var result = _ratingIndex.UserRating(ResourceTypes.QuizQuestion, exhibitId, User.Identity);
 
             return Ok(result);
         }
@@ -538,11 +539,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             var ev = new RatingAdded()
             {
-                Id = _ratingIndex.NextId(ResourceTypes.Quiz),
+                Id = _ratingIndex.NextId(ResourceTypes.QuizQuestion),
                 EntityId = exhibitId,
                 UserId = User.Identity.GetUserIdentity(),
                 Value = args.Rating.GetValueOrDefault(),
-                RatedType = ResourceTypes.Quiz,
+                RatedType = ResourceTypes.QuizQuestion,
                 Timestamp = DateTimeOffset.Now
             };
 

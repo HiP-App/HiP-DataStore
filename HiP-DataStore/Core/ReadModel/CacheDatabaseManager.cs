@@ -107,14 +107,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                             };
                             _db.Add(ResourceTypes.Tag, newTag);
                             break;
-                        case ResourceType _ when resourceType == ResourceTypes.Quiz:
+                        case ResourceType _ when resourceType == ResourceTypes.QuizQuestion:
                             var newQuestion = new QuizQuestion()
                             {
                                 Id = e.Id,
                                 UserId = e.UserId,
                                 Timestamp = e.Timestamp
                             };
-                            _db.Add(ResourceTypes.Quiz, newQuestion);
+                            _db.Add(ResourceTypes.QuizQuestion, newQuestion);
                             break;
                     }
                     break;
@@ -149,8 +149,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                             _db.Replace((ResourceTypes.ExhibitPage, e.Id), updatedExhibitPage);
                             break;
 
-                        case ResourceType _ when resourceType == ResourceTypes.Quiz:
-                            var originalQuestion = _db.Get<QuizQuestion>((ResourceTypes.Quiz, e.Id));
+                        case ResourceType _ when resourceType == ResourceTypes.QuizQuestion:
+                            var originalQuestion = _db.Get<QuizQuestion>((ResourceTypes.QuizQuestion, e.Id));
                             e.ApplyTo(originalQuestion);
                             var updatedQuestion = new QuizQuestion(originalQuestion)
                             {
@@ -158,7 +158,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                                 UserId = e.UserId,
                                 Timestamp = e.Timestamp
                             };
-                            _db.Replace((ResourceTypes.Quiz, e.Id), updatedQuestion);
+                            _db.Replace((ResourceTypes.QuizQuestion, e.Id), updatedQuestion);
 
                             if (e.PropertyName == nameof(QuizQuestion.ExhibitId))
                             {
@@ -230,10 +230,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         case ResourceType _ when resourceType == ResourceTypes.Tag:
                             MarkDeleted((resourceType, e.Id));
                             break;
-                        case ResourceType _ when resourceType == ResourceTypes.Quiz:
+                        case ResourceType _ when resourceType == ResourceTypes.QuizQuestion:
                             MarkDeleted((resourceType, e.Id));
                             //remove the question from the exhibit
-                            var question = _db.Get<QuizQuestion>((ResourceTypes.Quiz, e.Id));
+                            var question = _db.Get<QuizQuestion>((ResourceTypes.QuizQuestion, e.Id));
                             var exhibit = _db.Get<Exhibit>((ResourceTypes.Exhibit, question.ExhibitId));
                             exhibit.Questions.Remove(question.Id);
                             _db.Replace((ResourceTypes.Exhibit, exhibit.Id), exhibit);
