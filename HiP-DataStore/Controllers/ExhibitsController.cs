@@ -480,7 +480,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet("Questions/Rating/{exhibitId}")]
         [ProducesResponseType(typeof(RatingResult), 200)]
         [ProducesResponseType(400)]
-        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
         public IActionResult GetQuizRating(int exhibitId)
         {
             if (!ModelState.IsValid)
