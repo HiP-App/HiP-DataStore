@@ -23,7 +23,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
         {
             Exhibit = ResourceType.Register(nameof(Exhibit), typeof(ExhibitArgs));
             ExhibitPage = ResourceType.Register(nameof(ExhibitPage), typeof(ExhibitPageArgs2));
-            QuizQuestion = ResourceType.Register(nameof(QuizQuestion), typeof(QuizQuestion));
+            QuizQuestion = ResourceType.Register(nameof(QuizQuestion), typeof(ExhibitQuizQuestionArgs));
             Route = ResourceType.Register(nameof(Route), typeof(RouteArgs));
             Media = ResourceType.Register(nameof(Media), typeof(MediaArgs));
             Tag = ResourceType.Register(nameof(Tag), typeof(TagArgs));

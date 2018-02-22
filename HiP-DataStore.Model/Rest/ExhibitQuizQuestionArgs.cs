@@ -1,12 +1,12 @@
 ﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Utility;
+using PaderbornUniversity.SILab.Hip.EventSourcing;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 {
 
-    public class ExhibitQuizQuestionArgs : IContentArgs
+    public class ExhibitQuizQuestionRestArgs : IContentArgs
     {
         [AllowedStatuses]
         public ContentStatus Status { get; set; }
@@ -19,26 +19,33 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         [Required]
         public List<string> Options { get; set; }
 
+        public int? Image { get; set; }
+    }
+
+    public class ExhibitQuizQuestionArgs : IContentArgs
+    {
+        /// <summary>
+        /// This needs to nullable so that the <see cref="EntityManager"/> can also track exhibit id 0 (otherwise the default value would be 0)
+        /// </summary>
+        public int? ExhibitId { get; set; }
+        public ContentStatus Status { get; set; }
+
+        public string Text { get; set; }
+        public List<string> Options { get; set; }
+
         [Reference(nameof(ResourceTypes.Media))]
         public int? Image { get; set; }
 
-
-        public override bool Equals(object obj)
+        public ExhibitQuizQuestionArgs() { }
+        public ExhibitQuizQuestionArgs(int? exhibitId, ExhibitQuizQuestionRestArgs args)
         {
-            var question = obj as ExhibitQuizQuestionArgs;
-            return question != null &&
-                   Text == question.Text &&
-                   Options.SequenceEqual(question.Options) &&
-                   EqualityComparer<int?>.Default.Equals(Image, question.Image);
-        }
-
-        public override int GetHashCode()
-        {
-            var hashCode = -734600475;
-            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Text);
-            hashCode = hashCode * -1521134295 + EqualityComparer<List<string>>.Default.GetHashCode(Options);
-            hashCode = hashCode * -1521134295 + EqualityComparer<int?>.Default.GetHashCode(Image);
-            return hashCode;
+            ExhibitId = exhibitId;
+            Status = args.Status;
+            Text = args.Text;
+            Options = args.Options;
+            Image = args.Image;
         }
     }
+
+
 }

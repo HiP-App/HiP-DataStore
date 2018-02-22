@@ -16,20 +16,21 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         public QuizQuestion(ExhibitQuizQuestionArgs args)
         {
+            if (args.ExhibitId != null) ExhibitId = args.ExhibitId.Value;
             Status = args.Status;
             Text = args.Text;
             Options = args.Options;
             Image = args.Image;
         }
 
-        public QuizQuestion(QuizQuestion other)
+        public ExhibitQuizQuestionArgs CreateExhibitQuizQuestionArgs() => new ExhibitQuizQuestionArgs()
         {
-            Status = other.Status;
-            Text = other.Text;
-            Options = other.Options;
-            Image = other.Image;
-            ExhibitId = other.ExhibitId;
-        }
+            ExhibitId = ExhibitId,
+            Text = Text,
+            Options = Options,
+            Image = Image,
+            Status = Status
+        };
 
     }
 }

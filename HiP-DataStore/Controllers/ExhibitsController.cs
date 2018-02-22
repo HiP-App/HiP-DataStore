@@ -400,7 +400,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(typeof(int), 201)]
         [ProducesResponseType(400)]
         [ProducesResponseType(401)]
-        public async Task<IActionResult> PostQuestionAsync(int exhibitId, [FromBody]ExhibitQuizQuestionArgs args)
+        public async Task<IActionResult> PostQuestionAsync(int exhibitId, [FromBody]ExhibitQuizQuestionRestArgs args)
         {
             ValidateQuestionArgs(args, exhibitId);
 
@@ -414,9 +414,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (exhibit.Questions.Count == 10)
                 return BadRequest(ErrorMessages.QuestionCannotBeCreated(exhibitId));
 
-            var question = new QuizQuestion(args) { ExhibitId = exhibitId };
+            var questionArgs = new ExhibitQuizQuestionArgs(exhibitId, args);
             var id = _entityIndex.NextId(ResourceTypes.QuizQuestion);
-            await EntityManager.CreateEntityAsync(_eventStore, question, ResourceTypes.QuizQuestion, id, User.Identity.GetUserIdentity());
+            await EntityManager.CreateEntityAsync(_eventStore, questionArgs, ResourceTypes.QuizQuestion, id, User.Identity.GetUserIdentity());
             return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Quiz/{id}", id);
         }
 
@@ -425,7 +425,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> UpdateQuestionAsync(int id, [FromBody]ExhibitQuizQuestionArgs args)
+        public async Task<IActionResult> UpdateQuestionAsync(int id, [FromBody]ExhibitQuizQuestionRestArgs args)
         {
             ValidateQuestionArgs(args);
 
@@ -443,11 +443,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return BadRequest(ErrorMessages.CannotBeUnpublished(ResourceTypes.QuizQuestion));
 
             // validation passed, emit event
-            var oldQuestion = await _eventStore.EventStream.GetCurrentEntityAsync<QuizQuestion>(ResourceTypes.QuizQuestion, id);
-            var newQuestion = new QuizQuestion(args);
-            //we need to keep the exhibit id
-            newQuestion.ExhibitId = oldQuestion.ExhibitId;
-            await EntityManager.UpdateEntityAsync(_eventStore, oldQuestion, newQuestion, ResourceTypes.QuizQuestion, id, User.Identity.GetUserIdentity());
+            var oldQuestionArgs = await _eventStore.EventStream.GetCurrentEntityAsync<ExhibitQuizQuestionArgs>(ResourceTypes.QuizQuestion, id);
+            var newQuestionArgs = new ExhibitQuizQuestionArgs(oldQuestionArgs.ExhibitId, args);
+
+            await EntityManager.UpdateEntityAsync(_eventStore, oldQuestionArgs, newQuestionArgs, ResourceTypes.QuizQuestion, id, User.Identity.GetUserIdentity());
 
             return StatusCode(204);
         }
@@ -510,7 +509,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(404)]
         public IActionResult GetMyQuizRating(int exhibitId)
         {
-
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
@@ -585,7 +583,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             }
         }
 
-        private void ValidateQuestionArgs(ExhibitQuizQuestionArgs args, int? exhibitId = null)
+        private void ValidateQuestionArgs(ExhibitQuizQuestionRestArgs args, int? exhibitId = null)
         {
             // ensure image exist
             if (args.Image != null && !_mediaIndex.IsImage(args.Image.Value))

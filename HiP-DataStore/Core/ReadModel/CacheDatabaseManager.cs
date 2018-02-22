@@ -151,8 +151,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 
                         case ResourceType _ when resourceType == ResourceTypes.QuizQuestion:
                             var originalQuestion = _db.Get<QuizQuestion>((ResourceTypes.QuizQuestion, e.Id));
-                            e.ApplyTo(originalQuestion);
-                            var updatedQuestion = new QuizQuestion(originalQuestion)
+                            var questionArgs = originalQuestion.CreateExhibitQuizQuestionArgs();
+                            e.ApplyTo(questionArgs);
+                            var updatedQuestion = new QuizQuestion(questionArgs)
                             {
                                 Id = e.Id,
                                 UserId = e.UserId,
