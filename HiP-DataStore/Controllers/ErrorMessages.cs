@@ -1,4 +1,5 @@
-﻿using PaderbornUniversity.SILab.Hip.DataStore.Model;
+﻿using System;
+using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
@@ -35,6 +36,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             $"{res.Name.ToLower()} with id {id} has status Published. It can not be deleted";
 
         public static string QuestionCannotBeCreated(int exhibitId) =>
-            $"Exhibit {exhibitId} already has the maximum amount of questions";        
+            $"Exhibit {exhibitId} already has the maximum amount of questions";
+
+        public static string ExhibitHasNoQuestions(int exhibitId) => 
+            $"The exhibit {exhibitId} doesn't have any questions";
     }
 }

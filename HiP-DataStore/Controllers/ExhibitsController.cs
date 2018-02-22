@@ -486,7 +486,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return BadRequest(ModelState);
 
             if (!_entityIndex.Exists(ResourceTypes.Exhibit, exhibitId))
-                return NotFound(ErrorMessages.ContentNotFound(ResourceTypes.Exhibit, exhibitId));
+                return NotFound(ErrorMessages.ContentNotFound(ResourceTypes.Exhibit, exhibitId));           
 
             var result = new RatingResult()
             {
@@ -534,6 +534,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (User.Identity.GetUserIdentity() == null)
                 return Unauthorized();
+
+            var exhibit = _db.Get<Exhibit>((ResourceTypes.Exhibit, exhibitId));
+            if (!exhibit.Questions.Any())
+                return BadRequest(ErrorMessages.ExhibitHasNoQuestions(exhibitId));
 
             var ev = new RatingAdded()
             {
