@@ -45,9 +45,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
                 .Configure<UploadFilesConfig>(Configuration.GetSection("UploadingFiles"))
                 .Configure<ExhibitPagesConfig>(Configuration.GetSection("ExhibitPages"))
                 .Configure<AuthConfig>(Configuration.GetSection("Auth"))
-                .Configure<LoggingConfig> (Configuration.GetSection ("HiPLoggerConfig"))
+                .Configure<LoggingConfig>(Configuration.GetSection("HiPLoggerConfig"))
                 .Configure<CorsConfig>(Configuration);
-
+            
             var serviceProvider = services.BuildServiceProvider(); // allows us to actually get the configured services           
             var authConfig = serviceProvider.GetService<IOptions<AuthConfig>>();
 
@@ -87,7 +87,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
                 .AddSingleton<IDomainIndex, TagIndex>()
                 .AddSingleton<IDomainIndex, ExhibitPageIndex>()
                 .AddSingleton<IDomainIndex, ScoreBoardIndex>()
-                .AddSingleton<IDomainIndex, QuizIndex>()
                 .AddSingleton<IDomainIndex, RatingIndex>();
         }
 
