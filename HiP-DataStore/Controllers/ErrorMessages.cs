@@ -1,5 +1,4 @@
-﻿using System;
-using PaderbornUniversity.SILab.Hip.DataStore.Model;
+﻿using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
