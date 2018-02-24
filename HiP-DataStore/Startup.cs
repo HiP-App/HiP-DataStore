@@ -13,6 +13,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
+using PaderbornUniversity.SILab.Hip.UserStore;
 using PaderbornUniversity.SILab.Hip.Webservice;
 using PaderbornUniversity.SILab.Hip.Webservice.Logging;
 
@@ -41,6 +42,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             services
                 .Configure<EndpointConfig>(Configuration.GetSection("Endpoints"))
                 .Configure<MongoDbConfig>(Configuration.GetSection("Endpoints"))
+                .Configure<UserStoreConfig>(Configuration.GetSection("Endpoints"))
                 .Configure<EventStoreConfig>(Configuration.GetSection("EventStore"))
                 .Configure<UploadFilesConfig>(Configuration.GetSection("UploadingFiles"))
                 .Configure<ExhibitPagesConfig>(Configuration.GetSection("ExhibitPages"))
@@ -79,6 +81,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
                 .AddSingleton<IEventStore, EventSourcing.EventStoreLlp.EventStore>()
                 .AddSingleton<IMongoDbContext, MongoDbContext>()
                 .AddSingleton<EventStoreService>()
+                .AddSingleton<UserStoreService>()
                 .AddSingleton<CacheDatabaseManager>()
                 .AddSingleton<InMemoryCache>()
                 .AddSingleton<IDomainIndex, MediaIndex>()

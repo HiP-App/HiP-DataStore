@@ -71,7 +71,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Utility
                 return true;
             return CheckRoles(identity);
         }
-        
+
+        public static bool IsAllowedToGetStaistic(IIdentity identity)
+        {
+            return CheckRoles(identity, UserRoles.Administrator);
+        }
+
         public static bool IsAllowedToGetDeleted(IIdentity identity)
         {
                return CheckRoles(identity, AllowedToGetDeletedContent);
