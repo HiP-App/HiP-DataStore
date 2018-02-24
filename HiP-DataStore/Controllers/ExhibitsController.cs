@@ -574,19 +574,19 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return Forbid();
             
             var exhibitVisitedList = await _userStoreService.ExhibitVisitedAction.GetAllAsync(exhibitId, DateTime.Now.AddYears(-1));
-            int Year = exhibitVisitedList.Total;
-            int Month = 0;
-            int Day = 0;
+            int year = exhibitVisitedList.Total;
+            int month = 0;
+            int day = 0;
             foreach(var exhibitVisited in exhibitVisitedList.Items)
             {
                 if (exhibitVisited.Timestamp >= DateTime.Now.AddMonths(-1))
-                    Month++;
+                    month++;
 
                 if (exhibitVisited.Timestamp >= DateTime.Now.AddDays(-1))
-                    Day++;
+                    day++;
             }
 
-            return Ok(new ExhibitStatisticResult() { Year = Year, Month = Month, Day = Day} );
+            return Ok(new ExhibitStatisticResult() { Year = year, Month = month, Day = day} );
         }
 
         private void ValidateExhibitArgs(ExhibitArgs args)
