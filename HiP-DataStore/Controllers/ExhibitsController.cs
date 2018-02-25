@@ -557,6 +557,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Questions/Rating/{ev.Id}", ev.Id);
         }
 
+        /// <summary>
+        /// Get information about amount of exhibit visitors
+        /// </summary>
+        /// <param name="exhibitId">Id of the exhibit</param>
+        /// <returns></returns>
         [HttpGet("Statistic/{exhibitId}")]
         [ProducesResponseType(typeof(ExhibitStatisticResult), 200)]
         [ProducesResponseType(400)]
@@ -570,7 +575,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!_entityIndex.Exists(ResourceTypes.Exhibit, exhibitId))
                 return NotFound(ErrorMessages.ContentNotFound(ResourceTypes.Exhibit, exhibitId));
 
-            if (!UserPermissions.IsAllowedToGetStaistic(User.Identity))
+            if (!UserPermissions.IsAllowedToGetStatistic(User.Identity))
                 return Forbid();
             
             var exhibitVisitedList = await _userStoreService.ExhibitVisitedAction.GetAllAsync(exhibitId, DateTime.Now.AddYears(-1));

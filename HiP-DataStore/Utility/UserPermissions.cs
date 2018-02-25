@@ -72,7 +72,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Utility
             return CheckRoles(identity);
         }
 
-        public static bool IsAllowedToGetStaistic(IIdentity identity)
+        public static bool IsAllowedToGetStatistic(IIdentity identity)
         {
             return CheckRoles(identity, UserRoles.Administrator);
         }
