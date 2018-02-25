@@ -10,10 +10,12 @@ using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
+using PaderbornUniversity.SILab.Hip.UserStore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ContentStatus = PaderbornUniversity.SILab.Hip.DataStore.Model.ContentStatus;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
@@ -27,8 +29,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly EntityIndex _entityIndex;
         private readonly ReferencesIndex _referencesIndex;
         private readonly RatingIndex _ratingIndex;
+        private readonly UserStoreService _userStoreService;
 
-        public ExhibitsController(EventStoreService eventStore, IMongoDbContext db, InMemoryCache cache)
+        public ExhibitsController(EventStoreService eventStore, IMongoDbContext db, InMemoryCache cache, UserStoreService userStoreService)
         {
             _eventStore = eventStore;
             _db = db;
@@ -36,6 +39,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             _entityIndex = cache.Index<EntityIndex>();
             _referencesIndex = cache.Index<ReferencesIndex>();
             _ratingIndex = cache.Index<RatingIndex>();
+            _userStoreService = userStoreService;
         }
 
         [HttpGet("ids")]
@@ -551,6 +555,43 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             await _eventStore.AppendEventAsync(ev);
             return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Questions/Rating/{ev.Id}", ev.Id);
+        }
+
+        /// <summary>
+        /// Get information about amount of exhibit visitors
+        /// </summary>
+        /// <param name="exhibitId">Id of the exhibit</param>
+        /// <returns></returns>
+        [HttpGet("Statistic/{exhibitId}")]
+        [ProducesResponseType(typeof(ExhibitStatisticResult), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> GetStatistic(int exhibitId)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!_entityIndex.Exists(ResourceTypes.Exhibit, exhibitId))
+                return NotFound(ErrorMessages.ContentNotFound(ResourceTypes.Exhibit, exhibitId));
+
+            if (!UserPermissions.IsAllowedToGetStatistic(User.Identity))
+                return Forbid();
+            
+            var exhibitVisitedList = await _userStoreService.ExhibitVisitedAction.GetAllAsync(exhibitId, DateTime.Now.AddYears(-1));
+            int year = exhibitVisitedList.Total;
+            int month = 0;
+            int day = 0;
+            foreach(var exhibitVisited in exhibitVisitedList.Items)
+            {
+                if (exhibitVisited.Timestamp >= DateTime.Now.AddMonths(-1))
+                    month++;
+
+                if (exhibitVisited.Timestamp >= DateTime.Now.AddDays(-1))
+                    day++;
+            }
+
+            return Ok(new ExhibitStatisticResult() { Year = year, Month = month, Day = day} );
         }
 
         private void ValidateExhibitArgs(ExhibitArgs args)
