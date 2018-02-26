@@ -1,5 +1,4 @@
 ﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
-using System;
 using System.Collections.Generic;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
@@ -12,27 +11,19 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         public Review(ReviewArgs args)
         {
-            Description = args.Description;
-            StudentsToApprove = args.StudentsToApprove;
-            ReviewableByStudents = args.ReviewableByStudents;
-            Reviewers = args.Reviewers;
-        }
-
-        public Review(ReviewUpdateArgs args)
-        {
             Approved = args.Approved;
             Description = args.Description;
             StudentsToApprove = args.StudentsToApprove ?? 0;
             ReviewableByStudents = args.ReviewableByStudents ?? false;
             Reviewers = args.Reviewers;
             Comments = args.Comments;
-            EntityId = args.EntityId;
             EntityType = args.EntityType;
+            EntityId = args.EntityId;
         }
 
-        public ReviewUpdateArgs CreateReviewUpdateArgs()
+        public ReviewArgs CreateReviewArgs()
         {
-            var args = new ReviewUpdateArgs()
+            var args = new ReviewArgs()
             {
                 Approved = Approved,
                 Description = Description,
@@ -48,10 +39,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         public bool Approved { get; set; }
 
-        // Type of the entity the review belongs tos
+        // Type of the entity the review belongs to
         public string EntityType { get; set; }
 
-        // Id of the entity the review belongs to
+        // ID of the entity the review belongs to
         public int EntityId { get; set; }
 
         public string Description { get; set; }
@@ -62,25 +53,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         public List<string> Reviewers { get; set; }
 
-        public List<Comment> Comments { get; set; } = new List<Comment>();
-
-        public class Comment
-        {
-            public string Text { get; set; }
-
-            public DateTimeOffset Timestamp { get; set; }
-
-            public string UserId { get; set; }
-
-            public bool Approved { get; set; }
-
-            public Comment(string text, DateTimeOffset timestamp, string userId, bool approved)
-            {
-                Text = text;
-                Timestamp = timestamp;
-                UserId = userId;
-                Approved = approved;
-            }
-        }
+        public List<int> Comments { get; set; } = new List<int>();
     }
 }

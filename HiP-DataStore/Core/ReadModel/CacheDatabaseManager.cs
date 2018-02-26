@@ -126,6 +126,16 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                             };
                             _db.Add(ResourceTypes.Review, newReview);
                             break;
+
+                        case ResourceType _ when resourceType == ResourceTypes.ReviewComment:
+                            var newReviewComment = new ReviewComment(new ReviewCommentArgs())
+                            {
+                                Id = e.Id,
+                                UserId = e.UserId,
+                                Timestamp = e.Timestamp
+                            };
+                            _db.Add(ResourceTypes.ReviewComment, newReviewComment);
+                            break;
                     }
                     break;
 
@@ -216,16 +226,28 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
 
                         case ResourceType _ when resourceType == ResourceTypes.Review:
                             var originalReview = _db.Get<Review>((ResourceTypes.Review, e.Id));
-                            var reviewUpdateArgs = originalReview.CreateReviewUpdateArgs();
-                            e.ApplyTo(reviewUpdateArgs);
-                            var updatedReview = new Review(reviewUpdateArgs)
+                            var reviewArgs = originalReview.CreateReviewArgs();
+                            e.ApplyTo(reviewArgs);
+                            var updatedReview = new Review(reviewArgs)
                             {
                                 Id = e.Id,
                                 UserId = originalReview.UserId,
                                 Timestamp = e.Timestamp,
                             };
-
                             _db.Replace((ResourceTypes.Review, e.Id), updatedReview);
+                            break;
+
+                        case ResourceType _ when resourceType == ResourceTypes.ReviewComment:
+                            var originalReviewComment = _db.Get<ReviewComment>((ResourceTypes.ReviewComment, e.Id));
+                            var reviewCommentArgs = originalReviewComment.CreateReviewCommentArgs();
+                            e.ApplyTo(reviewCommentArgs);
+                            var updatedReviewComment = new ReviewComment(reviewCommentArgs)
+                            {
+                                Id = e.Id,
+                                UserId = originalReviewComment.UserId,
+                                Timestamp = e.Timestamp
+                            };
+                            _db.Replace((ResourceTypes.ReviewComment, e.Id), updatedReviewComment);
                             break;
                     }
                     break;
@@ -253,6 +275,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                             MarkDeleted((resourceType, e.Id));
                             break;
                         case ResourceType _ when resourceType == ResourceTypes.Review:
+                            MarkDeleted((resourceType, e.Id));
+                            break;
+                        case ResourceType _ when resourceType == ResourceTypes.ReviewComment:
                             MarkDeleted((resourceType, e.Id));
                             break;
                     }

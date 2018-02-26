@@ -96,7 +96,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
             switch (ev)
             {
                 case PropertyChangedEvent e:
-                    if (e.GetEntityType() != ResourceTypes.Review)
+                    if (e.GetEntityType() != ResourceTypes.Review && e.GetEntityType() != ResourceTypes.ReviewComment)
                     {
                         ClearReferences(source, e.PropertyName);
                         var references = e.GetReferences();

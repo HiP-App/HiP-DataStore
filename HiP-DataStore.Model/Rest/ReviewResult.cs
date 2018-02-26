@@ -1,7 +1,6 @@
 ﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using System;
 using System.Collections.Generic;
-using static PaderbornUniversity.SILab.Hip.DataStore.Model.Entity.Review;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 {
@@ -17,7 +16,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 
         public List<string> Reviewers { get; set; }
 
-        public List<Comment> Comments { get; set; }
+        public List<int> Comments { get; set; }
+
+        public string UserId { get; set; }
 
         public ReviewResult(Review review)
         {
@@ -27,6 +28,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
             Timestamp = review.Timestamp;
             Reviewers = review.Reviewers;
             Comments = review.Comments;
+            UserId = review.UserId;
         }
 
     }

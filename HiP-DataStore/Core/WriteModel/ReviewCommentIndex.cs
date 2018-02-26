@@ -8,14 +8,14 @@ using System.Linq;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 {
-    public class ReviewIndex : IDomainIndex
+    public class ReviewCommentIndex : IDomainIndex
     {
-        private readonly Dictionary<int, ReviewEntityInfo> _reviews = new Dictionary<int, ReviewEntityInfo>();
+        private readonly Dictionary<int, ReviewCommentEntityInfo> _reviewComments = new Dictionary<int, ReviewCommentEntityInfo>();
         private readonly object _lockObject = new object();
 
         private int _maximumId = -1;
 
-        public int NextId(ResourceType entityType)
+        public int NextId()
         {
             lock (_lockObject)
             {
@@ -23,25 +23,24 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
             }
         }
 
-        public string Owner(int reviewId)
+        public bool Approved(int id)
         {
             lock (_lockObject)
             {
-                if (_reviews.TryGetValue(reviewId, out var review))
-                    return review.UserId;
-
-                return null;
+                if (_reviewComments.TryGetValue(id, out var reviewComment))
+                    return reviewComment.Approved;
+                return false;
             }
         }
 
-        public bool Exists(string entityType, int entityId)
+        public string Owner(int reviewCommentId)
         {
             lock (_lockObject)
             {
-                var review = _reviews.FirstOrDefault(x => x.Value.EntityId == entityId && x.Value.EntityType == entityType);
-                if (review.Value != null)
-                    return true;
-                return false;
+                if (_reviewComments.TryGetValue(reviewCommentId, out var reviewComment))
+                    return reviewComment.UserId;
+
+                return null;
             }
         }
 
@@ -49,20 +48,23 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
         {
             lock (_lockObject)
             {
-                if(_reviews.TryGetValue(reviewId, out var review))
+                if (_reviewComments.TryGetValue(reviewId, out var reviewComment))
                     return true;
                 return false;
             }
         }
 
         /// <summary>
-        /// Returns the id of the review that belongs to the entity specified by the given ID and type.
+        /// Returns all the IDs of comments that belong to the specified review
         /// </summary>
-        public int GetReviewId(string entityType, int entityId)
+        public IReadOnlyCollection<int> GetReviewCommentIds(int reviewId)
         {
             lock (_lockObject)
             {
-                return _reviews.FirstOrDefault(x => x.Value.EntityId == entityId && x.Value.EntityType == entityType).Key;
+                return _reviewComments.AsQueryable()
+                    .Where(x => x.Value.ReviewId == reviewId)
+                    .Select(x => x.Key)
+                    .ToList();
             }
         }
 
@@ -71,30 +73,29 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
             switch (e)
             {
                 case CreatedEvent ev:
-                    if (ev.GetEntityType() == ResourceTypes.Review)
+                    if (ev.GetEntityType() == ResourceTypes.ReviewComment)
                     {
                         lock (_lockObject)
                         {
                             _maximumId = Math.Max(_maximumId, ev.Id);
-                            _reviews.Add(ev.Id, new ReviewEntityInfo { UserId = ev.UserId });
+                            _reviewComments.Add(ev.Id, new ReviewCommentEntityInfo { UserId = ev.UserId });
                         }
                     }
                     break;
 
                 case PropertyChangedEvent ev:
-                    if (ev.GetEntityType() == ResourceTypes.Review)
+                    if (ev.GetEntityType() == ResourceTypes.ReviewComment)
                     {
                         lock (_lockObject)
                         {
-                            if (_reviews.TryGetValue(ev.Id, out var review))
+                            if (_reviewComments.TryGetValue(ev.Id, out var reviewComment))
                             {
-                                if (ev.PropertyName == nameof(Review.EntityType) && ev.Value is string entityType)
+                                if (ev.PropertyName == nameof(ReviewComment.Approved) && ev.Value is bool approved)
                                 {
-                                    review.EntityType = entityType;
-                                }
-                                else if (ev.PropertyName == nameof(Review.EntityId) && ev.Value is int entityId)
+                                    reviewComment.Approved = approved;
+                                } else if (ev.PropertyName == nameof(ReviewComment.ReviewId) && ev.Value is int id)
                                 {
-                                    review.EntityId = entityId;
+                                    reviewComment.ReviewId = id;
                                 }
                             }
                         }
@@ -106,18 +107,18 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                     {
                         lock (_lockObject)
                         {
-                            _reviews.Remove(ev.Id);
+                            _reviewComments.Remove(ev.Id);
                         }
                     }
                     break;
             }
         }
 
-        class ReviewEntityInfo
+        class ReviewCommentEntityInfo
         {
-            public string EntityType { get; set; }
+            public bool Approved { get; set; }
 
-            public int EntityId { get; set; }
+            public int ReviewId { get; set; }
 
             public String UserId { get; set; }
         }

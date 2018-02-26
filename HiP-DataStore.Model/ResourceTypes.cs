@@ -14,6 +14,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
         public static ResourceType ScoreRecord { get; private set; }
         public static ResourceType Quiz { get; private set; }
         public static ResourceType Review { get; private set; }
+        public static ResourceType ReviewComment { get; private set; }
 
 
         /// <summary>
@@ -30,6 +31,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
             ScoreRecord = ResourceType.Register(nameof(ScoreRecord), typeof(ScoreBoardArgs));
             Rating = ResourceType.Register(nameof(Rating), typeof(RatingArgs));
             Review = ResourceType.Register(nameof(Review), typeof(ReviewArgs));
+            ReviewComment = ResourceType.Register(nameof(ReviewComment), typeof(ReviewCommentArgs));
         }
     }
 }

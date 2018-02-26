@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Newtonsoft.Json;
+using System.Collections.Generic;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 {
@@ -12,8 +13,27 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         /// <summary>
         /// Amount of students, that need to approve, in order to approve the review
         /// </summary>
-        public int StudentsToApprove { get; set; }
+        public int? StudentsToApprove { get; set; }
 
-        public bool ReviewableByStudents { get; set; }
+        public bool? ReviewableByStudents { get; set; }
+
+        [JsonIgnore]
+        public bool Approved { get; set; }
+
+        [JsonIgnore]
+        public List<int> Comments { get; set; } = new List<int>();
+
+        [JsonIgnore]
+        public string EntityType { get; set; }
+
+        [JsonIgnore]
+        public int EntityId { get; set; }
+
+        public ReviewArgs CloneArgs()
+        {
+            var copy = (ReviewArgs) this.MemberwiseClone();
+            copy.Comments = new List<int>(Comments);
+            return copy;
+        }
     }
 }
