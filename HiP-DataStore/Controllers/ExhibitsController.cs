@@ -604,7 +604,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (ReviewHelper.CheckNotFoundPut(id, _entityIndex, _reviewIndex) is string errorMessage)
+            if (ReviewHelper.CheckNotFoundPut(id, ResourceTypes.Exhibit, _entityIndex, _reviewIndex) is string errorMessage)
                 return NotFound(errorMessage);
 
             var reviewId = _reviewIndex.GetReviewId(ResourceTypes.Exhibit.Name, id);
