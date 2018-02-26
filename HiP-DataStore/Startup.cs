@@ -13,7 +13,9 @@ using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
+using PaderbornUniversity.SILab.Hip.UserStore;
 using PaderbornUniversity.SILab.Hip.Webservice;
+using PaderbornUniversity.SILab.Hip.Webservice.Logging;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore
 {
@@ -40,12 +42,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             services
                 .Configure<EndpointConfig>(Configuration.GetSection("Endpoints"))
                 .Configure<MongoDbConfig>(Configuration.GetSection("Endpoints"))
+                .Configure<UserStoreConfig>(Configuration.GetSection("Endpoints"))
                 .Configure<EventStoreConfig>(Configuration.GetSection("EventStore"))
                 .Configure<UploadFilesConfig>(Configuration.GetSection("UploadingFiles"))
                 .Configure<ExhibitPagesConfig>(Configuration.GetSection("ExhibitPages"))
                 .Configure<AuthConfig>(Configuration.GetSection("Auth"))
+                .Configure<LoggingConfig>(Configuration.GetSection("HiPLoggerConfig"))
                 .Configure<CorsConfig>(Configuration);
-
+            
             var serviceProvider = services.BuildServiceProvider(); // allows us to actually get the configured services           
             var authConfig = serviceProvider.GetService<IOptions<AuthConfig>>();
 
@@ -77,6 +81,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
                 .AddSingleton<IEventStore, EventSourcing.EventStoreLlp.EventStore>()
                 .AddSingleton<IMongoDbContext, MongoDbContext>()
                 .AddSingleton<EventStoreService>()
+                .AddSingleton<UserStoreService>()
                 .AddSingleton<CacheDatabaseManager>()
                 .AddSingleton<InMemoryCache>()
                 .AddSingleton<IDomainIndex, MediaIndex>()
@@ -85,7 +90,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
                 .AddSingleton<IDomainIndex, TagIndex>()
                 .AddSingleton<IDomainIndex, ExhibitPageIndex>()
                 .AddSingleton<IDomainIndex, ScoreBoardIndex>()
-                .AddSingleton<IDomainIndex, QuizIndex>()
                 .AddSingleton<IDomainIndex, RatingIndex>()
                 .AddSingleton<IDomainIndex, ReviewIndex>()
                 .AddSingleton<IDomainIndex, ReviewCommentIndex>();
@@ -93,10 +97,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory,
-            IOptions<CorsConfig> corsConfig)
-        {
-            loggerFactory.AddConsole(Configuration.GetSection("Logging"))
-                         .AddDebug();
+            IOptions<CorsConfig> corsConfig,IOptions<LoggingConfig> loggingConfig)
+            {
+            loggerFactory.AddConsole (Configuration.GetSection ("Logging"))
+                .AddDebug ()
+                .AddHipLogger (loggingConfig.Value);
 
             // CacheDatabaseManager should start up immediately (not only when injected into a controller or
             // something), so we manually request an instance here
@@ -119,6 +124,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
             app.UseAuthentication();
             app.UseMvc();
             app.UseSwaggerUiHip();
+
+            loggerFactory.CreateLogger("ApplicationStartup").LogInformation("DataStore started successfully");
         }
     }
 }

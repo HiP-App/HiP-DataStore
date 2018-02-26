@@ -12,7 +12,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
         public static ResourceType Media { get; private set; }
         public static ResourceType Tag { get; private set; }
         public static ResourceType ScoreRecord { get; private set; }
-        public static ResourceType Quiz { get; private set; }
+        public static ResourceType QuizQuestion { get; private set; }
         public static ResourceType Review { get; private set; }
         public static ResourceType ReviewComment { get; private set; }
 
@@ -24,7 +24,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
         {
             Exhibit = ResourceType.Register(nameof(Exhibit), typeof(ExhibitArgs));
             ExhibitPage = ResourceType.Register(nameof(ExhibitPage), typeof(ExhibitPageArgs2));
-            Quiz = ResourceType.Register(nameof(Quiz), typeof(ExhibitQuizArgs));
+            QuizQuestion = ResourceType.Register(nameof(QuizQuestion), typeof(ExhibitQuizQuestionArgs));
             Route = ResourceType.Register(nameof(Route), typeof(RouteArgs));
             Media = ResourceType.Register(nameof(Media), typeof(MediaArgs));
             Tag = ResourceType.Register(nameof(Tag), typeof(TagArgs));
