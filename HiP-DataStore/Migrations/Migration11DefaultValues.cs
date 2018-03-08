@@ -23,7 +23,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
 
                 //there are events in the event stream with ResourceType "Quiz" these need to ignored here
                 try
-                {                    
+                {
                     resourceType = (current as BaseEvent)?.GetEntityType();
                     if (resourceType == null) continue;
                 }
@@ -67,7 +67,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
                         e.AppendEvent(ev);
                         foreach (var prop in properties)
                         {
-                            if (prop.PropertyType.IsValueType)
+                            if (prop.PropertyType.IsValueType && !(prop.PropertyType.IsGenericType && prop.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>)))
                             {
                                 var value = Activator.CreateInstance(prop.PropertyType);
                                 e.AppendEvent(new PropertyChangedEvent(prop.Name, ev.ResourceTypeName, ev.Id, ev.UserId, value));
@@ -81,6 +81,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
             }
 
 
-        }        
+        }
     }
 }
