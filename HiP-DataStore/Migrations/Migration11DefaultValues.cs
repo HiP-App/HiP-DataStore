@@ -21,10 +21,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
                 var current = events.Current;
                 ResourceType resourceType;
 
-                //there are events in the event stream with ResourceType "Quiz" these need to be deleted since a new solution with ResourceType "QuizQuestion" has been implemented
+                //there are events in the event stream with ResourceType "Quiz" these need to ignored here
                 try
                 {                    
                     resourceType = (current as BaseEvent)?.GetEntityType();
+                    if (resourceType == null) continue;
                 }
                 catch { continue; }
                 switch (current)
@@ -36,7 +37,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
                         break;
 
                     case PropertyChangedEvent ev:
-                        resourceType = ev.GetEntityType();
                         properties = _dict[(resourceType, ev.Id)];
                         var property = properties.FirstOrDefault(p => p.Name == ev.PropertyName);
                         if (property != null)
@@ -52,9 +52,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Migrations
             {
                 var current = events.Current;
                 ResourceType resourceType;
+
+                //there are events in the event stream with ResourceType "Quiz" these need to be deleted since a new solution with ResourceType "QuizQuestion" has been implemented
                 try
                 {
                     resourceType = (current as BaseEvent)?.GetEntityType();
+                    if (resourceType == null) continue;
                 }
                 catch { continue; }
                 switch (current)
