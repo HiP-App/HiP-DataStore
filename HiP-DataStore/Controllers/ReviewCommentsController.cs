@@ -18,7 +18,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
     public class ReviewCommentsController : Controller
     {
         private readonly EventStoreService _eventStore;
-        private readonly EntityIndex _entityIndex;
         private readonly ReviewIndex _reviewIndex;
         private readonly ReviewCommentIndex _reviewCommentIndex;
         private readonly IMongoDbContext _db;
@@ -26,7 +25,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         public ReviewCommentsController(EventStoreService eventStore, InMemoryCache cache, IMongoDbContext db)
         {
             _eventStore = eventStore;
-            _entityIndex = cache.Index<EntityIndex>();
             _reviewIndex = cache.Index<ReviewIndex>();
             _reviewCommentIndex = cache.Index<ReviewCommentIndex>();
             _db = db;

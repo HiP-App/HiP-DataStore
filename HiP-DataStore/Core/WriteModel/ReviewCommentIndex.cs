@@ -47,9 +47,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
         {
             lock (_lockObject)
             {
-                if (_reviewComments.TryGetValue(reviewCommentId, out var reviewComment))
-                    return true;
-                return false;
+                return _reviewComments.ContainsKey(reviewCommentId);
             }
         }
 

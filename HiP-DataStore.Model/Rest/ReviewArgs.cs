@@ -31,7 +31,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 
         public ReviewArgs CloneArgs()
         {
-            var copy = (ReviewArgs) this.MemberwiseClone();
+            var copy = (ReviewArgs) MemberwiseClone();
             copy.Comments = new List<int>(Comments);
             return copy;
         }

@@ -10,7 +10,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
     public static class ReviewHelper
     {
-        public static bool IsReviewApproved(List<int> comments, bool approved, int? studentsToApprove, IIdentity identity, ReviewCommentIndex _reviewCommentIndex)
+        public static bool IsReviewApproved(List<int> comments, bool approved, int? studentsToApprove, IIdentity identity, ReviewCommentIndex reviewCommentIndex)
         {
             if (UserPermissions.IsSupervisorOrAdmin(identity))
             {
@@ -21,7 +21,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 var numberOfApproves = 0;
                 foreach (int id in comments)
                 {
-                    if (_reviewCommentIndex.Approved(id))
+                    if (reviewCommentIndex.Approved(id))
                         numberOfApproves++;
                 }
                 return numberOfApproves >= studentsToApprove;
