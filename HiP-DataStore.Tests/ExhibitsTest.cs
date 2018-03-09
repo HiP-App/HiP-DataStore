@@ -38,7 +38,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests
 
             // Verify that the correct number of events was generated and the cache DB was updated
             var eventStream = eventStore.Streams["test"];
-            Assert.Equal(3, eventStream.Events.Count);
+            Assert.Equal(6, eventStream.Events.Count);
 
             var cachedExhibit = mongoDb.Get<Exhibit>((ResourceTypes.Exhibit, id));
             Assert.Equal(exhibitArgs.Name, cachedExhibit.Name);
