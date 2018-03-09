@@ -7,8 +7,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
     {
         public int Id { get; set; }
 
-        public int ReviewId { get; set; }
-
         public string Text { get; set; }
 
         public bool Approved { get; set; }
@@ -23,7 +21,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
             Text = reviewComment.Text;
             Timestamp = reviewComment.Timestamp;
             UserId = reviewComment.UserId;
-            ReviewId = reviewComment.ReviewId;
             Approved = reviewComment.Approved;
         }
     }

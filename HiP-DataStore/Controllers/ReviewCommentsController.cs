@@ -37,7 +37,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
-        public IActionResult GetRreview(int id)
+        public IActionResult Get(int id)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -81,15 +81,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 newReviewArgs.Comments = new List<int>();
             newReviewArgs.Comments.Add(reviewCommentId);
 
-            var reviewComment = new ReviewComment(args)
-            {
-                ReviewId = reviewId
-            };
-
             if (args.Approved)
                 newReviewArgs.Approved = ReviewHelper.IsReviewApproved(newReviewArgs.Comments, args.Approved, newReviewArgs.StudentsToApprove, User.Identity, _reviewCommentIndex);
 
-            await EntityManager.CreateEntityAsync(_eventStore, reviewComment, ResourceTypes.ReviewComment, reviewCommentId, User.Identity.GetUserIdentity());
+            await EntityManager.CreateEntityAsync(_eventStore, args, ResourceTypes.ReviewComment, reviewCommentId, User.Identity.GetUserIdentity());
             await EntityManager.UpdateEntityAsync(_eventStore, reviewArgs, newReviewArgs, ResourceTypes.Review, reviewId, User.Identity.GetUserIdentity());
 
             return Created($"{Request.Scheme}://{Request.Host}/api/Comments/{reviewCommentId}", reviewCommentId);
@@ -119,7 +114,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             {
                 Text = text,
                 Approved = reviewCommentArgs.Approved,
-                ReviewId = reviewCommentArgs.ReviewId
             };
 
             await EntityManager.UpdateEntityAsync(_eventStore, reviewCommentArgs, args, ResourceTypes.ReviewComment, id, User.Identity.GetUserIdentity());

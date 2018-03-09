@@ -8,13 +8,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         public bool Approved { get; set; }
 
-        public int ReviewId { get; set; }
-
         public ReviewComment(ReviewCommentArgs args)
         {
             Text = args.Text;
             Approved = args.Approved;
-            ReviewId = args.ReviewId;
         }
 
         public ReviewComment()
@@ -27,7 +24,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
             {
                 Text = Text,
                 Approved = Approved,
-                ReviewId = ReviewId
             };
             return args;
         }

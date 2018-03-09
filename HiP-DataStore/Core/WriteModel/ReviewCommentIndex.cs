@@ -4,7 +4,6 @@ using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Events;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
 {
@@ -44,27 +43,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
             }
         }
 
-        public bool Exists(int reviewId)
+        public bool Exists(int reviewCommentId)
         {
             lock (_lockObject)
             {
-                if (_reviewComments.TryGetValue(reviewId, out var reviewComment))
+                if (_reviewComments.TryGetValue(reviewCommentId, out var reviewComment))
                     return true;
                 return false;
-            }
-        }
-
-        /// <summary>
-        /// Returns all the IDs of comments that belong to the specified review
-        /// </summary>
-        public IReadOnlyCollection<int> GetReviewCommentIds(int reviewId)
-        {
-            lock (_lockObject)
-            {
-                return _reviewComments.AsQueryable()
-                    .Where(x => x.Value.ReviewId == reviewId)
-                    .Select(x => x.Key)
-                    .ToList();
             }
         }
 
@@ -93,9 +78,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                                 if (ev.PropertyName == nameof(ReviewComment.Approved) && ev.Value is bool approved)
                                 {
                                     reviewComment.Approved = approved;
-                                } else if (ev.PropertyName == nameof(ReviewComment.ReviewId) && ev.Value is int id)
-                                {
-                                    reviewComment.ReviewId = id;
                                 }
                             }
                         }
@@ -117,8 +99,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
         class ReviewCommentEntityInfo
         {
             public bool Approved { get; set; }
-
-            public int ReviewId { get; set; }
 
             public String UserId { get; set; }
         }

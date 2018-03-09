@@ -336,14 +336,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             var reviewId = _reviewIndex.NextId(ResourceTypes.ExhibitPage);
 
-            var newReview = new Review(args)
-            {
-                Id = reviewId,
-                EntityType = ResourceTypes.ExhibitPage.Name,
-                EntityId = id
-            };
+            args.EntityId = id;
+            args.EntityType = ResourceTypes.ExhibitPage.Name;
 
-            await EntityManager.CreateEntityAsync(_eventStore, newReview, ResourceTypes.Review, reviewId, User.Identity.GetUserIdentity());
+            await EntityManager.CreateEntityAsync(_eventStore, args, ResourceTypes.Review, reviewId, User.Identity.GetUserIdentity());
 
             return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Review/{reviewId}", reviewId);
         }

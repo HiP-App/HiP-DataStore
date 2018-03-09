@@ -605,7 +605,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
-        public IActionResult GetRreview(int id)
+        public IActionResult GetReview(int id)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -650,14 +650,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             var reviewId = _reviewIndex.NextId(ResourceTypes.Exhibit);
 
-            var newReview = new Review(args)
-            {
-                Id = reviewId,
-                EntityType = ResourceTypes.Exhibit.Name,
-                EntityId = id
-            };
+            args.EntityId = id;
+            args.EntityType = ResourceTypes.Exhibit.Name;
 
-            await EntityManager.CreateEntityAsync(_eventStore, newReview, ResourceTypes.Review, reviewId, User.Identity.GetUserIdentity());
+            await EntityManager.CreateEntityAsync(_eventStore, args, ResourceTypes.Review, reviewId, User.Identity.GetUserIdentity());
 
             return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Review/{reviewId}", reviewId);
         }
