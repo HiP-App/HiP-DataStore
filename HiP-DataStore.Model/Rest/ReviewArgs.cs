@@ -8,6 +8,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 
         public string Description { get; set; }
 
+        /// <summary>
+        /// A list of user Ids
+        /// </summary>
         public List<string> Reviewers { get; set; }
 
         /// <summary>
