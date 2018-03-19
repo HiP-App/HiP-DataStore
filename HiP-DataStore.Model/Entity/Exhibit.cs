@@ -21,6 +21,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
 
         public List<int> Pages { get; private set; } = new List<int>();
 
+        public List<int> Questions { get; private set; } = new List<int>();
+
         public Exhibit()
         {
         }

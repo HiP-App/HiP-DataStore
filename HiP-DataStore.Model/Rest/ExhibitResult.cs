@@ -8,7 +8,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
     public class ExhibitResult
     {
         public int Id { get; set; }
-        
+
         public string Name { get; set; }
 
         public string Description { get; set; }
@@ -31,8 +31,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         public ContentStatus Status { get; set; }
 
         public int[] Tags { get; set; }
-
-        public int? Quiz { get; set; }
 
         public DateTimeOffset Timestamp { get; set; }
 

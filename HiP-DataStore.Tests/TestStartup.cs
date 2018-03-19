@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -13,6 +14,7 @@ using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
 using PaderbornUniversity.SILab.Hip.EventSourcing.FakeStore;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo.Test;
+using PaderbornUniversity.SILab.Hip.UserStore;
 using PaderbornUniversity.SILab.Hip.Webservice;
 using System.Collections.Generic;
 
@@ -47,6 +49,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests
                 .Configure<EndpointConfig>(Configuration.GetSection("Endpoints"))
                 .Configure<MongoDbConfig>(Configuration.GetSection("Endpoints"))
                 .Configure<EventStoreConfig>(Configuration.GetSection("EventStore"))
+                .Configure<UserStoreConfig>(Configuration.GetSection("Endpoints"))
                 .Configure<UploadFilesConfig>(Configuration.GetSection("UploadingFiles"))
                 .Configure<ExhibitPagesConfig>(Configuration.GetSection("ExhibitPages"))
                 .Configure<AuthConfig>(Configuration.GetSection("Auth"))
@@ -80,15 +83,16 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests
                 .AddSingleton<IMongoDbContext, FakeMongoDbContext>()
                 .AddSingleton<EventStoreService>()
                 .AddSingleton<CacheDatabaseManager>()
+                .AddSingleton<UserStoreService>()
                 .AddSingleton<InMemoryCache>()
                 .AddSingleton<IDomainIndex, MediaIndex>()
                 .AddSingleton<IDomainIndex, EntityIndex>()
                 .AddSingleton<IDomainIndex, ReferencesIndex>()
                 .AddSingleton<IDomainIndex, TagIndex>()
-                .AddSingleton<IDomainIndex, QuizIndex>()
                 .AddSingleton<IDomainIndex, ExhibitPageIndex>()
                 .AddSingleton<IDomainIndex, ScoreBoardIndex>()
-                .AddSingleton<IDomainIndex, RatingIndex>();
+                .AddSingleton<IDomainIndex, RatingIndex>()
+                .AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

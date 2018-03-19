@@ -107,14 +107,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                             };
                             _db.Add(ResourceTypes.Tag, newTag);
                             break;
-                        case ResourceType _ when resourceType == ResourceTypes.Quiz:
-                            var newQuiz = new Quiz(new ExhibitQuizArgs())
+                        case ResourceType _ when resourceType == ResourceTypes.QuizQuestion:
+                            var newQuestion = new QuizQuestion()
                             {
                                 Id = e.Id,
                                 UserId = e.UserId,
                                 Timestamp = e.Timestamp
                             };
-                            _db.Add(ResourceTypes.Quiz, newQuiz);
+                            _db.Add(ResourceTypes.QuizQuestion, newQuestion);
                             break;
                     }
                     break;
@@ -149,19 +149,25 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                             _db.Replace((ResourceTypes.ExhibitPage, e.Id), updatedExhibitPage);
                             break;
 
-                        case ResourceType _ when resourceType == ResourceTypes.Quiz:
-                            var originalQuiz = _db.Get<Quiz>((ResourceTypes.Quiz, e.Id));
-                            var quizArgs = originalQuiz.CreateQuizArgs();
-                            e.ApplyTo(quizArgs);
-                            var updatedQuiz = new Quiz(quizArgs)
+                        case ResourceType _ when resourceType == ResourceTypes.QuizQuestion:
+                            var originalQuestion = _db.Get<QuizQuestion>((ResourceTypes.QuizQuestion, e.Id));
+                            var questionArgs = originalQuestion.CreateExhibitQuizQuestionArgs();
+                            e.ApplyTo(questionArgs);
+                            var updatedQuestion = new QuizQuestion(questionArgs)
                             {
                                 Id = e.Id,
                                 UserId = e.UserId,
                                 Timestamp = e.Timestamp
                             };
-                            updatedQuiz.References.AddRange(originalQuiz.References);
-                            updatedQuiz.Referencers.AddRange(originalQuiz.Referencers);
-                            _db.Replace((ResourceTypes.Quiz, e.Id), updatedQuiz);
+                            _db.Replace((ResourceTypes.QuizQuestion, e.Id), updatedQuestion);
+
+                            if (e.PropertyName == nameof(QuizQuestion.ExhibitId))
+                            {
+                                var exhibitId = (int)e.Value;
+                                var exhibit = _db.Get<Exhibit>((ResourceTypes.Exhibit, exhibitId));
+                                exhibit.Questions.Add(e.Id);
+                                _db.Replace((ResourceTypes.Exhibit, exhibit.Id), exhibit);
+                            }
                             break;
 
                         case ResourceType _ when resourceType == ResourceTypes.Media:
@@ -225,8 +231,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                         case ResourceType _ when resourceType == ResourceTypes.Tag:
                             MarkDeleted((resourceType, e.Id));
                             break;
-                        case ResourceType _ when resourceType == ResourceTypes.Quiz:
+                        case ResourceType _ when resourceType == ResourceTypes.QuizQuestion:
                             MarkDeleted((resourceType, e.Id));
+                            //remove the question from the exhibit
+                            var question = _db.Get<QuizQuestion>((ResourceTypes.QuizQuestion, e.Id));
+                            var exhibit = _db.Get<Exhibit>((ResourceTypes.Exhibit, question.ExhibitId));
+                            exhibit.Questions.Remove(question.Id);
+                            _db.Replace((ResourceTypes.Exhibit, exhibit.Id), exhibit);
                             break;
                     }
                     break;
