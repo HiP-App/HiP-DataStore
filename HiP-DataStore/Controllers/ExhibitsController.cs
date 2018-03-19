@@ -583,17 +583,21 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             var exhibitVisitedList = await _userStoreService.ExhibitVisitedAction.GetAllAsync(exhibitId, DateTime.Now.AddYears(-1));
             int year = exhibitVisitedList.Total;
             int month = 0;
+            int week = 0;
             int day = 0;
             foreach(var exhibitVisited in exhibitVisitedList.Items)
             {
                 if (exhibitVisited.Timestamp >= DateTime.Now.AddMonths(-1))
                     month++;
 
+                if (exhibitVisited.Timestamp >= DateTime.Now.AddDays(-7))
+                    week++;
+
                 if (exhibitVisited.Timestamp >= DateTime.Now.AddDays(-1))
                     day++;
             }
 
-            return Ok(new ExhibitStatisticResult() { Year = year, Month = month, Day = day} );
+            return Ok(new ExhibitStatisticResult() { Year = year, Month = month, Week = week, Day = day} );
         }
 
         /// <summary>
