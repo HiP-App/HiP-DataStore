@@ -32,11 +32,20 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
         [JsonIgnore]
         public int EntityId { get; set; }
 
-        public ReviewArgs CloneArgs()
+        public ReviewArgs()
         {
-            var copy = (ReviewArgs) MemberwiseClone();
-            copy.Comments = new List<int>(Comments);
-            return copy;
+        }
+
+        public ReviewArgs(ReviewArgs args)
+        {
+            Description = args.Description;
+            Reviewers = args.Reviewers;
+            StudentsToApprove = args.StudentsToApprove;
+            ReviewableByStudents = args.ReviewableByStudents;
+            Approved = args.Approved;
+            Comments = new List<int>(args.Comments);
+            EntityType = args.EntityType;
+            EntityId = args.EntityId;
         }
     }
 }

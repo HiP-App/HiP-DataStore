@@ -70,13 +70,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             var reviewArgs = await _eventStore.EventStream.GetCurrentEntityAsync<ReviewArgs>(ResourceTypes.Review, reviewId);
 
-            var newReviewArgs = reviewArgs.CloneArgs();
+            var newReviewArgs = new ReviewArgs(reviewArgs);
 
             var reviewCommentId = _reviewCommentIndex.NextId();
 
             // Add comment id to review
-            if (newReviewArgs.Comments == null)
-                newReviewArgs.Comments = new List<int>();
             newReviewArgs.Comments.Add(reviewCommentId);
 
             if (args.Approved)

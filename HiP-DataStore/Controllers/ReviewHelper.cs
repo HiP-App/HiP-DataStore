@@ -90,16 +90,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (args.ReviewableByStudents == false)
                 args.StudentsToApprove = 0;
 
-            // keep old values if no new ones are specified
-            if (args.Description == null)
-                args.Description = oldReviewArgs.Description;
-            if (args.ReviewableByStudents == null)
-                args.ReviewableByStudents = oldReviewArgs.ReviewableByStudents;
-            if (args.StudentsToApprove == null)
-                args.StudentsToApprove = oldReviewArgs.StudentsToApprove;
-            if (args.Reviewers == null)
-                args.Reviewers = oldReviewArgs.Reviewers;
-
             return args;
         }
     }
