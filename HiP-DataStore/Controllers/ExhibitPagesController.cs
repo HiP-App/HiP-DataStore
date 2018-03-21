@@ -27,6 +27,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly EntityIndex _entityIndex;
         private readonly ReferencesIndex _referencesIndex;
         private readonly ExhibitPageIndex _exhibitPageIndex;
+        private readonly ReviewIndex _reviewIndex;
 
         public ExhibitPagesController(
             IOptions<ExhibitPagesConfig> exhibitPagesConfig,
@@ -41,6 +42,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             _entityIndex = cache.Index<EntityIndex>();
             _referencesIndex = cache.Index<ReferencesIndex>();
             _exhibitPageIndex = cache.Index<ExhibitPageIndex>();
+            _reviewIndex = cache.Index<ReviewIndex>();
         }
 
         [HttpGet("Pages/ids")]
@@ -280,6 +282,125 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return ReferenceInfoHelper.GetReferenceInfo(ResourceTypes.ExhibitPage, id, _entityIndex, _referencesIndex);
         }
 
+        /// <summary>
+        /// Returns the review to the exhibit page with the given ID
+        /// </summary>
+        /// <param name="id">ID of the exhibit page the review belongs to</param>
+        [HttpGet("Pages/Review/{id}")]
+        [ProducesResponseType(typeof(ReviewResult), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        public IActionResult GetReview(int id)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (ReviewHelper.CheckNotFoundGet(id, ResourceTypes.ExhibitPage, _entityIndex, _reviewIndex) is string errorMessage)
+                return NotFound(errorMessage);
+
+            var reviewId = _reviewIndex.GetReviewId(ResourceTypes.ExhibitPage.Name, id);
+            var review = _db.Get<Review>((ResourceTypes.Review, reviewId));
+
+            if (!review.ReviewableByStudents && !UserPermissions.IsSupervisorOrAdmin(User.Identity))
+                return Forbid();
+
+            var result = new ReviewResult(review);
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Creates a review for the exhibit page with the given ID
+        /// </summary>
+        /// <param name="id">ID of the exhibit page the review belongs to</param>
+        /// <param name="args">Arguments for the review</param>
+        [HttpPost("Pages/Review/{id}")]
+        [ProducesResponseType(typeof(int), 201)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> PostReviewAsync(int id, ReviewArgs args)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!_entityIndex.Exists(ResourceTypes.ExhibitPage, id))
+                return NotFound(ErrorMessages.ContentNotFound(ResourceTypes.ExhibitPage, id));
+
+            if (ReviewHelper.CheckBadRequestPost(id, ResourceTypes.ExhibitPage, _entityIndex, _reviewIndex) is string errorMessage)
+                return BadRequest(errorMessage);
+
+            if (!UserPermissions.IsAllowedToCreateReview(User.Identity, _entityIndex.Owner(ResourceTypes.ExhibitPage, id)))
+                return Forbid();
+
+            var reviewId = _reviewIndex.NextId(ResourceTypes.ExhibitPage);
+
+            args.EntityId = id;
+            args.EntityType = ResourceTypes.ExhibitPage.Name;
+
+            await EntityManager.CreateEntityAsync(_eventStore, args, ResourceTypes.Review, reviewId, User.Identity.GetUserIdentity());
+
+            return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Review/{reviewId}", reviewId);
+        }
+
+        /// <summary>
+        /// Changes the review that belongs to the exhibit page with the given ID
+        /// </summary>
+        /// <param name="id">ID of the exhibit page the review belongs to</param>
+        /// <param name="args">Arguments for the review</param>
+        [HttpPut("Pages/Review/{id}")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> PutReviewAsync(int id, ReviewArgs args)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (ReviewHelper.CheckNotFoundPut(id, ResourceTypes.ExhibitPage, _entityIndex, _reviewIndex) is string errorMessage)
+                return NotFound(errorMessage);
+
+            var reviewId = _reviewIndex.GetReviewId(ResourceTypes.ExhibitPage.Name, id);
+            var oldReviewArgs = await _eventStore.EventStream.GetCurrentEntityAsync<ReviewArgs>(ResourceTypes.Review, reviewId);
+
+            if (ReviewHelper.CheckForbidPut(oldReviewArgs, User.Identity, _reviewIndex, reviewId))
+                return Forbid();
+
+            args = ReviewHelper.UpdateReviewArgs(args, oldReviewArgs, User.Identity);
+
+            await EntityManager.UpdateEntityAsync(_eventStore, oldReviewArgs, args, ResourceTypes.Review, reviewId, User.Identity.GetUserIdentity());
+            return StatusCode(204);
+        }
+
+        /// <summary>
+        /// Deletes the review of the exhibit page with the given ID
+        /// </summary>
+        /// <param name="id">ID of the exhibit page the review belongs to</param>
+        /// <returns></returns>
+        [HttpDelete("Pages/Review/{id}")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> DeleteReviewAsync(int id)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            // only supervisors or admins are allowed to delete reviews
+            if (!UserPermissions.IsSupervisorOrAdmin(User.Identity))
+                return Forbid();
+
+            if (ReviewHelper.CheckNotFoundGet(id, ResourceTypes.ExhibitPage, _entityIndex, _reviewIndex) is string errorMessage)
+                return NotFound(errorMessage);
+
+            var reviewId = _reviewIndex.GetReviewId(ResourceTypes.ExhibitPage.Name, id);
+
+            await EntityManager.DeleteEntityAsync(_eventStore, ResourceTypes.Review, reviewId, User.Identity.GetUserIdentity());
+            return NoContent();
+        }
 
         private IActionResult QueryExhibitPages(IQueryable<ExhibitPage> allPages, ExhibitPageQueryArgs args)
         {

@@ -1,4 +1,5 @@
-﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
+﻿using PaderbornUniversity.SILab.Hip.DataStore.Model;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Events;
@@ -95,10 +96,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
             switch (ev)
             {
                 case PropertyChangedEvent e:
-                    ClearReferences(source, e.PropertyName);
-                    var references = e.GetReferences();
-                    AddReferences(source, references, e.PropertyName);
-
+                    if (e.GetEntityType() != ResourceTypes.Review && e.GetEntityType() != ResourceTypes.ReviewComment)
+                    {
+                        ClearReferences(source, e.PropertyName);
+                        var references = e.GetReferences();
+                        AddReferences(source, references, e.PropertyName);
+                    }
                     break;
 
                 case DeletedEvent _:
