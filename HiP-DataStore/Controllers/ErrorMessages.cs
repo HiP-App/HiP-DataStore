@@ -39,5 +39,20 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         public static string ExhibitHasNoQuestions(int exhibitId) => 
             $"The exhibit {exhibitId} doesn't have any questions";
+
+        public static string CannotAddReviewToContentWithWrongStatus() =>
+            $"Reviews can only be added to content, that has status '{ContentStatus.In_Review}'";
+
+        public static string ReviewNotFound(ResourceType type, int id) =>
+            $"No review exists for the {type.Name.ToLower()} with id '{id}'";
+
+        public static string ContentAlreadyHasReview(ResourceType type, int id) =>
+            $"A review for the {type.Name.ToLower()} with id '{id}' already exists";
+
+        public static string NoReviewWithIdExists(int id) =>
+            $"A review with id '{id}' does not exist";
+
+        public static string ReviewCommentNotFound(int id) =>
+            $"A review comment with id '{id}' does not exist";
     }
 }

@@ -26,6 +26,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly EntityIndex _entityIndex;
         private readonly ReferencesIndex _referencesIndex;
         private readonly RatingIndex _ratingIndex;
+        private readonly ReviewIndex _reviewIndex;
 
         public RoutesController(EventStoreService eventStore, IMongoDbContext db, IEnumerable<IDomainIndex> indices)
         {
@@ -35,6 +36,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             _entityIndex = indices.OfType<EntityIndex>().First();
             _referencesIndex = indices.OfType<ReferencesIndex>().First();
             _ratingIndex = indices.OfType<RatingIndex>().First();
+            _reviewIndex = indices.OfType<ReviewIndex>().First();
         }
 
         [HttpGet("ids")]
@@ -304,6 +306,125 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Rating/{ev.Id}", ev.Id);
         }
 
+        /// <summary>
+        /// Returns the review to the route with the given ID
+        /// </summary>
+        /// <param name="id">ID of the route the review belongs to</param>
+        [HttpGet("Review/{id}")]
+        [ProducesResponseType(typeof(ReviewResult), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        public IActionResult GetReview(int id)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (ReviewHelper.CheckNotFoundGet(id, ResourceTypes.Route, _entityIndex, _reviewIndex) is string errorMessage)
+                return NotFound(errorMessage);
+
+            var reviewId = _reviewIndex.GetReviewId(ResourceTypes.Route.Name, id);
+            var review = _db.Get<Review>((ResourceTypes.Review, reviewId));
+
+            if (!review.ReviewableByStudents && !UserPermissions.IsSupervisorOrAdmin(User.Identity))
+                return Forbid();
+
+            var result = new ReviewResult(review);
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Creates a review for the route with the given ID
+        /// </summary>
+        /// <param name="id">ID of the route the review belongs to</param>
+        /// <param name="args">Arguments for the review</param>
+        [HttpPost("Review/{id}")]
+        [ProducesResponseType(typeof(int), 201)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> PostReviewAsync(int id, ReviewArgs args)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!_entityIndex.Exists(ResourceTypes.Route, id))
+                return NotFound(ErrorMessages.ContentNotFound(ResourceTypes.Route, id));
+
+            if (ReviewHelper.CheckBadRequestPost(id, ResourceTypes.Route, _entityIndex, _reviewIndex) is string errorMessage)
+                return BadRequest(errorMessage);
+
+            if (!UserPermissions.IsAllowedToCreateReview(User.Identity, _entityIndex.Owner(ResourceTypes.Route, id)))
+                return Forbid();
+
+            var reviewId = _reviewIndex.NextId(ResourceTypes.Route);
+
+            args.EntityId = id;
+            args.EntityType = ResourceTypes.Route.Name;
+
+            await EntityManager.CreateEntityAsync(_eventStore, args, ResourceTypes.Review, reviewId, User.Identity.GetUserIdentity());
+
+            return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Review/{reviewId}", reviewId);
+        }
+
+        /// <summary>
+        /// Changes the review that belongs to the route with the given ID
+        /// </summary>
+        /// <param name="id">ID of the route the review belongs to</param>
+        /// <param name="args">Arguments for the review</param>
+        [HttpPut("Review/{id}")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> PutReviewAsync(int id, ReviewArgs args)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (ReviewHelper.CheckNotFoundPut(id, ResourceTypes.Route, _entityIndex, _reviewIndex) is string errorMessage)
+                return NotFound(errorMessage);
+
+            var reviewId = _reviewIndex.GetReviewId(ResourceTypes.Route.Name, id);
+            var oldReviewArgs = await _eventStore.EventStream.GetCurrentEntityAsync<ReviewArgs>(ResourceTypes.Review, reviewId);
+
+            if (ReviewHelper.CheckForbidPut(oldReviewArgs, User.Identity, _reviewIndex, reviewId))
+                return Forbid();
+
+            args = ReviewHelper.UpdateReviewArgs(args, oldReviewArgs, User.Identity);
+
+            await EntityManager.UpdateEntityAsync(_eventStore, oldReviewArgs, args, ResourceTypes.Review, reviewId, User.Identity.GetUserIdentity());
+            return StatusCode(204);
+        }
+
+        /// <summary>
+        /// Deletes the review of the route with the given ID
+        /// </summary>
+        /// <param name="id">ID of the route the review belongs to</param>
+        /// <returns></returns>
+        [HttpDelete("Review/{id}")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> DeleteReviewAsync(int id)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            // only supervisors or admins are allowed to delete reviews
+            if (!UserPermissions.IsSupervisorOrAdmin(User.Identity))
+                return Forbid();
+
+            if (ReviewHelper.CheckNotFoundGet(id, ResourceTypes.Route, _entityIndex, _reviewIndex) is string errorMessage)
+                return NotFound(errorMessage);
+
+            var reviewId = _reviewIndex.GetReviewId(ResourceTypes.Route.Name, id);
+
+            await EntityManager.DeleteEntityAsync(_eventStore, ResourceTypes.Review, reviewId, User.Identity.GetUserIdentity());
+            return NoContent();
+        }
 
         private void ValidateRouteArgs(RouteArgs args)
         {

@@ -1,5 +1,6 @@
 ﻿using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Principal;
 
@@ -86,6 +87,22 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Utility
         {
             // The entity owner as well as supervisors and administrators are allowed
             return (ownerId == identity.GetUserIdentity()) || CheckRoles(identity);
+        }
+
+        public static bool IsAllowedToCommentReview(IIdentity identity, List<string> reviewers, string owner)
+        {
+            return (CheckRoles(identity) || reviewers.Contains(identity.GetUserIdentity()) 
+                || owner.Equals(identity.GetUserIdentity()));
+        }
+
+        public static bool IsSupervisorOrAdmin(IIdentity identity)
+        {
+            return (CheckRoles(identity));
+        }
+
+        public static bool IsAllowedToCreateReview(IIdentity identity, string owner)
+        {
+            return (CheckRoles(identity) || identity.GetUserIdentity().Equals(owner));
         }
 
         //Check if the user has the nessesary roles
