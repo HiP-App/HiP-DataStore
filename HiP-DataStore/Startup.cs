@@ -49,7 +49,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
                 .Configure<AuthConfig>(Configuration.GetSection("Auth"))
                 .Configure<LoggingConfig>(Configuration.GetSection("HiPLoggerConfig"))
                 .Configure<CorsConfig>(Configuration);
-            
+
             var serviceProvider = services.BuildServiceProvider(); // allows us to actually get the configured services           
             var authConfig = serviceProvider.GetService<IOptions<AuthConfig>>();
 
@@ -97,11 +97,18 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory,
-            IOptions<CorsConfig> corsConfig,IOptions<LoggingConfig> loggingConfig)
+            IOptions<CorsConfig> corsConfig, IOptions<LoggingConfig> loggingConfig)
+        {
+            loggerFactory.AddConsole(Configuration.GetSection("Logging"))
+                .AddDebug()
+                .AddHipLogger(loggingConfig.Value);
+
+            var variables = Configuration.GetSection("EventStore").AsEnumerable();
+            var logger = loggerFactory.CreateLogger("Test");
+            foreach (var v in variables)
             {
-            loggerFactory.AddConsole (Configuration.GetSection ("Logging"))
-                .AddDebug ()
-                .AddHipLogger (loggingConfig.Value);
+                logger.LogInformation(v.ToString());
+            }
 
             // CacheDatabaseManager should start up immediately (not only when injected into a controller or
             // something), so we manually request an instance here
