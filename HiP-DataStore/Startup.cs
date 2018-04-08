@@ -30,6 +30,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
                 .AddEnvironmentVariables();
             Configuration = builder.Build();
 
+            // Demo Docker Cloud Hook Check (again)
             // Initialize ResourceTypes
             ResourceTypes.Initialize();
         }
