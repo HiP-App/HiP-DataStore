@@ -32,7 +32,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(ReviewCommentResult), 200)]
         [ProducesResponseType(400)]
-        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public IActionResult Get(int id)
         {
@@ -54,10 +53,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         /// </summary>
         /// <param name="reviewId">The id of the review</param>
         /// <param name="args"></param>
-        [HttpPost]
-        [ProducesResponseType(204)]
+        [HttpPost("id")]
+        [ProducesResponseType(typeof(int), 201)]
         [ProducesResponseType(400)]
-        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public async Task<IActionResult> PostAsync(int reviewId, ReviewCommentArgs args)
         {
@@ -65,7 +63,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return BadRequest(ModelState);
 
             if (!_reviewIndex.Exists(reviewId))
-                return BadRequest(ErrorMessages.NoReviewWithIdExists(reviewId));
+                return NotFound(ErrorMessages.NoReviewWithIdExists(reviewId));
 
             var reviewArgs = await _eventStore.EventStream.GetCurrentEntityAsync<ReviewArgs>(ResourceTypes.Review, reviewId);
 
@@ -90,10 +88,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         /// </summary>
         /// <param name="id">The id of the review comment</param>
         /// /// <param name="text"></param>
-        [HttpPut]
+        [HttpPut("id")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
-        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public async Task<IActionResult> PutAsync(int id, string text)
         {
