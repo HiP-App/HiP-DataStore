@@ -16,6 +16,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using ContentStatus = PaderbornUniversity.SILab.Hip.DataStore.Model.ContentStatus;
+using Newtonsoft.Json;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
@@ -290,7 +291,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         }
 
         /// <summary>
-        /// Geting rating of the exhibit for the requested user
+        /// Gets rating of the exhibit for the requested user
         /// </summary>
         /// <param name="id"> Id of the exhibit </param>
         /// <returns></returns>
