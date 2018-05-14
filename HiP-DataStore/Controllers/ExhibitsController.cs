@@ -16,6 +16,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using ContentStatus = PaderbornUniversity.SILab.Hip.DataStore.Model.ContentStatus;
+using Newtonsoft.Json;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
