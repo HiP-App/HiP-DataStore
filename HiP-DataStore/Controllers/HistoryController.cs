@@ -6,6 +6,7 @@ using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
+using PaderbornUniversity.SILab.Hip.UserStore;
 using System.Threading.Tasks;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
@@ -19,10 +20,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly EventStoreService _eventStore;
         private readonly EntityIndex _entityIndex;
 
-        public HistoryController(EventStoreService eventStore, InMemoryCache cache)
+        private readonly UserStoreService _userStoreService;
+
+        public HistoryController(EventStoreService eventStore, InMemoryCache cache, UserStoreService userStoreService)
         {
             _eventStore = eventStore;
             _entityIndex = cache.Index<EntityIndex>();
+            _userStoreService = userStoreService;
         }
 
         // APIs to get a summary of creation/deletion/updates
@@ -98,7 +102,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (!UserPermissions.IsAllowedToGetHistory(User.Identity, _entityIndex.Owner(type, id)))
                 return Forbid();
 
-            var summary = await HistoryUtil.GetSummaryAsync(_eventStore.EventStream, (type, id));
+            var summary = await HistoryUtil.GetSummaryAsync(_eventStore.EventStream, (type, id), _userStoreService);
             return Ok(summary);
         }
 

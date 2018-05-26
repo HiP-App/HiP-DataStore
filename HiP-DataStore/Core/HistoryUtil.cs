@@ -2,6 +2,7 @@
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Events;
+using PaderbornUniversity.SILab.Hip.UserStore;
 using System;
 using System.Threading.Tasks;
 
@@ -27,7 +28,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
         /// The event stream is assumed to be consistent. If the stream is inconsistent (e.g. has a create event
         /// immediately followed by another create event), the behavior and resulting summary is undefined.
         /// </remarks>
-        public static async Task<HistorySummary> GetSummaryAsync(IEventStream eventStream, EntityId entityId)
+        public static async Task<HistorySummary> GetSummaryAsync(IEventStream eventStream, EntityId entityId, UserStoreService _userStoreService)
         {
             var enumerator = eventStream.GetEnumerator();
             var summary = new HistorySummary();
@@ -38,7 +39,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
                     baseEvent.GetEntityType() == entityId.Type && baseEvent.Id == entityId.Id)
                 {
                     var timestamp = baseEvent.Timestamp;
-                    var user = baseEvent.UserId;
+                    var userDetails = await _userStoreService.Users.GetByIdAsync(baseEvent.UserId);             //retrieve the user details (according to his id) from UserResult by querying UserStore
+                    var user = userDetails?.FirstName + " " + userDetails?.LastName + " with ID: " + baseEvent.UserId;
 
                     switch (baseEvent)
                     {
