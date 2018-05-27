@@ -34,7 +34,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
             var enumerator = eventStream.GetEnumerator();
             var summary = new HistorySummary();
             var allUsers=await userStoreService.Users.GetAllAsync(new UserQueryArgs());             //get the details of all the users, so we contact the UserStore once instead of contacting it everytime for every change
-            string user = string.Empty;
+            
             UserResult userDetails;
             Dictionary<string, string> usersDictionary = new Dictionary<string, string>();             //the key is the user id and value is the user name and his id
 
@@ -44,7 +44,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
                     baseEvent.GetEntityType() == entityId.Type && baseEvent.Id == entityId.Id)
                 {
                     var timestamp = baseEvent.Timestamp;
-                    user = string.Empty;
+                    string user = string.Empty;
                     //check the dictionary first before iterating over all the UserResult objects in "allUsers"
                     if (usersDictionary.ContainsKey(baseEvent.UserId))
                     {
