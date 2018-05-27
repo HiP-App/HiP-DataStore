@@ -44,11 +44,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
                     baseEvent.GetEntityType() == entityId.Type && baseEvent.Id == entityId.Id)
                 {
                     var timestamp = baseEvent.Timestamp;
-                    string user = string.Empty;
+                    string user;
                     //check the dictionary first before iterating over all the UserResult objects in "allUsers"
                     if (usersDictionary.ContainsKey(baseEvent.UserId))
                     {
-                        usersDictionary.TryGetValue(baseEvent.UserId, out user);
+                        if (usersDictionary.TryGetValue(baseEvent.UserId, out user) == false)
+                            user = baseEvent.UserId;
                     }
                     else
                     {
