@@ -4,6 +4,7 @@ using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Events;
 using PaderbornUniversity.SILab.Hip.UserStore;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core
@@ -32,6 +33,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
         {
             var enumerator = eventStream.GetEnumerator();
             var summary = new HistorySummary();
+            var allUsers=await userStoreService.Users.GetAllAsync(new UserQueryArgs());             //get the details of all the users, so we contact the UserStore once instead of contacting it everytime for every change
+            string user = string.Empty;
+            UserResult userDetails;
+            Dictionary<string, string> usersDictionary = new Dictionary<string, string>();             //the key is the user id and value is the user name and his id
 
             while (await enumerator.MoveNextAsync())
             {
@@ -39,9 +44,27 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
                     baseEvent.GetEntityType() == entityId.Type && baseEvent.Id == entityId.Id)
                 {
                     var timestamp = baseEvent.Timestamp;
-                    var userDetails = await userStoreService.Users.GetByIdAsync(baseEvent.UserId);             //retrieve the user details (according to his id) from UserResult by querying UserStore
-                    var user = userDetails?.FirstName + " " + userDetails?.LastName + " with ID: " + baseEvent.UserId;
-
+                    user = string.Empty;
+                    //check the dictionary first before iterating over all the UserResult objects in "allUsers"
+                    if (usersDictionary.ContainsKey(baseEvent.UserId))
+                    {
+                        usersDictionary.TryGetValue(baseEvent.UserId, out user);
+                    }
+                    else
+                    {
+                        userDetails = null;
+                        foreach (UserResult res in allUsers.Items)
+                        {
+                            if (res.Id == baseEvent.UserId)
+                            {
+                                userDetails = res;
+                                break;
+                            }
+                        }
+                        user = $"{userDetails?.FirstName} {userDetails?.LastName} with ID: {baseEvent.UserId}";
+                        usersDictionary.Add(baseEvent.UserId, user);
+                    }
+                    
                     switch (baseEvent)
                     {
                         case CreatedEvent _:
