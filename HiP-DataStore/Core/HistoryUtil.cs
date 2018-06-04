@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
+﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Events;
@@ -9,9 +8,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 
 using System.Linq;
-using System.Net.Http.Headers;
-using System.Net.Http;
-using Newtonsoft.Json.Linq;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core
@@ -62,17 +58,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
                 {
                     var timestamp = baseEvent.Timestamp;
                     string user;
-                    string userID = baseEvent.UserId;
+                    string userId = baseEvent.UserId;
                     //check the dictionary first before iterating over all the UserResult objects in "allUsers"
-                    if (usersDictionary.ContainsKey(userID))
+                    if (usersDictionary.ContainsKey(userId))
                     {
-                        usersDictionary.TryGetValue(userID, out user);
+                        usersDictionary.TryGetValue(userId, out user);
                     }
                     else
                     {
-                        userDetails = allUsers.Items.FirstOrDefault(userD => userD.Id==userID);
+                        userDetails = allUsers.Items.FirstOrDefault(userD => userD.Id==userId);
                         user = $"{userDetails?.FirstName} {userDetails?.LastName}";                        
-                        usersDictionary.Add(userID, user);
+                        usersDictionary.Add(userId, user);
                     }
                     
                     switch (baseEvent)
@@ -86,21 +82,21 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
                             }
 
                             summary.Owner = user;
-                            summary.OwnerID = userID;
+                            summary.OwnerId = userId;
                             summary.Created = timestamp;
                             summary.LastModified = timestamp;
-                            summary.Changes.Add(new HistorySummary.Change(timestamp, "Created", userID, user));
+                            summary.Changes.Add(new HistorySummary.Change(timestamp, "Created", userId, user));
                             break;
 
                         case PropertyChangedEvent ev:
                             summary.LastModified = timestamp;
-                            summary.Changes.Add(new HistorySummary.Change(timestamp, "Updated", userID,user, ev.PropertyName, ev.Value));
+                            summary.Changes.Add(new HistorySummary.Change(timestamp, "Updated", userId,user, ev.PropertyName, ev.Value));
                             break;
 
                         case DeletedEvent _:
                             summary.LastModified = timestamp;
                             summary.Deleted = timestamp;
-                            summary.Changes.Add(new HistorySummary.Change(timestamp, "Deleted", userID, user));
+                            summary.Changes.Add(new HistorySummary.Change(timestamp, "Deleted", userId, user));
                             break;
                     }
                 }

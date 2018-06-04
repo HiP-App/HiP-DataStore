@@ -34,7 +34,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
         /// <summary>
         /// The ID of the user who created the entity.
         /// </summary>
-        public string OwnerID { get; set; }
+        public string OwnerId { get; set; }
 
         /// <summary>
         /// A list of individual modifications (including creation and deletion).

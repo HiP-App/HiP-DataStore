@@ -23,14 +23,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Utility
             return (identity as ClaimsIdentity)?.FindAll(c => c.Type == "https://hip.cs.upb.de/roles").ToList() ?? new List<Claim>();
         }
 
-        public static async Task<string> GetAccessTokenAsync(string domain,string audience,string clientID,string clientSecret)
+        public static async Task<string> GetAccessTokenAsync(string domain,string audience,string clientId,string clientSecret)
         {
             var client = new AuthenticationApiClient(domain);
 
             var response = await client.GetTokenAsync(new ClientCredentialsTokenRequest
             {
                 Audience = audience,
-                ClientId = clientID,
+                ClientId = clientId,
                 ClientSecret = clientSecret
             });
 
