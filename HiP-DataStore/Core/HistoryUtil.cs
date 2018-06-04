@@ -1,4 +1,5 @@
-﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
+﻿using Microsoft.AspNetCore.Http;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Events;
@@ -6,6 +7,12 @@ using PaderbornUniversity.SILab.Hip.UserStore;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+
+using System.Linq;
+using System.Net.Http.Headers;
+using System.Net.Http;
+using Newtonsoft.Json.Linq;
+using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core
 {
@@ -29,14 +36,24 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
         /// The event stream is assumed to be consistent. If the stream is inconsistent (e.g. has a create event
         /// immediately followed by another create event), the behavior and resulting summary is undefined.
         /// </remarks>
-        public static async Task<HistorySummary> GetSummaryAsync(IEventStream eventStream, EntityId entityId, UserStoreService userStoreService)
+        public static async Task<HistorySummary> GetSummaryAsync(IEventStream eventStream, EntityId entityId, string userStoreBaseUrl, DataStoreAuthConfig dataStoreAuthConfig)
         {
             var enumerator = eventStream.GetEnumerator();
             var summary = new HistorySummary();
-            var allUsers=await userStoreService.Users.GetAllAsync(new UserQueryArgs());             //get the details of all the users, so we contact the UserStore once instead of contacting it everytime for every change
             
+            var userService = new UsersClient(userStoreBaseUrl);
+
+            //we should get machine to machine access token and assign it to userService.Authorization
+            string accessToken = await Auth.GetAccessTokenAsync(dataStoreAuthConfig.Domain, dataStoreAuthConfig.Audience, dataStoreAuthConfig.ClientId, dataStoreAuthConfig.ClientSecret);
+
+            userService.Authorization = "Bearer "+ accessToken;
+            //get the details of all the users, so we contact the UserStore once instead of contacting it everytime for every change
+            var allUsers = await userService.GetAllAsync(new UserQueryArgs());                           
+
+
             UserResult userDetails;
-            Dictionary<string, string> usersDictionary = new Dictionary<string, string>();             //the key is the user id and value is the user name and his id
+            //the Key is the user id, and Value is the user name
+            Dictionary<string, string> usersDictionary = new Dictionary<string, string>();             
 
             while (await enumerator.MoveNextAsync())
             {
@@ -45,25 +62,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
                 {
                     var timestamp = baseEvent.Timestamp;
                     string user;
+                    string userID = baseEvent.UserId;
                     //check the dictionary first before iterating over all the UserResult objects in "allUsers"
-                    if (usersDictionary.ContainsKey(baseEvent.UserId))
+                    if (usersDictionary.ContainsKey(userID))
                     {
-                        if (usersDictionary.TryGetValue(baseEvent.UserId, out user) == false)
-                            user = baseEvent.UserId;
+                        usersDictionary.TryGetValue(userID, out user);
                     }
                     else
                     {
-                        userDetails = null;
-                        foreach (UserResult res in allUsers.Items)
-                        {
-                            if (res.Id == baseEvent.UserId)
-                            {
-                                userDetails = res;
-                                break;
-                            }
-                        }
-                        user = $"{userDetails?.FirstName} {userDetails?.LastName} with ID: {baseEvent.UserId}";
-                        usersDictionary.Add(baseEvent.UserId, user);
+                        userDetails = allUsers.Items.FirstOrDefault(userD => userD.Id==userID);
+                        user = $"{userDetails?.FirstName} {userDetails?.LastName}";                        
+                        usersDictionary.Add(userID, user);
                     }
                     
                     switch (baseEvent)
@@ -77,20 +86,21 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
                             }
 
                             summary.Owner = user;
+                            summary.OwnerID = userID;
                             summary.Created = timestamp;
                             summary.LastModified = timestamp;
-                            summary.Changes.Add(new HistorySummary.Change(timestamp, "Created", user));
+                            summary.Changes.Add(new HistorySummary.Change(timestamp, "Created", userID, user));
                             break;
 
                         case PropertyChangedEvent ev:
                             summary.LastModified = timestamp;
-                            summary.Changes.Add(new HistorySummary.Change(timestamp, "Updated", user, ev.PropertyName, ev.Value));
+                            summary.Changes.Add(new HistorySummary.Change(timestamp, "Updated", userID,user, ev.PropertyName, ev.Value));
                             break;
 
                         case DeletedEvent _:
                             summary.LastModified = timestamp;
                             summary.Deleted = timestamp;
-                            summary.Changes.Add(new HistorySummary.Change(timestamp, "Deleted", user));
+                            summary.Changes.Add(new HistorySummary.Change(timestamp, "Deleted", userID, user));
                             break;
                     }
                 }
