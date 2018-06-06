@@ -51,11 +51,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
             }
             catch (SwaggerException e)
             {
-                logger.LogWarning(e,"The request, for getting an access token or the users' details, has been failed. The summary of changes will not show the users' names");
+                logger.LogWarning(e,"The request, for getting the users' details from UserStore, has been failed. The summary of changes will not show the users' names");
             } 
             catch (Exception e)
             {
-                logger.LogWarning(e, "The request, for getting an access token or the users' details, has been failed. The summary of changes will not show the users' names");
+                logger.LogWarning(e, "The request, for getting an access token, has been failed. The summary of changes will not show the users' names");
             }
 
             UserResult userDetails;
