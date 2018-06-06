@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 
 using System.Linq;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
+using Microsoft.Extensions.Logging;
+using PaderbornUniversity.SILab.Hip.DataStore.Controllers;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Core
 {
@@ -32,20 +34,29 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
         /// The event stream is assumed to be consistent. If the stream is inconsistent (e.g. has a create event
         /// immediately followed by another create event), the behavior and resulting summary is undefined.
         /// </remarks>
-        public static async Task<HistorySummary> GetSummaryAsync(IEventStream eventStream, EntityId entityId, string userStoreBaseUrl, DataStoreAuthConfig dataStoreAuthConfig)
+        public static async Task<HistorySummary> GetSummaryAsync(IEventStream eventStream, EntityId entityId, string userStoreBaseUrl, DataStoreAuthConfig dataStoreAuthConfig, ILogger<HistoryController> logger)
         {
             var enumerator = eventStream.GetEnumerator();
             var summary = new HistorySummary();
-            
+            AllItemsResultOfUserResult allUsers = null;
             var userService = new UsersClient(userStoreBaseUrl);
+            try
+            {
+                //we should get machine to machine access token and assign it to userService.Authorization
+                string accessToken = await Auth.GetAccessTokenAsync(dataStoreAuthConfig.Domain, dataStoreAuthConfig.Audience, dataStoreAuthConfig.ClientId, dataStoreAuthConfig.ClientSecret);
 
-            //we should get machine to machine access token and assign it to userService.Authorization
-            string accessToken = await Auth.GetAccessTokenAsync(dataStoreAuthConfig.Domain, dataStoreAuthConfig.Audience, dataStoreAuthConfig.ClientId, dataStoreAuthConfig.ClientSecret);
-
-            userService.Authorization = "Bearer "+ accessToken;
-            //get the details of all the users, so we contact the UserStore once instead of contacting it everytime for every change
-            var allUsers = await userService.GetAllAsync(new UserQueryArgs());                           
-
+                userService.Authorization = "Bearer "+ accessToken;
+                //get the details of all the users, so we contact the UserStore once instead of contacting it everytime for every change                
+                allUsers = await userService.GetAllAsync(new UserQueryArgs());
+            }
+            catch (SwaggerException e)
+            {
+                logger.LogWarning(e,"The request, for getting an access token or the users' details, has been failed. The summary of changes will not show the users' names");
+            } 
+            catch (Exception e)
+            {
+                logger.LogWarning(e, "The request, for getting an access token or the users' details, has been failed. The summary of changes will not show the users' names");
+            }
 
             UserResult userDetails;
             //the Key is the user id, and Value is the user name
@@ -66,7 +77,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
                     }
                     else
                     {
-                        userDetails = allUsers.Items.FirstOrDefault(userD => userD.Id==userId);
+                        userDetails = allUsers?.Items?.FirstOrDefault(userD => userD.Id==userId);
                         user = $"{userDetails?.FirstName} {userDetails?.LastName}";                        
                         usersDictionary.Add(userId, user);
                     }
