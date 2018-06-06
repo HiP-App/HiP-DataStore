@@ -27,9 +27,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
         public DateTimeOffset? Deleted { get; set; }
 
         /// <summary>
-        /// The ID of the user who created the entity.
+        /// The name of the user who created the entity.
         /// </summary>
         public string Owner { get; set; }
+
+        /// <summary>
+        /// The ID of the user who created the entity.
+        /// </summary>
+        public string OwnerId { get; set; }
 
         /// <summary>
         /// A list of individual modifications (including creation and deletion).
@@ -41,6 +46,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
             public DateTimeOffset Timestamp { get; set; }
             public string Description { get; set; }
             public string UserId { get; set; }
+            public string UserName { get; set; }
 
             [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
             public string Property { get; set; }
@@ -48,11 +54,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core
             [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
             public object Value { get; set; }
 
-            public Change(DateTimeOffset timestamp, string description, string userId, string property = null, object value = null)
+            public Change(DateTimeOffset timestamp, string description, string userId,string userName, string property = null, object value = null)
             {
                 Timestamp = timestamp;
                 Description = description;
                 UserId = userId;
+                UserName = userName;
                 Property = property;
                 Value = value;
             }
