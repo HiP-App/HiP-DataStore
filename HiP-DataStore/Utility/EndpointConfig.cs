@@ -24,5 +24,7 @@
         /// to the original image files are then returned.
         /// </remarks>
         public string ThumbnailUrlPattern { get; set; }
+
+        public string UserStoreHost { get; set; }
     }
 }
