@@ -18,9 +18,5 @@ if($sdkVersion){
 npm install
 	
 npm --% publish --registry=%NPMFeed%
-	
-$env:version = $json.version
-$env:name = $json.name
-npm --% dist-tag add %name%@%version% --registry=%NPMFeed%
 
 $LASTEXITCODE = 0
