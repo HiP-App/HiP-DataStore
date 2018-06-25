@@ -1,5 +1,6 @@
 ﻿using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.EventArgs;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Events;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
@@ -60,7 +61,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                     switch (resourceType)
                     {
                         case ResourceType _ when resourceType == ResourceTypes.Exhibit:
-                            var newExhibit = new Exhibit(new ExhibitArgs())
+                            var newExhibit = new Exhibit(new ExhibitTransferArgs())
                             {
                                 Id = e.Id,
                                 UserId = e.UserId,
