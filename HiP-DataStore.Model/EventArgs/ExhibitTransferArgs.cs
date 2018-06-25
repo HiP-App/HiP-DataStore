@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.EventArgs
 {
@@ -22,9 +20,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.EventArgs
 
         public List<int> Pages { get; set; }
 
-        /// <summary>
-        /// The radius (in km) in which the exhibit can be accessed.
-        /// </summary>
         public float AccessRadius { get; set; }
 
         public List<int> Questions { get; set; }

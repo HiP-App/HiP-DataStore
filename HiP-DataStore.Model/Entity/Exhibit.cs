@@ -1,5 +1,4 @@
 ﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.EventArgs;
-using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using System.Collections.Generic;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
