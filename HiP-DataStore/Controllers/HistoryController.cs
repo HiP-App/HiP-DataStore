@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using PaderbornUniversity.SILab.Hip.DataStore.Core;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
@@ -19,11 +21,19 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly EventStoreService _eventStore;
         private readonly EntityIndex _entityIndex;
 
-        public HistoryController(EventStoreService eventStore, InMemoryCache cache)
+        private readonly EndpointConfig _endpointConfig;
+        private readonly DataStoreAuthConfig _dataStoreAuthConfig;
+        private readonly ILogger<HistoryController> _logger;
+
+        public HistoryController(EventStoreService eventStore, InMemoryCache cache, IOptions<EndpointConfig> endpointConfig, IOptions<DataStoreAuthConfig> dataStoreAuthConfig, ILogger<HistoryController> logger)
         {
             _eventStore = eventStore;
             _entityIndex = cache.Index<EntityIndex>();
+            _endpointConfig = endpointConfig.Value;
+            _dataStoreAuthConfig = dataStoreAuthConfig.Value;
+            _logger = logger;
         }
+
 
         // APIs to get a summary of creation/deletion/updates
 
@@ -97,8 +107,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (!UserPermissions.IsAllowedToGetHistory(User.Identity, _entityIndex.Owner(type, id)))
                 return Forbid();
-
-            var summary = await HistoryUtil.GetSummaryAsync(_eventStore.EventStream, (type, id));
+            var summary = await HistoryUtil.GetSummaryAsync(_eventStore.EventStream, (type, id),_endpointConfig.UserStoreHost,_dataStoreAuthConfig, _logger);
             return Ok(summary);
         }
 
