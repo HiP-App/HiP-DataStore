@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -46,12 +47,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
                 .Configure<EventStoreConfig>(Configuration.GetSection("EventStore"))
                 .Configure<UploadFilesConfig>(Configuration.GetSection("UploadingFiles"))
                 .Configure<ExhibitPagesConfig>(Configuration.GetSection("ExhibitPages"))
-                .Configure<AuthConfig>(Configuration.GetSection("Auth"))
+                .Configure<DataStoreAuthConfig>(Configuration.GetSection("Auth"))
                 .Configure<LoggingConfig>(Configuration.GetSection("HiPLoggerConfig"))
                 .Configure<CorsConfig>(Configuration);
 
             var serviceProvider = services.BuildServiceProvider(); // allows us to actually get the configured services           
-            var authConfig = serviceProvider.GetService<IOptions<AuthConfig>>();
+            var authConfig = serviceProvider.GetService<IOptions<DataStoreAuthConfig>>();
 
             // Configure authentication
             services
@@ -93,6 +94,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
                 .AddSingleton<IDomainIndex, RatingIndex>()
                 .AddSingleton<IDomainIndex, ReviewIndex>()
                 .AddSingleton<IDomainIndex, ReviewCommentIndex>();
+
+            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
