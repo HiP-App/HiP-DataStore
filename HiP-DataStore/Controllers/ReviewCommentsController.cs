@@ -8,6 +8,9 @@ using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
+using PaderbornUniversity.SILab.Hip.UserStore;
+using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
@@ -20,13 +23,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly ReviewIndex _reviewIndex;
         private readonly ReviewCommentIndex _reviewCommentIndex;
         private readonly IMongoDbContext _db;
+        private readonly UserStoreService _userStoreService;
 
-        public ReviewCommentsController(EventStoreService eventStore, InMemoryCache cache, IMongoDbContext db)
+        public ReviewCommentsController(EventStoreService eventStore, InMemoryCache cache, IMongoDbContext db, UserStoreService userStoreService)
         {
             _eventStore = eventStore;
             _reviewIndex = cache.Index<ReviewIndex>();
             _reviewCommentIndex = cache.Index<ReviewCommentIndex>();
             _db = db;
+            _userStoreService = userStoreService;
         }
 
         [HttpGet("{id}")]
@@ -77,6 +82,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (args.Approved)
                 newReviewArgs.Approved = ReviewHelper.IsReviewApproved(newReviewArgs.Comments, args.Approved, newReviewArgs.StudentsToApprove, User.Identity, _reviewCommentIndex);
 
+            await SendReviewFinishedNotification(reviewId);
+
             await EntityManager.CreateEntityAsync(_eventStore, args, ResourceTypes.ReviewComment, reviewCommentId, User.Identity.GetUserIdentity());
             await EntityManager.UpdateEntityAsync(_eventStore, reviewArgs, newReviewArgs, ResourceTypes.Review, reviewId, User.Identity.GetUserIdentity());
 
@@ -111,6 +118,35 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             await EntityManager.UpdateEntityAsync(_eventStore, reviewCommentArgs, args, ResourceTypes.ReviewComment, id, User.Identity.GetUserIdentity());
 
             return StatusCode(204);
+        }
+
+        private async Task SendReviewFinishedNotification(int reviewId)
+        {
+            var review = _db.GetCollection<Review>(ResourceTypes.Review).FirstOrDefault(r => r.Id == reviewId);
+            if (review != null)
+            {
+                var reviewEntitiyType = GetReviewEntityTypeFromCommentEntityType(review.EntityType);
+                var entityText = ReviewHelper.GetEntityTextForEntityType(_db, reviewEntitiyType, review.EntityId);
+                await ReviewHelper.SendReviewNotficationAsync(_userStoreService, review.EntityId, review.UserId, reviewEntitiyType, $"Someone finished their review of your {entityText}");
+            }
+        }
+
+        private ReviewEntityType GetReviewEntityTypeFromCommentEntityType(string entityType)
+        {
+            switch (entityType)
+            {
+                case string _ when entityType == ResourceTypes.Exhibit.Name:
+                    return ReviewEntityType.Exhibit;
+
+                case string _ when entityType == ResourceTypes.ExhibitPage.Name:
+                    return ReviewEntityType.ExhibitPage;
+
+                case string _ when entityType == ResourceTypes.Route.Name:
+                    return ReviewEntityType.Route;
+
+                default:
+                    throw new NotSupportedException($"No ReviewEntityType could be found for the entity type {entityType}");
+            }
         }
     }
 }

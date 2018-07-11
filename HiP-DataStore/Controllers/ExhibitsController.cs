@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
@@ -31,8 +32,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly RatingIndex _ratingIndex;
         private readonly UserStoreService _userStoreService;
         private readonly ReviewIndex _reviewIndex;
+        private readonly ILogger<ExhibitsController> _logger;
 
-        public ExhibitsController(EventStoreService eventStore, IMongoDbContext db, InMemoryCache cache, UserStoreService userStoreService)
+        public ExhibitsController(EventStoreService eventStore, IMongoDbContext db, InMemoryCache cache, ILogger<ExhibitsController> logger, UserStoreService userStoreService)
         {
             _eventStore = eventStore;
             _db = db;
@@ -42,6 +44,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             _ratingIndex = cache.Index<RatingIndex>();
             _userStoreService = userStoreService;
             _reviewIndex = cache.Index<ReviewIndex>();
+            _logger = logger;
         }
 
         [HttpGet("ids")]
@@ -492,7 +495,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return BadRequest(ModelState);
 
             if (!_entityIndex.Exists(ResourceTypes.Exhibit, exhibitId))
-                return NotFound(ErrorMessages.ContentNotFound(ResourceTypes.Exhibit, exhibitId));           
+                return NotFound(ErrorMessages.ContentNotFound(ResourceTypes.Exhibit, exhibitId));
 
             var result = new RatingResult()
             {
@@ -579,13 +582,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (!UserPermissions.IsAllowedToGetStatistic(User.Identity))
                 return Forbid();
-            
+
             var exhibitVisitedList = await _userStoreService.ExhibitVisitedAction.GetAllAsync(exhibitId, DateTime.Now.AddYears(-1));
             int year = exhibitVisitedList.Total;
             int month = 0;
             int week = 0;
             int day = 0;
-            foreach(var exhibitVisited in exhibitVisitedList.Items)
+            foreach (var exhibitVisited in exhibitVisitedList.Items)
             {
                 if (exhibitVisited.Timestamp >= DateTime.Now.AddMonths(-1))
                     month++;
@@ -597,7 +600,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                     day++;
             }
 
-            return Ok(new ExhibitStatisticResult() { Year = year, Month = month, Week = week, Day = day} );
+            return Ok(new ExhibitStatisticResult() { Year = year, Month = month, Week = week, Day = day });
         }
 
         /// <summary>
@@ -657,6 +660,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             args.EntityId = id;
             args.EntityType = ResourceTypes.Exhibit.Name;
 
+
+            if (args.Reviewers.Any())
+            {
+                await ReviewHelper.SendReviewRequestNotificationsAsync(_userStoreService, _db, _logger, id, args.Reviewers);
+            }
             await EntityManager.CreateEntityAsync(_eventStore, args, ResourceTypes.Review, reviewId, User.Identity.GetUserIdentity());
 
             return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Review/{reviewId}", reviewId);
@@ -688,9 +696,16 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             args = ReviewHelper.UpdateReviewArgs(args, oldReviewArgs, User.Identity);
 
+            //only take the new reviewers
+            var newReviewers = args.Reviewers.Except(oldReviewArgs.Reviewers);
+            await ReviewHelper.SendReviewRequestNotificationsAsync(_userStoreService, _db, _logger, id, newReviewers);
+
             await EntityManager.UpdateEntityAsync(_eventStore, oldReviewArgs, args, ResourceTypes.Review, reviewId, User.Identity.GetUserIdentity());
+
             return StatusCode(204);
         }
+
+
 
         /// <summary>
         /// Deletes the review of the exhibit with the given ID
