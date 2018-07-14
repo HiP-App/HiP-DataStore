@@ -100,14 +100,14 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return args;
         }
 
-        public static async Task SendReviewRequestNotificationsAsync(UserStoreService userStoreService, IMongoDbContext db, ILogger logger, int id, IEnumerable<string> reviewers)
+        public static async Task SendReviewRequestNotificationsAsync(UserStoreService userStoreService, IMongoDbContext db, ILogger logger, int id, ReviewEntityType entityType, IEnumerable<string> reviewers)
         {
-            var entityText = GetEntityTextForEntityType(db, ReviewEntityType.Exhibit, id);
+            var entityText = GetEntityTextForEntityType(db, entityType, id);
             try
             {
                 foreach (var reviewer in reviewers)
                 {
-                    await ReviewHelper.SendReviewNotficationAsync(userStoreService, id, reviewer, ReviewEntityType.Exhibit, $"Your review was requested on {entityText}");
+                    await ReviewHelper.SendReviewNotficationAsync(userStoreService, id, reviewer, entityType, $"Your review was requested on {entityText}");
                 }
             }
             catch (Exception e)

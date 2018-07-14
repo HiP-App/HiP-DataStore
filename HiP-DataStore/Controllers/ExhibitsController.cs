@@ -663,7 +663,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (args.Reviewers.Any())
             {
-                await ReviewHelper.SendReviewRequestNotificationsAsync(_userStoreService, _db, _logger, id, args.Reviewers);
+                await ReviewHelper.SendReviewRequestNotificationsAsync(_userStoreService, _db, _logger, id, ReviewEntityType.Exhibit, args.Reviewers);
             }
             await EntityManager.CreateEntityAsync(_eventStore, args, ResourceTypes.Review, reviewId, User.Identity.GetUserIdentity());
 
@@ -698,7 +698,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             //only take the new reviewers
             var newReviewers = args.Reviewers.Except(oldReviewArgs.Reviewers);
-            await ReviewHelper.SendReviewRequestNotificationsAsync(_userStoreService, _db, _logger, id, newReviewers);
+            await ReviewHelper.SendReviewRequestNotificationsAsync(_userStoreService, _db, _logger, id, ReviewEntityType.Exhibit, newReviewers);
 
             await EntityManager.UpdateEntityAsync(_eventStore, oldReviewArgs, args, ResourceTypes.Review, reviewId, User.Identity.GetUserIdentity());
 
