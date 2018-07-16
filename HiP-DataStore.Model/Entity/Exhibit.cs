@@ -1,4 +1,4 @@
-﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
+﻿using PaderbornUniversity.SILab.Hip.DataStore.Model.EventArgs;
 using System.Collections.Generic;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
@@ -27,7 +27,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
         {
         }
 
-        public Exhibit(ExhibitArgs args)
+        public Exhibit(ExhibitTransferArgs args)
         {
             Name = args.Name;
             Description = args.Description;
@@ -38,11 +38,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
             Tags = args.Tags ?? new List<int>();
             Pages = args.Pages ?? new List<int>();
             AccessRadius = args.AccessRadius;
+            Questions = args.Questions ?? new List<int>();
         }
 
-        public ExhibitArgs CreateExhibitArgs()
+        public ExhibitTransferArgs CreateExhibitArgs()
         {
-            var args = new ExhibitArgs
+            var args = new ExhibitTransferArgs
             {
                 Name = Name,
                 Description = Description,
@@ -52,7 +53,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
                 Status = Status,
                 Tags = Tags,
                 Pages = Pages,
-                AccessRadius = AccessRadius
+                AccessRadius = AccessRadius,
+                Questions = Questions
             };
             return args;
         }
