@@ -13,8 +13,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HiP-DataStore.TestsOld", "H
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HiP-DataStore.Tests", "HiP-DataStore.Tests\HiP-DataStore.Tests.csproj", "{59ED523A-8E32-45A1-8765-4BB80CC43A82}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HiP-UserStore.Sdk", "..\HiP-UserStore\HiP-UserStore.Sdk\HiP-UserStore.Sdk.csproj", "{B268A532-AF01-40FC-A3FF-D2A7BBDC84D3}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -41,10 +39,6 @@ Global
 		{59ED523A-8E32-45A1-8765-4BB80CC43A82}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{59ED523A-8E32-45A1-8765-4BB80CC43A82}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{59ED523A-8E32-45A1-8765-4BB80CC43A82}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B268A532-AF01-40FC-A3FF-D2A7BBDC84D3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B268A532-AF01-40FC-A3FF-D2A7BBDC84D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B268A532-AF01-40FC-A3FF-D2A7BBDC84D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B268A532-AF01-40FC-A3FF-D2A7BBDC84D3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
