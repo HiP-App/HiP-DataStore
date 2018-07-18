@@ -107,7 +107,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             {
                 foreach (var reviewer in reviewers)
                 {
-                    await ReviewHelper.SendReviewNotficationAsync(userStoreService, id, reviewer, entityType, $"Your review was requested on {entityText}");
+                    await SendReviewNotficationAsync(userStoreService, id, reviewer, entityType, $"Your review was requested on {entityText}");
                 }
             }
             catch (Exception e)
@@ -133,15 +133,15 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             {
                 case ReviewEntityType.Exhibit:
                     var exhibit = db.GetCollection<Exhibit>(ResourceTypes.Exhibit).FirstOrDefault(e => e.Id == entityId);
-                    return $"Exhibit {exhibit.Name}";
+                    return $"Exhibit {exhibit?.Name}";
 
                 case ReviewEntityType.ExhibitPage:
                     var exhibitPage = db.GetCollection<ExhibitPage>(ResourceTypes.ExhibitPage).FirstOrDefault(e => e.Id == entityId);
-                    return $"Exhibit page {exhibitPage.Title}";
+                    return $"Exhibit page {exhibitPage?.Title}";
 
                 case ReviewEntityType.Route:
                     var route = db.GetCollection<Route>(ResourceTypes.Route).FirstOrDefault(r => r.Id == entityId);
-                    return $"Route {route.Title}";
+                    return $"Route {route?.Title}";
 
                 default:
                     return "";
