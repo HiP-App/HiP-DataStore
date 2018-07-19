@@ -51,12 +51,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Tests
             // Anonymous access should be forbidden
             client.Authorization = "";
             var exception = await Assert.ThrowsAsync<SwaggerException>(async () => await client.GetByIdAsync(id));
-            Assert.True(exception.StatusCode == "401");
+            Assert.True(exception.StatusCode == 401);
 
             // Access by another (non-admin) user should be forbidden
             client.Authorization = "SomeUser-Student";
             exception = await Assert.ThrowsAsync<SwaggerException>(async () => await client.GetByIdAsync(id));
-            Assert.True(exception.StatusCode == "403");
+            Assert.True(exception.StatusCode == 403);
         }
     }
 }
