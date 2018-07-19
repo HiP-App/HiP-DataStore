@@ -1,10 +1,17 @@
-﻿using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
+﻿using Microsoft.Extensions.Logging;
+using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
+using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Rest;
 using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
+using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
+using PaderbornUniversity.SILab.Hip.UserStore;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Principal;
+using System.Threading.Tasks;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
@@ -31,7 +38,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         public static string CheckBadRequestPost(int id, ResourceType resourceType, EntityIndex entityIndex, ReviewIndex reviewIndex)
         {
-            if (!entityIndex.Status(resourceType, id).Equals(ContentStatus.In_Review))
+            if (!entityIndex.Status(resourceType, id).Equals(Model.ContentStatus.In_Review))
                 return ErrorMessages.CannotAddReviewToContentWithWrongStatus();
 
             if (reviewIndex.Exists(resourceType.Name, id))
@@ -91,6 +98,54 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 args.StudentsToApprove = 0;
 
             return args;
+        }
+
+        public static async Task SendReviewRequestNotificationsAsync(UserStoreService userStoreService, IMongoDbContext db, ILogger logger, int id, ReviewEntityType entityType, IEnumerable<string> reviewers)
+        {
+            var entityText = GetEntityTextForEntityType(db, entityType, id);
+            try
+            {
+                foreach (var reviewer in reviewers)
+                {
+                    await SendReviewNotficationAsync(userStoreService, id, reviewer, entityType, $"Your review was requested on {entityText}");
+                }
+            }
+            catch (Exception e)
+            {
+                logger.LogError("Sending review request notifiation failed!", e);
+            }
+        }
+
+        public static async Task SendReviewNotficationAsync(UserStoreService service, int entityId, string recipient, ReviewEntityType entitiyType, string text)
+        {
+            await service.ReviewNotications.CreateNotificationAsync(new ReviewNotificationArgs()
+            {
+                EntityId = entityId,
+                EntityType = entitiyType,
+                Recipient = recipient,
+                Text = text,
+            });
+        }
+
+        public static string GetEntityTextForEntityType(IMongoDbContext db, ReviewEntityType entityType, int entityId)
+        {
+            switch (entityType)
+            {
+                case ReviewEntityType.Exhibit:
+                    var exhibit = db.GetCollection<Exhibit>(ResourceTypes.Exhibit).FirstOrDefault(e => e.Id == entityId);
+                    return $"Exhibit {exhibit?.Name}";
+
+                case ReviewEntityType.ExhibitPage:
+                    var exhibitPage = db.GetCollection<ExhibitPage>(ResourceTypes.ExhibitPage).FirstOrDefault(e => e.Id == entityId);
+                    return $"Exhibit page {exhibitPage?.Title}";
+
+                case ReviewEntityType.Route:
+                    var route = db.GetCollection<Route>(ResourceTypes.Route).FirstOrDefault(r => r.Id == entityId);
+                    return $"Route {route?.Title}";
+
+                default:
+                    return "";
+            }
         }
     }
 }

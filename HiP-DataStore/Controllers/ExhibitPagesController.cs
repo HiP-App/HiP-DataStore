@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
@@ -9,10 +10,12 @@ using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
+using PaderbornUniversity.SILab.Hip.UserStore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ContentStatus = PaderbornUniversity.SILab.Hip.DataStore.Model.ContentStatus;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
@@ -28,12 +31,16 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly ReferencesIndex _referencesIndex;
         private readonly ExhibitPageIndex _exhibitPageIndex;
         private readonly ReviewIndex _reviewIndex;
+        private readonly UserStoreService _userStoreService;
+        private readonly ILogger<ExhibitPagesController> _logger;
 
         public ExhibitPagesController(
             IOptions<ExhibitPagesConfig> exhibitPagesConfig,
             EventStoreService eventStore,
             IMongoDbContext db,
-            InMemoryCache cache)
+            InMemoryCache cache,
+            UserStoreService userStoreService,
+            ILogger<ExhibitPagesController> logger)
         {
             _exhibitPagesConfig = exhibitPagesConfig;
             _eventStore = eventStore;
@@ -43,6 +50,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             _referencesIndex = cache.Index<ReferencesIndex>();
             _exhibitPageIndex = cache.Index<ExhibitPageIndex>();
             _reviewIndex = cache.Index<ReviewIndex>();
+            _userStoreService = userStoreService;
+            _logger = logger;
         }
 
         [HttpGet("Pages/ids")]
@@ -339,6 +348,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             args.EntityId = id;
             args.EntityType = ResourceTypes.ExhibitPage.Name;
 
+            if (args.Reviewers.Any())
+            {
+                await ReviewHelper.SendReviewRequestNotificationsAsync(_userStoreService, _db, _logger, id, ReviewEntityType.ExhibitPage, args.Reviewers);
+            }
+
             await EntityManager.CreateEntityAsync(_eventStore, args, ResourceTypes.Review, reviewId, User.Identity.GetUserIdentity());
 
             return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Review/{reviewId}", reviewId);
@@ -367,6 +381,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (ReviewHelper.CheckForbidPut(oldReviewArgs, User.Identity, _reviewIndex, reviewId))
                 return Forbid();
+
+            //only take the new reviewers
+            var newReviewers = args.Reviewers.Except(oldReviewArgs.Reviewers);
+            await ReviewHelper.SendReviewRequestNotificationsAsync(_userStoreService, _db, _logger, id, ReviewEntityType.ExhibitPage, newReviewers);
 
             args = ReviewHelper.UpdateReviewArgs(args, oldReviewArgs, User.Identity);
 

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel;
 using PaderbornUniversity.SILab.Hip.DataStore.Model;
 using PaderbornUniversity.SILab.Hip.DataStore.Model.Entity;
@@ -9,10 +10,12 @@ using PaderbornUniversity.SILab.Hip.DataStore.Utility;
 using PaderbornUniversity.SILab.Hip.EventSourcing;
 using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Mongo;
+using PaderbornUniversity.SILab.Hip.UserStore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ContentStatus = PaderbornUniversity.SILab.Hip.DataStore.Model.ContentStatus;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 {
@@ -27,8 +30,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly ReferencesIndex _referencesIndex;
         private readonly RatingIndex _ratingIndex;
         private readonly ReviewIndex _reviewIndex;
+        private readonly UserStoreService _userStoreService;
+        private readonly ILogger<RoutesController> _logger;
 
-        public RoutesController(EventStoreService eventStore, IMongoDbContext db, IEnumerable<IDomainIndex> indices)
+        public RoutesController(EventStoreService eventStore, IMongoDbContext db, IEnumerable<IDomainIndex> indices, UserStoreService userStoreService, ILogger<RoutesController> logger)
         {
             _eventStore = eventStore;
             _db = db;
@@ -37,6 +42,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             _referencesIndex = indices.OfType<ReferencesIndex>().First();
             _ratingIndex = indices.OfType<RatingIndex>().First();
             _reviewIndex = indices.OfType<ReviewIndex>().First();
+            _userStoreService = userStoreService;
+            _logger = logger;
         }
 
         [HttpGet("ids")]
@@ -363,7 +370,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             args.EntityId = id;
             args.EntityType = ResourceTypes.Route.Name;
 
+            if (args.Reviewers.Any())
+            {
+                await ReviewHelper.SendReviewRequestNotificationsAsync(_userStoreService, _db, _logger, id, ReviewEntityType.Route, args.Reviewers);
+            }
+
             await EntityManager.CreateEntityAsync(_eventStore, args, ResourceTypes.Review, reviewId, User.Identity.GetUserIdentity());
+
 
             return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Review/{reviewId}", reviewId);
         }
@@ -393,6 +406,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return Forbid();
 
             args = ReviewHelper.UpdateReviewArgs(args, oldReviewArgs, User.Identity);
+
+            //only take the new reviewers
+            var newReviewers = args.Reviewers.Except(oldReviewArgs.Reviewers);
+            await ReviewHelper.SendReviewRequestNotificationsAsync(_userStoreService, _db, _logger, id, ReviewEntityType.Route, newReviewers);
 
             await EntityManager.UpdateEntityAsync(_eventStore, oldReviewArgs, args, ResourceTypes.Review, reviewId, User.Identity.GetUserIdentity());
             return StatusCode(204);
