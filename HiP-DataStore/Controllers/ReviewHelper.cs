@@ -105,6 +105,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             var entityText = GetEntityTextForEntityType(db, entityType, id);
             try
             {
+                if (reviewers == null) return;
                 foreach (var reviewer in reviewers)
                 {
                     await SendReviewNotficationAsync(userStoreService, id, reviewer, entityType, $"Your review was requested on {entityText}");
@@ -112,7 +113,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             }
             catch (Exception e)
             {
-                logger.LogError("Sending review request notifiation failed!", e);
+                logger.LogError(e, "Sending review request notifiation failed!");
             }
         }
 
