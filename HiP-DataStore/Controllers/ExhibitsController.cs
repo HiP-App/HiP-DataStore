@@ -428,7 +428,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             await EntityManager.CreateEntityAsync(_eventStore, questionArgs, ResourceTypes.QuizQuestion, id, User.Identity.GetUserIdentity());
             return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Quiz/{id}", id);
         }
-
+                
         [HttpPut("Question/{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
@@ -728,6 +728,37 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             await EntityManager.DeleteEntityAsync(_eventStore, ResourceTypes.Review, reviewId, User.Identity.GetUserIdentity());
             return NoContent();
+        }
+
+        [HttpPost("{exhibitId}/Highscore")]
+        [ProducesResponseType(typeof(int), 201)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
+        public async Task<IActionResult> PostHighScoreAsync(int exhibitId, double highScore)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            string userID = User.Identity.GetUserIdentity();
+            if (userID == null)
+                return Unauthorized();
+            var exhibit = _db.Get<Exhibit>((ResourceTypes.Exhibit, exhibitId));
+
+        }
+
+        [HttpGet("Highscore/{id}")]
+        [ProducesResponseType(typeof(ExhibitQuizQuestionResult), 200)]
+        [ProducesResponseType(304)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        public IActionResult GetHighscoreForExhibitId(int exhibitId)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            string userID = User.Identity.GetUserIdentity();
+            if (userID == null)
+                return Unauthorized();
+
         }
 
         private void ValidateExhibitArgs(ExhibitArgs args)
