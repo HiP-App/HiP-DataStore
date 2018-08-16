@@ -741,12 +741,24 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             string userID = User.Identity.GetUserIdentity();
             if (userID == null)
                 return Unauthorized();
-            var exhibit = _db.Get<Exhibit>((ResourceTypes.Exhibit, exhibitId));
+            //insert the high score, the exhibit Id, and the user ID into the eventstore
+            var ev = new HighscoreAdded()
+            {
+                //Id=     I don't know yet
+                //EntityId =        I don't know yet
+                UserId = userID,
+                Timestamp = DateTimeOffset.Now,
+                ExhibitId=exhibitId,
+                HighScore= highScore
+            };         
+
+            await _eventStore.AppendEventAsync(ev);
+            return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/{exhibitId}/Highscore", highScore);
 
         }
 
         [HttpGet("Highscore/{id}")]
-        [ProducesResponseType(typeof(ExhibitQuizQuestionResult), 200)]
+        [ProducesResponseType(200)]
         [ProducesResponseType(304)]
         [ProducesResponseType(400)]
         [ProducesResponseType(403)]
