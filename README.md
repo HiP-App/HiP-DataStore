@@ -17,3 +17,4 @@ For testing purposes, install & run Event Store and MongoDB on your local machin
   * via Terminal: Execute `dotnet run` from the project folder containing `HiP-DataStore.csproj`
 
 The app is preconfigured to run on dev machines without any manual configuration (using the event store and Mongo database on `localhost`). See [appsettings.json](https://github.com/HiP-App/HiP-DataStore/blob/develop/HiP-DataStore/appsettings.json) for a list of configuration fields and their default values.
+To be able to provide test values for local development, make a copy of the appsettings.json and rename it to `appsettings.Development.json` (see [here](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/environments?view=aspnetcore-2.1) for more information)
