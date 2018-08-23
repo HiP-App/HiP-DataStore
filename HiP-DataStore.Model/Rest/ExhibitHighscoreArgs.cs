@@ -4,9 +4,9 @@ using System.Text;
 
 namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 {
-    class ExhibitHighscoreArgs
+    public class ExhibitHighscoreArgs
     {
-        public int exhibitId { get; set; }
-        public double highScore { get; set; }
+        public int ExhibitId { get; set; }
+        public double HighScore { get; set; }
     }
 }

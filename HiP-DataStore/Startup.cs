@@ -93,6 +93,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore
                 .AddSingleton<IDomainIndex, ScoreBoardIndex>()
                 .AddSingleton<IDomainIndex, RatingIndex>()
                 .AddSingleton<IDomainIndex, ReviewIndex>()
+                .AddSingleton<IDomainIndex,HighScoreIndex>()
                 .AddSingleton<IDomainIndex, ReviewCommentIndex>();
 
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();

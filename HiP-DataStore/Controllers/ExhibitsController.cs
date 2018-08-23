@@ -32,6 +32,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly RatingIndex _ratingIndex;
         private readonly UserStoreService _userStoreService;
         private readonly ReviewIndex _reviewIndex;
+        private readonly HighScoreIndex _highScoreIndex;
         private readonly ILogger<ExhibitsController> _logger;
 
         public ExhibitsController(EventStoreService eventStore, IMongoDbContext db, InMemoryCache cache, ILogger<ExhibitsController> logger, UserStoreService userStoreService)
@@ -44,6 +45,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             _ratingIndex = cache.Index<RatingIndex>();
             _userStoreService = userStoreService;
             _reviewIndex = cache.Index<ReviewIndex>();
+            _highScoreIndex = cache.Index<HighScoreIndex>();
             _logger = logger;
         }
 
@@ -428,7 +430,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             await EntityManager.CreateEntityAsync(_eventStore, questionArgs, ResourceTypes.QuizQuestion, id, User.Identity.GetUserIdentity());
             return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Quiz/{id}", id);
         }
-                
+
         [HttpPut("Question/{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
@@ -730,39 +732,38 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return NoContent();
         }
 
-        [HttpPost("{exhibitId}/Highscore")]
-        [ProducesResponseType(typeof(int), 201)]
+        [HttpPost("Highscore")]
+        [ProducesResponseType(typeof(double), 201)]
         [ProducesResponseType(400)]
         [ProducesResponseType(401)]
-        public async Task<IActionResult> PostHighScoreAsync(int exhibitId, double highScore)
+        //public async Task<IActionResult> PostHighScoreAsync(int exhibitId, double highScore)
+        public async Task<IActionResult> PostHighScoreAsync(ExhibitHighscoreArgs args)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
             string userID = User.Identity.GetUserIdentity();
             if (userID == null)
                 return Unauthorized();
-            //insert the high score, the exhibit Id, and the user ID into the eventstore
-            var ev = new HighscoreAdded()
-            {
-                //Id=     I don't know yet
-                //EntityId =        I don't know yet
-                UserId = userID,
-                Timestamp = DateTimeOffset.Now,
-                ExhibitId=exhibitId,
-                HighScore= highScore
-            };         
 
-            await _eventStore.AppendEventAsync(ev);
-            return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/{exhibitId}/Highscore", highScore);
+            /*
+             * Steps
+             * 1-create an index in the memory to store the highscore events
+             * 2-query that index to check if there was already a highscore, then we get the entity id and update the event
+             * if there is no existing highscore we create a new entity id
+             */
+             //before adding the highscore to the eventstream, we should check if we have previous highscore for the specified user and exhibit
+             
+
+            var highscoreId = _highScoreIndex.NextId();
+            await EntityManager.CreateEntityAsync<ExhibitHighscoreArgs>(_eventStore, args, ResourceTypes.Highscore, highscoreId, userID);            
+            return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Highscore", args.HighScore);
 
         }
 
         [HttpGet("Highscore/{id}")]
         [ProducesResponseType(200)]
-        [ProducesResponseType(304)]
         [ProducesResponseType(400)]
-        [ProducesResponseType(403)]
-        [ProducesResponseType(404)]
+        [ProducesResponseType(401)]
         public IActionResult GetHighscoreForExhibitId(int exhibitId)
         {
             if (!ModelState.IsValid)
@@ -770,7 +771,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             string userID = User.Identity.GetUserIdentity();
             if (userID == null)
                 return Unauthorized();
+            //retrieve the highscore for the specified user and exhibit 
+            //query the MongoDB using CacheDatabaseManager
 
+            return Ok();
         }
 
         private void ValidateExhibitArgs(ExhibitArgs args)
