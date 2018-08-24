@@ -21,22 +21,25 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
         /// <returns>True in case there was a highscore for the specified exhibit and user, false otherwise</returns>
         public bool CheckHighscoreInPreviousRecords(int exhibitId, string userId)
         {
-            if (_highScoresDict.ContainsKey(userId))
+            lock (_lockObject)
             {
-                _highScoresDict.TryGetValue(userId, out var value);
-                if (value.ExhibitIds.Contains(exhibitId))
+                if (_highScoresDict.ContainsKey(userId))
                 {
-                    int index = value.ExhibitIds.IndexOf(exhibitId);
-                    CurrentEntityId = value.EntityIds[index];
-                    return true;
-                }
-                else
-                {
-                    CurrentEntityId = -1;
-                }
+                    _highScoresDict.TryGetValue(userId, out var value);
+                    if (value.ExhibitIds.Contains(exhibitId))
+                    {
+                        int index = value.ExhibitIds.IndexOf(exhibitId);
+                        CurrentEntityId = value.EntityIds[index];
+                        return true;
+                    }
+                    else
+                    {
+                        CurrentEntityId = -1;
+                    }
 
-            }
-            return false;
+                }
+                return false;
+            }            
         }
 
         /// <summary>
