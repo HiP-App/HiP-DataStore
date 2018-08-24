@@ -736,26 +736,25 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(typeof(double), 201)]
         [ProducesResponseType(400)]
         [ProducesResponseType(401)]
-        //public async Task<IActionResult> PostHighScoreAsync(int exhibitId, double highScore)
         public async Task<IActionResult> PostHighScoreAsync(ExhibitHighscoreArgs args)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            string userID = User.Identity.GetUserIdentity();
-            if (userID == null)
+            string userId = User.Identity.GetUserIdentity();
+            if (userId == null)
                 return Unauthorized();
 
-            /*
-             * Steps
-             * 1-create an index in the memory to store the highscore events
-             * 2-query that index to check if there was already a highscore, then we get the entity id and update the event
-             * if there is no existing highscore we create a new entity id
-             */
-             //before adding the highscore to the eventstream, we should check if we have previous highscore for the specified user and exhibit
-             
+            if (_highScoreIndex.CheckHighscoreInPreviousRecords(args.ExhibitId, userId))
+            {
+                ExhibitHighscoreArgs oldObject = await _eventStore.EventStream.GetCurrentEntityAsync<ExhibitHighscoreArgs>(ResourceTypes.Highscore, _highScoreIndex.CurrentEntityId);
+                await EntityManager.UpdateEntityAsync<ExhibitHighscoreArgs>(_eventStore, oldObject, args, ResourceTypes.Highscore, _highScoreIndex.CurrentEntityId, userId);
+            }
+            else
+            {
+                var highscoreId = _entityIndex.NextId(ResourceTypes.Highscore);
+                await EntityManager.CreateEntityAsync<ExhibitHighscoreArgs>(_eventStore, args, ResourceTypes.Highscore, highscoreId, userId);
+            }
 
-            var highscoreId = _highScoreIndex.NextId();
-            await EntityManager.CreateEntityAsync<ExhibitHighscoreArgs>(_eventStore, args, ResourceTypes.Highscore, highscoreId, userID);            
             return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Highscore", args.HighScore);
 
         }
