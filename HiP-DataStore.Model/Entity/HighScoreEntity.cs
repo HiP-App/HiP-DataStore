@@ -17,8 +17,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Entity
         {
             var args = new ExhibitHighScoreArgs()
             {
-                ExhibitId = this.ExhibitId,
-                HighScore = this.HighScore
+                ExhibitId = ExhibitId,
+                HighScore = HighScore
             };
             return args;
         }

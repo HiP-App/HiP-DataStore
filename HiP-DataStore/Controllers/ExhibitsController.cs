@@ -768,8 +768,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             //the passed id is the entity ID, but we need to replace it with the exhibit ID if possible, or we return the highscore and the entity id when we insert the highscore
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            string userID = User.Identity.GetUserIdentity();
-            if (userID == null)
+            if (User.Identity.GetUserIdentity() == null)
                 return Unauthorized();
             var highScore = _db.Get<HighScoreEntity>((ResourceTypes.Highscore, id));
             if (highScore != null)
