@@ -33,7 +33,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model
             Rating = ResourceType.Register(nameof(Rating), typeof(RatingArgs));
             Review = ResourceType.Register(nameof(Review), typeof(ReviewArgs));
             ReviewComment = ResourceType.Register(nameof(ReviewComment), typeof(ReviewCommentArgs));
-            Highscore = ResourceType.Register(nameof(Highscore), typeof(ExhibitHighscoreArgs));
+            Highscore = ResourceType.Register(nameof(Highscore), typeof(ExhibitHighScoreArgs));
         }
     }
 }

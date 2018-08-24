@@ -736,7 +736,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(typeof(double), 201)]
         [ProducesResponseType(400)]
         [ProducesResponseType(401)]
-        public async Task<IActionResult> PostHighScoreAsync(ExhibitHighscoreArgs args)
+        public async Task<IActionResult> PostHighScoreAsync(ExhibitHighScoreArgs args)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -746,34 +746,36 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (_highScoreIndex.CheckHighscoreInPreviousRecords(args.ExhibitId, userId))
             {
-                ExhibitHighscoreArgs oldObject = await _eventStore.EventStream.GetCurrentEntityAsync<ExhibitHighscoreArgs>(ResourceTypes.Highscore, _highScoreIndex.CurrentEntityId);
-                await EntityManager.UpdateEntityAsync<ExhibitHighscoreArgs>(_eventStore, oldObject, args, ResourceTypes.Highscore, _highScoreIndex.CurrentEntityId, userId);
+                ExhibitHighScoreArgs oldObject = await _eventStore.EventStream.GetCurrentEntityAsync<ExhibitHighScoreArgs>(ResourceTypes.Highscore, _highScoreIndex.CurrentEntityId);
+                await EntityManager.UpdateEntityAsync(_eventStore, oldObject, args, ResourceTypes.Highscore, _highScoreIndex.CurrentEntityId, userId);
             }
             else
             {
                 var highscoreId = _entityIndex.NextId(ResourceTypes.Highscore);
-                await EntityManager.CreateEntityAsync<ExhibitHighscoreArgs>(_eventStore, args, ResourceTypes.Highscore, highscoreId, userId);
+                await EntityManager.CreateEntityAsync(_eventStore, args, ResourceTypes.Highscore, highscoreId, userId);
             }
 
             return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Highscore", args.HighScore);
-
         }
 
         [HttpGet("Highscore/{id}")]
-        [ProducesResponseType(200)]
+        [ProducesResponseType(typeof(double), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(401)]
-        public IActionResult GetHighscoreForExhibitId(int exhibitId)
+        [ProducesResponseType(404)]
+        public IActionResult GetHighScore(int id)
         {
+            //the passed id is the entity ID, but we need to replace it with the exhibit ID if possible, or we return the highscore and the entity id when we insert the highscore
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
             string userID = User.Identity.GetUserIdentity();
             if (userID == null)
                 return Unauthorized();
-            //retrieve the highscore for the specified user and exhibit 
-            //query the MongoDB using CacheDatabaseManager
-
-            return Ok();
+            var highScore = _db.Get<HighScoreEntity>((ResourceTypes.Highscore, id));
+            if (highScore != null)
+                return Ok(highScore.HighScore);
+            else
+                return NotFound();
         }
 
         private void ValidateExhibitArgs(ExhibitArgs args)

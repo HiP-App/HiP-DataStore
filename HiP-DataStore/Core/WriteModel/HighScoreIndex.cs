@@ -25,18 +25,19 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
             {
                 if (_highScoresDict.ContainsKey(userId))
                 {
-                    _highScoresDict.TryGetValue(userId, out var value);
-                    if (value.ExhibitIds.Contains(exhibitId))
+                    if(_highScoresDict.TryGetValue(userId, out var value))
                     {
-                        int index = value.ExhibitIds.IndexOf(exhibitId);
-                        CurrentEntityId = value.EntityIds[index];
-                        return true;
+                        if (value.ExhibitIds.Contains(exhibitId))
+                        {
+                            int index = value.ExhibitIds.IndexOf(exhibitId);
+                            CurrentEntityId = value.EntityIds[index];
+                            return true;
+                        }
+                        else
+                        {
+                            CurrentEntityId = -1;
+                        }
                     }
-                    else
-                    {
-                        CurrentEntityId = -1;
-                    }
-
                 }
                 return false;
             }            
@@ -55,7 +56,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                     {
                         lock (_lockObject)
                         {
-                            if (ev.PropertyName == nameof(ExhibitHighscoreArgs.ExhibitId) && ev.Value is int exhibitId)
+                            if (ev.PropertyName == nameof(ExhibitHighScoreArgs.ExhibitId) && ev.Value is int exhibitId)
                             {
                                 HighScoreEntityInfo value;
                                 if (_highScoresDict.ContainsKey(ev.UserId))
