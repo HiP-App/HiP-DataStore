@@ -703,8 +703,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return StatusCode(204);
         }
 
-
-
         /// <summary>
         /// Deletes the review of the exhibit with the given ID
         /// </summary>
@@ -736,6 +734,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(typeof(double), 201)]
         [ProducesResponseType(400)]
         [ProducesResponseType(401)]
+        [ProducesResponseType(404)]
         public async Task<IActionResult> PostHighScoreAsync(ExhibitHighScoreArgs args)
         {
             if (!ModelState.IsValid)
@@ -743,6 +742,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             string userId = User.Identity.GetUserIdentity();
             if (userId == null)
                 return Unauthorized();
+
+            if (!_entityIndex.Exists(ResourceTypes.Exhibit, args.ExhibitId))
+                return NotFound(ErrorMessages.ContentNotFound(ResourceTypes.Exhibit, args.ExhibitId));
 
             if (_highScoreIndex.CheckHighscoreInPreviousRecords(args.ExhibitId, userId))
             {
@@ -764,13 +766,13 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         [ProducesResponseType(401)]
         [ProducesResponseType(404)]
         public IActionResult GetHighScore(int exhibitId)
-        {            
+        {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
             if (User.Identity.GetUserIdentity() == null)
                 return Unauthorized();
             //we need to get the corrosponding entity Id by querying the HighScoreIndex
-            if(_highScoreIndex.CheckHighscoreInPreviousRecords(exhibitId, User.Identity.GetUserIdentity()))
+            if (_highScoreIndex.CheckHighscoreInPreviousRecords(exhibitId, User.Identity.GetUserIdentity()))
             {
                 var highScoreEntity = _db.Get<HighScoreEntity>((ResourceTypes.Highscore, _highScoreIndex.CurrentEntityId));
                 return Ok(highScoreEntity.HighScore);
