@@ -730,7 +730,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return NoContent();
         }
 
-        [HttpPost("Highscore")]
+        [HttpPost("HighScore")]
         [ProducesResponseType(typeof(double), 201)]
         [ProducesResponseType(400)]
         [ProducesResponseType(401)]
@@ -745,22 +745,22 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             if (!_entityIndex.Exists(ResourceTypes.Exhibit, args.ExhibitId))
                 return NotFound(ErrorMessages.ContentNotFound(ResourceTypes.Exhibit, args.ExhibitId));
-
-            if (_highScoreIndex.CheckHighscoreInPreviousRecords(args.ExhibitId, userId))
+            var entityId = _highScoreIndex.CheckHighScoreExistence(args.ExhibitId, userId);
+            if (entityId == null)
             {
-                ExhibitHighScoreArgs oldObject = await _eventStore.EventStream.GetCurrentEntityAsync<ExhibitHighScoreArgs>(ResourceTypes.Highscore, _highScoreIndex.CurrentEntityId);
-                await EntityManager.UpdateEntityAsync(_eventStore, oldObject, args, ResourceTypes.Highscore, _highScoreIndex.CurrentEntityId, userId);
+                entityId = _entityIndex.NextId(ResourceTypes.Highscore);
+                await EntityManager.CreateEntityAsync(_eventStore, args, ResourceTypes.Highscore, entityId.Value, userId);
             }
             else
             {
-                var highscoreId = _entityIndex.NextId(ResourceTypes.Highscore);
-                await EntityManager.CreateEntityAsync(_eventStore, args, ResourceTypes.Highscore, highscoreId, userId);
+                ExhibitHighScoreArgs oldObject = await _eventStore.EventStream.GetCurrentEntityAsync<ExhibitHighScoreArgs>(ResourceTypes.Highscore, entityId.Value);
+                await EntityManager.UpdateEntityAsync(_eventStore, oldObject, args, ResourceTypes.Highscore, entityId.Value, userId);
             }
 
-            return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Highscore", args.HighScore);
+            return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/HighScore", args.HighScore);
         }
 
-        [HttpGet("Highscore/{exhibitId}")]
+        [HttpGet("HighScore/{exhibitId}")]
         [ProducesResponseType(typeof(double), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(401)]
@@ -771,14 +771,19 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 return BadRequest(ModelState);
             if (User.Identity.GetUserIdentity() == null)
                 return Unauthorized();
+
+            if (!_entityIndex.Exists(ResourceTypes.Exhibit, exhibitId))
+                return NotFound(ErrorMessages.ContentNotFound(ResourceTypes.Exhibit, exhibitId));
+
             //we need to get the corrosponding entity Id by querying the HighScoreIndex
-            if (_highScoreIndex.CheckHighscoreInPreviousRecords(exhibitId, User.Identity.GetUserIdentity()))
+            var entityId = _highScoreIndex.CheckHighScoreExistence(exhibitId, User.Identity.GetUserIdentity());
+            if (entityId != null)
             {
-                var highScoreEntity = _db.Get<HighScoreEntity>((ResourceTypes.Highscore, _highScoreIndex.CurrentEntityId));
+                var highScoreEntity = _db.Get<HighScoreEntity>((ResourceTypes.Highscore, entityId.Value));
                 return Ok(highScoreEntity.HighScore);
             }
             else
-                return NotFound();
+                return NotFound(ErrorMessages.HighScoreNotFound(exhibitId));
         }
 
         private void ValidateExhibitArgs(ExhibitArgs args)

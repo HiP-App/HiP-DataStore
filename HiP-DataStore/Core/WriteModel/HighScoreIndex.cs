@@ -9,38 +9,29 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
     public class HighScoreIndex : IDomainIndex
     {
         //"key" is the user id, and "value" is the HighScoreEntityInfo class
-        private readonly Dictionary<string, HighScoreEntityInfo> _highScoresDict = new Dictionary<string, HighScoreEntityInfo>();       
+        private readonly Dictionary<string, HighScoreEntityInfo> _highScoresDict = new Dictionary<string, HighScoreEntityInfo>();
         private readonly object _lockObject = new object();
-        public int CurrentEntityId { get; set; } = -1;
 
         /// <summary>
         /// Checks the in-memory index to detect whether there is already a recoreded highscore for the specified exhibit and user
         /// </summary>
         /// <param name="exhibitId">Exhibit ID</param>
         /// <param name="userId">User's ID</param>
-        /// <returns>True in case there was a highscore for the specified exhibit and user, false otherwise</returns>
-        public bool CheckHighscoreInPreviousRecords(int exhibitId, string userId)
+        /// <returns>The entity Id of the highscore for the specified exhibit and user; null otherwise</returns>
+        public int? CheckHighScoreExistence(int exhibitId, string userId)
         {
             lock (_lockObject)
             {
-                if (_highScoresDict.ContainsKey(userId))
+                if (_highScoresDict.TryGetValue(userId, out var value))
                 {
-                    if(_highScoresDict.TryGetValue(userId, out var value))
+                    if (value.ExhibitIds.Contains(exhibitId))
                     {
-                        if (value.ExhibitIds.Contains(exhibitId))
-                        {
-                            int index = value.ExhibitIds.IndexOf(exhibitId);
-                            CurrentEntityId = value.EntityIds[index];
-                            return true;
-                        }
-                        else
-                        {
-                            CurrentEntityId = -1;
-                        }
+                        int index = value.ExhibitIds.IndexOf(exhibitId);
+                        return value.EntityIds[index];
                     }
                 }
-                return false;
-            }            
+                return null;
+            }
         }
 
         /// <summary>
@@ -62,12 +53,12 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                                 if (_highScoresDict.ContainsKey(ev.UserId))
                                 {
                                     //update the entry in the dictionary
-                                    if(_highScoresDict.TryGetValue(ev.UserId, out value))
+                                    if (_highScoresDict.TryGetValue(ev.UserId, out value))
                                     {
                                         value.ExhibitIds.Add(exhibitId);
                                         value.EntityIds.Add(ev.Id);
                                         _highScoresDict[ev.UserId] = value;
-                                    }                                             
+                                    }
                                 }
                                 else
                                 {
