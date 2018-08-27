@@ -758,21 +758,23 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/Highscore", args.HighScore);
         }
 
-        [HttpGet("Highscore/{id}")]
+        [HttpGet("Highscore/{exhibitId}")]
         [ProducesResponseType(typeof(double), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(401)]
         [ProducesResponseType(404)]
-        public IActionResult GetHighScore(int id)
-        {
-            //the passed id is the entity ID, but we need to replace it with the exhibit ID if possible, or we return the highscore and the entity id when we insert the highscore
+        public IActionResult GetHighScore(int exhibitId)
+        {            
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
             if (User.Identity.GetUserIdentity() == null)
                 return Unauthorized();
-            var highScore = _db.Get<HighScoreEntity>((ResourceTypes.Highscore, id));
-            if (highScore != null)
-                return Ok(highScore.HighScore);
+            //we need to get the corrosponding entity Id by querying the HighScoreIndex
+            if(_highScoreIndex.CheckHighscoreInPreviousRecords(exhibitId, User.Identity.GetUserIdentity()))
+            {
+                var highScoreEntity = _db.Get<HighScoreEntity>((ResourceTypes.Highscore, _highScoreIndex.CurrentEntityId));
+                return Ok(highScoreEntity.HighScore);
+            }
             else
                 return NotFound();
         }
