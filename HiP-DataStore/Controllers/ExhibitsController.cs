@@ -32,6 +32,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         private readonly RatingIndex _ratingIndex;
         private readonly UserStoreService _userStoreService;
         private readonly ReviewIndex _reviewIndex;
+        private readonly HighScoreIndex _highScoreIndex;
         private readonly ILogger<ExhibitsController> _logger;
 
         public ExhibitsController(EventStoreService eventStore, IMongoDbContext db, InMemoryCache cache, ILogger<ExhibitsController> logger, UserStoreService userStoreService)
@@ -44,6 +45,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             _ratingIndex = cache.Index<RatingIndex>();
             _userStoreService = userStoreService;
             _reviewIndex = cache.Index<ReviewIndex>();
+            _highScoreIndex = cache.Index<HighScoreIndex>();
             _logger = logger;
         }
 
@@ -701,8 +703,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             return StatusCode(204);
         }
 
-
-
         /// <summary>
         /// Deletes the review of the exhibit with the given ID
         /// </summary>
@@ -728,6 +728,62 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
             await EntityManager.DeleteEntityAsync(_eventStore, ResourceTypes.Review, reviewId, User.Identity.GetUserIdentity());
             return NoContent();
+        }
+
+        [HttpPost("HighScore")]
+        [ProducesResponseType(typeof(double), 201)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> PostHighScoreAsync(ExhibitHighScoreArgs args)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            string userId = User.Identity.GetUserIdentity();
+            if (userId == null)
+                return Unauthorized();
+
+            if (!_entityIndex.Exists(ResourceTypes.Exhibit, args.ExhibitId))
+                return NotFound(ErrorMessages.ContentNotFound(ResourceTypes.Exhibit, args.ExhibitId));
+            var entityId = _highScoreIndex.CheckHighScoreExistence(args.ExhibitId, userId);
+            if (entityId == null)
+            {
+                entityId = _entityIndex.NextId(ResourceTypes.Highscore);
+                await EntityManager.CreateEntityAsync(_eventStore, args, ResourceTypes.Highscore, entityId.Value, userId);
+            }
+            else
+            {
+                ExhibitHighScoreArgs oldObject = await _eventStore.EventStream.GetCurrentEntityAsync<ExhibitHighScoreArgs>(ResourceTypes.Highscore, entityId.Value);
+                await EntityManager.UpdateEntityAsync(_eventStore, oldObject, args, ResourceTypes.Highscore, entityId.Value, userId);
+            }
+
+            return Created($"{Request.Scheme}://{Request.Host}/api/Exhibits/HighScore", args.HighScore);
+        }
+
+        [HttpGet("HighScore/{exhibitId}")]
+        [ProducesResponseType(typeof(double), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(404)]
+        public IActionResult GetHighScore(int exhibitId)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            if (User.Identity.GetUserIdentity() == null)
+                return Unauthorized();
+
+            if (!_entityIndex.Exists(ResourceTypes.Exhibit, exhibitId))
+                return NotFound(ErrorMessages.ContentNotFound(ResourceTypes.Exhibit, exhibitId));
+
+            //we need to get the corrosponding entity Id by querying the HighScoreIndex
+            var entityId = _highScoreIndex.CheckHighScoreExistence(exhibitId, User.Identity.GetUserIdentity());
+            if (entityId != null)
+            {
+                var highScoreEntity = _db.Get<HighScoreEntity>((ResourceTypes.Highscore, entityId.Value));
+                return Ok(highScoreEntity.HighScore);
+            }
+            else
+                return NotFound(ErrorMessages.HighScoreNotFound(exhibitId));
         }
 
         private void ValidateExhibitArgs(ExhibitArgs args)
