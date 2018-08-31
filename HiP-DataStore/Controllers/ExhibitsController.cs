@@ -291,9 +291,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 Count = _ratingIndex.Count(ResourceTypes.Exhibit, exhibitId),
                 RatingTable = _ratingIndex.Table(ResourceTypes.Exhibit, exhibitId)
             };
-
-            //in order to fill the property "LastMonthAverage", we have two options, either we query the cached database, or we modify the "RatingIndex" class to include the dates and then query it
-
+                        
             return Ok(result);
         }
 

@@ -57,7 +57,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
                         ratedType.Ratings.Add(ev.EntityId, new RatingEntityInfo());
 
                     var ratedEntity = ratedType.Ratings[ev.EntityId];
-                    //ratedEntity.AddRating(ev.UserId, ev.Value);
                     ratedEntity.AddRating(ev.UserId, ev.Value, ev.Timestamp);
                     break;
             }
@@ -126,7 +125,6 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
             var nowDate = DateTimeOffset.Now;
             double lastMonthTotalRating = 0, lastMonthAverage = 0;
             int counter = 0;
-            //iterate through _allRates and calculate the average rating of the last month
             foreach (var rateStruct in _allRates)
             {
                 if (rateStruct.Value.RateDate.Month == (nowDate.Month - 1) && rateStruct.Value.RateDate.Year == nowDate.Year)
