@@ -126,12 +126,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
         /// <returns>The last month rating</returns>
         public double CalculateLastMonthAverageRating()
         {
-            var nowDate = DateTimeOffset.Now;
             double lastMonthTotalRating = 0, lastMonthAverage = 0;
             int counter = 0;
             foreach (var rateStruct in _allRates)
             {
-                if (rateStruct.Value.RateDate.Month == (nowDate.Month - 1) && rateStruct.Value.RateDate.Year == nowDate.Year)
+                if (CheckIfRatingIsLastMonthRating(rateStruct.Value.RateDate))
                 {
                     counter++;
                     lastMonthTotalRating += rateStruct.Value.Rate;
@@ -140,6 +139,17 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
             if (counter > 0)
                 lastMonthAverage = lastMonthTotalRating / counter;
             return lastMonthAverage;
+        }
+
+        private bool CheckIfRatingIsLastMonthRating(DateTimeOffset ratingDate)
+        {
+            var nowDate = DateTimeOffset.Now;
+            if (nowDate.Month == 1 && ratingDate.Month == 12 && ratingDate.Year == (nowDate.Year - 1))
+                return true;
+            else if (ratingDate.Month == (nowDate.Month - 1) && ratingDate.Year == nowDate.Year)
+                return true;
+            else
+                return false;
         }
 
         bool CalculateAverageRating(int? oldRate, int newRate)
