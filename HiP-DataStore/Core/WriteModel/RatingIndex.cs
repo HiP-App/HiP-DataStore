@@ -120,6 +120,10 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.WriteModel
             return table;
         }
 
+        /// <summary>
+        /// It only calculates the average rating of the specified exhibit for the last month.
+        /// </summary>
+        /// <returns>The last month rating</returns>
         public double CalculateLastMonthAverageRating()
         {
             var nowDate = DateTimeOffset.Now;

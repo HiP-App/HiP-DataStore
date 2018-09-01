@@ -291,7 +291,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
                 Count = _ratingIndex.Count(ResourceTypes.Exhibit, exhibitId),
                 RatingTable = _ratingIndex.Table(ResourceTypes.Exhibit, exhibitId)
             };
-                        
+
             return Ok(result);
         }
 
@@ -504,6 +504,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             {
                 Id = exhibitId,
                 Average = _ratingIndex.Average(ResourceTypes.QuizQuestion, exhibitId),
+                LastMonthAverage = _ratingIndex.LastMonthAverage(ResourceTypes.QuizQuestion, exhibitId),
                 Count = _ratingIndex.Count(ResourceTypes.QuizQuestion, exhibitId),
                 RatingTable = _ratingIndex.Table(ResourceTypes.QuizQuestion, exhibitId)
             };
