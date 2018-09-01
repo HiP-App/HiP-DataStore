@@ -137,6 +137,16 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                             };
                             _db.Add(ResourceTypes.ReviewComment, newReviewComment);
                             break;
+
+                        case ResourceType _ when resourceType == ResourceTypes.Highscore:
+                            var newHighScore = new HighScoreEntity(new ExhibitHighScoreArgs())
+                            {
+                                Id = e.Id,
+                                UserId = e.UserId,
+                                Timestamp = e.Timestamp
+                            };
+                            _db.Add(ResourceTypes.Highscore, newHighScore);
+                            break;
                     }
                     break;
 
@@ -256,6 +266,19 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                             };
                             _db.Replace((ResourceTypes.ReviewComment, e.Id), updatedReviewComment);
                             break;
+
+                        case ResourceType _ when resourceType == ResourceTypes.Highscore:
+                            var originalHighScore = _db.Get<HighScoreEntity>((ResourceTypes.Highscore, e.Id));
+                            var highScoreArgs = originalHighScore.CreateExhibitHighscoreArgs();
+                            e.ApplyTo(highScoreArgs);
+                            var updatedHighScore = new HighScoreEntity(highScoreArgs)
+                            {
+                                Id = e.Id,
+                                UserId = originalHighScore.UserId,
+                                Timestamp = e.Timestamp
+                            };
+                            _db.Replace((ResourceTypes.Highscore, e.Id), updatedHighScore);
+                            break;
                     }
                     break;
 
@@ -290,6 +313,9 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Core.ReadModel
                             MarkDeleted((resourceType, e.Id));
                             break;
                         case ResourceType _ when resourceType == ResourceTypes.ReviewComment:
+                            MarkDeleted((resourceType, e.Id));
+                            break;
+                        case ResourceType _ when resourceType == ResourceTypes.Highscore:
                             MarkDeleted((resourceType, e.Id));
                             break;
                     }

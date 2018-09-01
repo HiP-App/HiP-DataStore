@@ -37,7 +37,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
         public static string QuestionCannotBeCreated(int exhibitId) =>
             $"Exhibit {exhibitId} already has the maximum amount of questions";
 
-        public static string ExhibitHasNoQuestions(int exhibitId) => 
+        public static string ExhibitHasNoQuestions(int exhibitId) =>
             $"The exhibit {exhibitId} doesn't have any questions";
 
         public static string CannotAddReviewToContentWithWrongStatus() =>
@@ -54,5 +54,8 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
 
         public static string ReviewCommentNotFound(int id) =>
             $"A review comment with id '{id}' does not exist";
+
+        public static string HighScoreNotFound(int exhibitId) =>
+            $"A highscore for the exhibit with id '{exhibitId}' does not exist";
     }
 }
