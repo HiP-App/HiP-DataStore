@@ -726,7 +726,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             if (ReviewHelper.CheckNotFoundGet(id, ResourceTypes.Exhibit, _entityIndex, _reviewIndex) is string errorMessage)
                 return NotFound(errorMessage);
 
-            var reviewId = _reviewIndex.GetReviewId(ResourceTypes.ExhibitPage.Name, id);
+            var reviewId = _reviewIndex.GetReviewId(ResourceTypes.Exhibit.Name, id);
 
             await EntityManager.DeleteEntityAsync(_eventStore, ResourceTypes.Review, reviewId, User.Identity.GetUserIdentity());
             return NoContent();
