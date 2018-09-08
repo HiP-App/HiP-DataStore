@@ -269,26 +269,27 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             }
         }
 
-        [HttpGet("Rating/{id}")]
+        [HttpGet("Rating/{exhibitId}")]
         [ProducesResponseType(typeof(RatingResult), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
-        public IActionResult GetRating(int id)
+        public IActionResult GetRating(int exhibitId)
         {
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!_entityIndex.Exists(ResourceTypes.Exhibit, id))
-                return NotFound(ErrorMessages.ContentNotFound(ResourceTypes.Exhibit, id));
+            if (!_entityIndex.Exists(ResourceTypes.Exhibit, exhibitId))
+                return NotFound(ErrorMessages.ContentNotFound(ResourceTypes.Exhibit, exhibitId));
 
             var result = new RatingResult()
             {
-                Id = id,
-                Average = _ratingIndex.Average(ResourceTypes.Exhibit, id),
-                Count = _ratingIndex.Count(ResourceTypes.Exhibit, id),
-                RatingTable = _ratingIndex.Table(ResourceTypes.Exhibit, id)
+                Id = exhibitId,
+                Average = _ratingIndex.Average(ResourceTypes.Exhibit, exhibitId),
+                LastMonthAverage = _ratingIndex.LastMonthAverage(ResourceTypes.Exhibit, exhibitId),
+                Count = _ratingIndex.Count(ResourceTypes.Exhibit, exhibitId),
+                RatingTable = _ratingIndex.Table(ResourceTypes.Exhibit, exhibitId)
             };
 
             return Ok(result);
@@ -503,6 +504,7 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Controllers
             {
                 Id = exhibitId,
                 Average = _ratingIndex.Average(ResourceTypes.QuizQuestion, exhibitId),
+                LastMonthAverage = _ratingIndex.LastMonthAverage(ResourceTypes.QuizQuestion, exhibitId),
                 Count = _ratingIndex.Count(ResourceTypes.QuizQuestion, exhibitId),
                 RatingTable = _ratingIndex.Table(ResourceTypes.QuizQuestion, exhibitId)
             };

@@ -8,8 +8,11 @@ namespace PaderbornUniversity.SILab.Hip.DataStore.Model.Rest
 
         public double Average { get; set; }
 
+        public double LastMonthAverage { get; set; }
+
         public int Count { get; set; }
 
         public Dictionary<int,int> RatingTable { get; set; }
+        
     }
 }
